@@ -61,6 +61,7 @@ private:
 
     JobPtr FetchOne(std::size_t &lookup_idx);
 
+    // Flag to indicate if to execute the thread pool
     std::atomic<bool> execute{true};
     std::vector<JobQueue> jobQueues;
     std::condition_variable queueCV;

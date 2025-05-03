@@ -17,3 +17,16 @@ JobSystem::JobSystem()
                              { Worker(); })
     }
 }
+
+JobSystem::~JobSystem()
+{
+    // threads wol block until all threads joined
+    FinishRemainTask();
+}
+
+// Non-blocking
+void JobSystem::FinishRemainTask()
+{
+    execute = false;
+    queueCV.notify_all();
+}
