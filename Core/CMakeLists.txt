@@ -1,3 +1,3 @@
-add_library(JobSystem JobSystem/Job.h JobSystem/JobSystem.h JobSystem.cpp)
+add_library(JobSystem JobSystem/Job.h JobSystem/JobSystem.h JobSystem/JobSystem.cpp)
 target_link_directories(JobSystem PUBLIC JobSystem)
 target_link_libraries(JobSystem PUBLIC Util)

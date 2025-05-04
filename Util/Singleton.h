@@ -9,7 +9,7 @@ public:
     Singleton(Singleton &&) = delete;
 
     // Disallow copy and move operator
-    Singleton &operatpr = (const Singleton &) = delete;
+    Singleton &operator= (const Singleton &) =delete;
     Singleton &operator=(Singleton &&) = delete;
 
 protected:
@@ -20,4 +20,4 @@ private:
     struct InstanceT : T
     {
     };
-}
+};

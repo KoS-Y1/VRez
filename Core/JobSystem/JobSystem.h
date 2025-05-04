@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Job.h>
+#include "Job.h"
 #include <Singleton.h>
 
 #include <condition_variable>
@@ -44,10 +44,10 @@ private:
         JobQueue(JobQueue &&queue) noexcept : std::deque<JobPtr>(std::move(queue)) {};
         // Disallow copy constructor
         JobQueue(JobQueue const &) = delete;
-    }
+    };
 
     template <typename Func>
-    void DoEnqueueJob(JobQueue &queue, JobPtr &&Job, Func &&func);
+    void DoEnqueueJob(JobQueue &queue, JobPtr &&job, Func &&func);
 
     void EnqueueJob(JobPtr &&job, std::size_t priority = 0);
 
@@ -68,4 +68,4 @@ private:
     std::mutex queueMutex;
     std::vector<std::size_t> queueLookupSequence;
     std::vector<std::jthread> threads;
-}
+};

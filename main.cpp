@@ -16,7 +16,7 @@ int main(void)
 
     };
 
-    result = vkCreateInstance(&infoInstance, NULL, &instance);
+    result = vkCreateInstance(&infoInstance, nullptr, &instance);
     std::cout << "Returns " << result << std::endl;
 
     return 0;

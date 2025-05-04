@@ -10,10 +10,10 @@ public:
         Complete,
         Reschedule,
         RescheduleImportant
-    }
+    };
 
     // Disallow copy and move constructor
-    Job(const Job &) = delete;
+    Job(const Job&) = delete;
     Job(Job &&) = delete;
 
     // Disallow copy and move operator
@@ -24,7 +24,7 @@ public:
     // Virtual destructor since we may delete an instance of a derived class through a pointer to the base class Job
     virtual ~Job() = default;
 
-    // Return true by defualt, derived classes will override it
+    // Return true by default, derived classes will override it
     virtual bool ReadyForExecution() { return true; }
     // Pure virtual function , derived classes must implement it
     virtual CompletionPolicy Execute() = 0;
@@ -36,4 +36,4 @@ protected:
 private:
     JobSystem *jobSystem = nullptr;
     friend class JobSystem;
-}
+};
