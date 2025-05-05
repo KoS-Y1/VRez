@@ -12,6 +12,12 @@ public:
     Singleton &operator= (const Singleton &) =delete;
     Singleton &operator=(Singleton &&) = delete;
 
+    static T &GetInstance()
+    {
+        static InstanceT instance;
+        return instance;
+    }
+
 protected:
     Singleton() = default;
     ~Singleton() = default;
