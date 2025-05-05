@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Job.h"
+#include <Job.h>
 #include <Singleton.h>
 
 #include <condition_variable>
@@ -59,7 +59,7 @@ private:
 
     void Worker();
 
-    JobPtr FetchOne(std::size_t &lookup_idx);
+    JobPtr FetchOne(std::size_t &lookupIdx);
 
     // Flag to indicate if to execute the thread pool
     std::atomic<bool> execute{true};

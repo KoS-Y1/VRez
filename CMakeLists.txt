@@ -10,4 +10,7 @@ add_subdirectory(Util)
 
 add_executable(VulkanRayTracer main.cpp)
 
-target_link_libraries(VulkanRayTracer Vulkan::Vulkan)
+target_link_libraries(VulkanRayTracer
+        Vulkan::Vulkan
+        JobSystem
+)
