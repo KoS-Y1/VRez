@@ -1,13 +1,13 @@
-#include <iostream>
-#include <string>
-
 #include <vulkan/vulkan.h>
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_vulkan.h>
 
 #include <JobSystem.h>
+#include <Assert.h>
 
-// std::mutex s_mutex;
-//
-// struct TestJob : Job
+#include "VulkanState.h"
+
+// class TestJob : public Job
 // {
 // public:
 //     explicit TestJob(size_t i, int name) : counter(i), name(name) {};
@@ -17,7 +17,6 @@
 //         for (int i = 0; i < counter; i++)
 //         {
 //             {
-//                 std::lock_guard<std::mutex> lock(s_mutex);
 //                 std::cout << name << " called " << i << std::endl;
 //
 //             }
@@ -32,25 +31,45 @@
 
 int main(void)
 {
-    VkInstance instance = VK_NULL_HANDLE;
-    VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
-    VkDevice device = VK_NULL_HANDLE;
-    VkResult result = VK_SUCCESS;
+    // Init SDL
+    DEBUG_ASSERT(SDL_Init(SDL_INIT_VIDEO));
+    atexit(SDL_Quit);
+    DEBUG_ASSERT(SDL_Vulkan_LoadLibrary(nullptr));
+    atexit(SDL_Vulkan_UnloadLibrary);
 
-    std::cout << "Initialize vulkan instance" << std::endl;
-    VkInstanceCreateInfo infoInstance = {
-        .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
+    // Init Vulkan state
+    VulkanState vulkanState;
 
-    };
+    // Init SDL window
+    SDL_Window *window = SDL_CreateWindow("VulkanRayTracer", 1600, 900,
+        SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_VULKAN);
+    DEBUG_ASSERT(window);
 
-    result = vkCreateInstance(&infoInstance, nullptr, &instance);
-    std::cout << "Returns " << result << std::endl;
+    bool running = true;
+    while (running)
+    {
+        SDL_Event event;
+        while (SDL_PollEvent(&event)) {
+            switch (event.type) {
+                case SDL_EVENT_QUIT:
+                    running = false;
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
 
+    // std::cout << "Returns " << result << std::endl;
+    //
     // int i = 1, j = 2, k = 3;
     // JobSystem::GetInstance().Schedule<TestJob>(i, i);
     // JobSystem::GetInstance().Schedule<TestJob>(j, j);
     // JobSystem::GetInstance().ScheduleImportant<TestJob>(k, k);
-
+    //
     // std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    SDL_DestroyWindow(window);
+
     return 0;
 }
