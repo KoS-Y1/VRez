@@ -4,12 +4,23 @@
 
 #include <SDL3/SDL_vulkan.h>
 
-VulkanState::VulkanState()
+VulkanState::VulkanState(SDL_Window *window, uint32_t width, uint32_t height)
 {
+    window = window;
+    width = width;
+    height = height;
+
     CreateInstance();
     CreatePhysicalDevice();
     CreateDevice();
     CreateCommandPool();
+    CreateSurface(window);
+    CreateSwapchain(width, height);
+
+    renderFence = CreateFence(VK_FENCE_CREATE_SIGNALED_BIT);
+    renderSemaphore = CreateSemaphore();
+    presentSemaphore = CreateSemaphore();
+
     CreateCommandBuffer();
 }
 
@@ -17,23 +28,29 @@ VulkanState::~VulkanState()
 {
     WaitIdle();
 
-    vkFreeCommandBuffers(device,commandPool, 1, &cmdBuf);
-    vkDestroyCommandPool(device,commandPool,nullptr);
-    vkDestroyDevice(device,nullptr);
-    vkDestroyInstance(instance,nullptr);
+    vkFreeCommandBuffers(device, commandPool, 1, &cmdBuf);
+    vkDestroyFence(device, renderFence, nullptr);
+    vkDestroySemaphore(device, renderSemaphore, nullptr);
+    vkDestroySemaphore(device, presentSemaphore, nullptr);
+
+    vkDestroySwapchainKHR(device, swapchain.swapchain, nullptr);
+    vkDestroySurfaceKHR(instance, surface, nullptr);
+    vkDestroyCommandPool(device, commandPool, nullptr);
+    vkDestroyDevice(device, nullptr);
+    vkDestroyInstance(instance, nullptr);
 }
 
 void VulkanState::CreateInstance()
 {
     VkApplicationInfo infoApp
-        {
-            .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
-            .pNext = nullptr,
-            .pApplicationName = "VulkanRayTracerApp",
-            .applicationVersion = VK_MAKE_API_VERSION(0, 1, 0, 0),
-            .pEngineName = "VulkanRayTracerEngine",
-            .apiVersion = VK_API_VERSION_1_0,
-        };
+    {
+        .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
+        .pNext = nullptr,
+        .pApplicationName = "VulkanRayTracerApp",
+        .applicationVersion = VK_MAKE_API_VERSION(0, 1, 0, 0),
+        .pEngineName = "VulkanRayTracerEngine",
+        .apiVersion = VK_API_VERSION_1_0,
+    };
 
     // Enable validation layer
     std::vector<const char *> layers
@@ -125,35 +142,199 @@ void VulkanState::CreateDevice()
         .pEnabledFeatures = nullptr,
     };
     DEBUG_VK_ASSERT(vkCreateDevice(physicalDevice, &infoDevice, nullptr, &device));
+
+    // Get queue
+    vkGetDeviceQueue(device, 0, 0, &queue);
 }
 
 void VulkanState::CreateCommandPool()
 {
     VkCommandPoolCreateInfo infoCommandPool
-        {
-            .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
-            .pNext = nullptr,
-            .flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT,
-            .queueFamilyIndex = 0,
-        };
+    {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT,
+        .queueFamilyIndex = 0,
+    };
     DEBUG_VK_ASSERT(vkCreateCommandPool(device, &infoCommandPool, nullptr, &commandPool));
 }
+
+void VulkanState::CreateSurface(SDL_Window *window)
+{
+    DEBUG_ASSERT(SDL_Vulkan_CreateSurface(window, instance, nullptr, &surface));
+}
+
+
+void VulkanState::CreateSwapchain(uint32_t width, uint32_t height)
+{
+    VkSwapchainCreateInfoKHR infoSwapchain
+    {
+        .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
+        .pNext = nullptr,
+        .flags = 0,
+        .surface = surface,
+        .minImageCount = MIN_SWAPCHAIN_IMG_COUNT,
+        .imageFormat = IMG_FORMAT,
+        .imageColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR,
+        .imageExtent = {width, height},
+        .imageArrayLayers = 1,
+        .imageUsage = VK_IMAGE_USAGE_TRANSFER_DST_BIT,
+        .imageSharingMode = VK_SHARING_MODE_EXCLUSIVE,
+        .queueFamilyIndexCount = 0,
+        .pQueueFamilyIndices = nullptr,
+        .preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,
+        .compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
+        .presentMode = VK_PRESENT_MODE_FIFO_KHR,
+        .clipped = false,
+        .oldSwapchain = nullptr,
+    };
+    DEBUG_VK_ASSERT(vkCreateSwapchainKHR(device, &infoSwapchain, nullptr, &swapchain.swapchain));
+
+    // Get swapchain images
+    DEBUG_VK_ASSERT(vkGetSwapchainImagesKHR(device, swapchain.swapchain, &swapchain.count, NULL));
+    DEBUG_VK_ASSERT(vkGetSwapchainImagesKHR(device, swapchain.swapchain, &swapchain.count, swapchain.images));
+
+    // Layout transition
+    {
+        VkImageSubresourceRange subresourceRange
+        {
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .baseMipLevel = 0,
+            .levelCount = 1,
+            .baseArrayLayer = 0,
+            .layerCount = 1,
+        };
+
+        VkHostImageLayoutTransitionInfo infoTransition[swapchain.count];
+        for (size_t i = 0; i < swapchain.count; i++)
+        {
+            infoTransition[i] = {
+                .sType = VK_STRUCTURE_TYPE_HOST_IMAGE_LAYOUT_TRANSITION_INFO,
+                .pNext = nullptr,
+                .image = swapchain.images[i],
+                .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+                .newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+                .subresourceRange = subresourceRange
+            };
+        }
+        DEBUG_VK_ASSERT(vkTransitionImageLayout(device, swapchain.count, infoTransition));
+    }
+
+}
+
+VkSemaphore VulkanState::CreateSemaphore() const
+{
+    VkSemaphore semaphore = VK_NULL_HANDLE;
+    VkSemaphoreCreateInfo createInfo{
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0,
+    };
+    DEBUG_VK_ASSERT(vkCreateSemaphore(device, &createInfo, nullptr, &semaphore));
+
+    return semaphore;
+}
+
+VkFence VulkanState::CreateFence(const VkFenceCreateFlags flag) const
+{
+    VkFence fence = VK_NULL_HANDLE;
+    VkFenceCreateInfo createInfo{
+        .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = flag,
+    };
+    DEBUG_VK_ASSERT(vkCreateFence(device, &createInfo, nullptr, &fence));
+
+    return fence;
+}
+
 
 void VulkanState::CreateCommandBuffer()
 {
     VkCommandBufferAllocateInfo infoCmdBuffer
-        {
-            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-            .pNext = nullptr,
-            .commandPool = commandPool,
-            .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-            .commandBufferCount = 1,
-        };
+    {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .pNext = nullptr,
+        .commandPool = commandPool,
+        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+        .commandBufferCount = 1,
+    };
     DEBUG_VK_ASSERT(vkAllocateCommandBuffers(device, &infoCmdBuffer, &cmdBuf));
 }
 
-void VulkanState::WaitIdle()
+void VulkanState::WaitIdle() const
 {
     DEBUG_VK_ASSERT(vkDeviceWaitIdle(device));
 }
 
+
+void VulkanState::Present()
+{
+
+    // Reset fence and command pool
+    WaitAndResetFence(renderFence);
+    DEBUG_VK_ASSERT(vkResetCommandPool(device, commandPool, VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT));
+
+    // Acquire next image in the swapchain for presenting
+    uint32_t imageIndex = 0;
+    DEBUG_VK_ASSERT(vkAcquireNextImageKHR(device, swapchain.swapchain, POINT_ONE_SECOND, presentSemaphore, nullptr, &imageIndex));
+
+    BeginCommandBuffer(0);
+
+    // TODO
+
+    EndAndSubmitCommandBuffer(VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, renderFence, presentSemaphore, renderSemaphore);
+
+    QueuePresent(renderSemaphore, imageIndex);
+}
+
+void VulkanState::WaitAndResetFence(VkFence fence, uint64_t timeout) const
+{
+    DEBUG_VK_ASSERT(vkWaitForFences(device, 1, &fence, true, timeout));
+    DEBUG_VK_ASSERT(vkResetFences(device, 1, &fence));
+}
+
+void VulkanState::BeginCommandBuffer(VkCommandBufferUsageFlags const flag) const
+{
+    VkCommandBufferBeginInfo infoBegin{
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .pNext = nullptr,
+        .flags = flag,
+        .pInheritanceInfo = nullptr,
+    };
+    DEBUG_VK_ASSERT(vkBeginCommandBuffer(cmdBuf, &infoBegin));
+}
+
+void VulkanState::EndAndSubmitCommandBuffer(VkPipelineStageFlags const waitStageMask, VkFence const fence,
+                                            VkSemaphore const waitSemaphore, VkSemaphore const signalSemaphore)
+{
+    DEBUG_VK_ASSERT(vkEndCommandBuffer(cmdBuf));
+
+    VkSubmitInfo infoSubmit{
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+        .pNext = nullptr,
+        .waitSemaphoreCount = 1,
+        .pWaitSemaphores = &waitSemaphore,
+        .pWaitDstStageMask = &waitStageMask,
+        .commandBufferCount = 1,
+        .pCommandBuffers = &cmdBuf,
+        .signalSemaphoreCount = 1,
+        .pSignalSemaphores = &signalSemaphore,
+    };
+    DEBUG_VK_ASSERT(vkQueueSubmit(queue, 1, &infoSubmit, fence));
+}
+
+void VulkanState::QueuePresent(VkSemaphore waitSemaphore, uint32_t imageIndex) const
+{
+    VkPresentInfoKHR infoPresent{
+        .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+        .pNext = nullptr,
+        .waitSemaphoreCount = 1,
+        .pWaitSemaphores = &waitSemaphore,
+        .swapchainCount = 1,
+        .pSwapchains = &swapchain.swapchain,
+        .pImageIndices = &imageIndex,
+        .pResults = nullptr,
+};
+    DEBUG_VK_ASSERT(vkQueuePresentKHR(queue, &infoPresent));
+}

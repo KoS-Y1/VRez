@@ -8,6 +8,8 @@ inline void Assert(const char* expression, bool condition, const char* file, int
     if (!condition)
     {
         SDL_Log("Assertion failed: %s, %s(%d)", expression, file, line);
+        SDL_Log(SDL_GetError());
+
         exit(EXIT_FAILURE);
     }
 }

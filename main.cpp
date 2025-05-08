@@ -4,8 +4,9 @@
 
 #include <JobSystem.h>
 #include <Assert.h>
+#include <VulkanState.h>
+#include <Window.h>
 
-#include "VulkanState.h"
 
 // class TestJob : public Job
 // {
@@ -37,28 +38,10 @@ int main(void)
     DEBUG_ASSERT(SDL_Vulkan_LoadLibrary(nullptr));
     atexit(SDL_Vulkan_UnloadLibrary);
 
-    // Init Vulkan state
-    VulkanState vulkanState;
-
     // Init SDL window
-    SDL_Window *window = SDL_CreateWindow("VulkanRayTracer", 1600, 900,
-        SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_VULKAN);
-    DEBUG_ASSERT(window);
-
-    bool running = true;
-    while (running)
-    {
-        SDL_Event event;
-        while (SDL_PollEvent(&event)) {
-            switch (event.type) {
-                case SDL_EVENT_QUIT:
-                    running = false;
-                    break;
-                default:
-                    break;
-            }
-        }
-    }
+    Window window;
+    // Init Vulkan state
+    window.Run();
 
     // std::cout << "Returns " << result << std::endl;
     //
@@ -69,7 +52,6 @@ int main(void)
     //
     // std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-    SDL_DestroyWindow(window);
 
     return 0;
 }

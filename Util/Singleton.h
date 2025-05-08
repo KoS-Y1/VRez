@@ -18,6 +18,7 @@ public:
         return instance;
     }
 
+
 protected:
     Singleton() = default;
     ~Singleton() = default;
