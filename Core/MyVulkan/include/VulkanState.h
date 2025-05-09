@@ -25,6 +25,8 @@ public:
 
     ~VulkanState();
 
+    [[nodiscard]] VkDevice const &GetDevice() const { return device; };
+
     void Present();
 
 private:
@@ -59,18 +61,18 @@ private:
 
     void CreateCommandBuffer();
 
-    VkSemaphore CreateSemaphore() const;
+    VkSemaphore CreateSemaphore() ;
 
-    VkFence CreateFence(VkFenceCreateFlags const flag) const;
+    VkFence CreateFence(VkFenceCreateFlags const flag) ;
 
-    void WaitIdle() const;
+    void WaitIdle() ;
 
-    void WaitAndResetFence(VkFence fence, uint64_t timeout = POINT_ONE_SECOND) const;
+    void WaitAndResetFence(VkFence fence, uint64_t timeout = POINT_ONE_SECOND) ;
 
-    void BeginCommandBuffer(VkCommandBufferUsageFlags const flag) const;
+    void BeginCommandBuffer(VkCommandBufferUsageFlags const flag) ;
 
-    void EndAndSubmitCommandBuffer(VkPipelineStageFlags const waitStageMask, VkFence const fence,
-                                   VkSemaphore const waitSemaphore, VkSemaphore const signalSemaphore);
+    void EndAndSubmitCommandBuffer(VkPipelineStageFlags const waitStageMask, VkFence fence,
+                                   VkSemaphore waitSemaphore, VkSemaphore signalSemaphore);
 
-    void QueuePresent(VkSemaphore waitSemaphore, uint32_t imageIndex) const;
+    void QueuePresent(VkSemaphore waitSemaphore, uint32_t imageIndex) ;
 };

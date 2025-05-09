@@ -2,10 +2,10 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
 
-#include <JobSystem.h>
+#include <include/JobSystem.h>
 #include <Assert.h>
-#include <VulkanState.h>
-#include <Window.h>
+#include <include/JobSystem.h>
+#include <include/Window.h>
 
 
 // class TestJob : public Job

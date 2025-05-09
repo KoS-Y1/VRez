@@ -1,8 +1,8 @@
-#include "Window.h"
+#include "include/Window.h"
 
 #include <Assert.h>
 
-#include <VulkanState.h>
+#include <include/VulkanState.h>
 
 Window::Window()
 {

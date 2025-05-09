@@ -1,8 +1,10 @@
-#include "VulkanState.h"
+#include "include/VulkanState.h"
 
 #include <vector>
 
 #include <SDL3/SDL_vulkan.h>
+
+#include <include/VulkanUtil.h>
 
 VulkanState::VulkanState(SDL_Window *window, uint32_t width, uint32_t height)
 {
@@ -14,14 +16,13 @@ VulkanState::VulkanState(SDL_Window *window, uint32_t width, uint32_t height)
     CreatePhysicalDevice();
     CreateDevice();
     CreateCommandPool();
+    CreateCommandBuffer();
     CreateSurface(window);
     CreateSwapchain(width, height);
 
     renderFence = CreateFence(VK_FENCE_CREATE_SIGNALED_BIT);
     renderSemaphore = CreateSemaphore();
     presentSemaphore = CreateSemaphore();
-
-    CreateCommandBuffer();
 }
 
 VulkanState::~VulkanState()
@@ -125,7 +126,7 @@ void VulkanState::CreateDevice()
     // Enable swapchain extension for presenting on screen
     std::vector<const char *> extensions
     {
-        VK_KHR_SWAPCHAIN_EXTENSION_NAME
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME,
     };
 
     VkDeviceCreateInfo infoDevice
@@ -191,38 +192,11 @@ void VulkanState::CreateSwapchain(uint32_t width, uint32_t height)
     DEBUG_VK_ASSERT(vkCreateSwapchainKHR(device, &infoSwapchain, nullptr, &swapchain.swapchain));
 
     // Get swapchain images
-    DEBUG_VK_ASSERT(vkGetSwapchainImagesKHR(device, swapchain.swapchain, &swapchain.count, NULL));
+    DEBUG_VK_ASSERT(vkGetSwapchainImagesKHR(device, swapchain.swapchain, &swapchain.count, nullptr));
     DEBUG_VK_ASSERT(vkGetSwapchainImagesKHR(device, swapchain.swapchain, &swapchain.count, swapchain.images));
-
-    // Layout transition
-    {
-        VkImageSubresourceRange subresourceRange
-        {
-            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-            .baseMipLevel = 0,
-            .levelCount = 1,
-            .baseArrayLayer = 0,
-            .layerCount = 1,
-        };
-
-        VkHostImageLayoutTransitionInfo infoTransition[swapchain.count];
-        for (size_t i = 0; i < swapchain.count; i++)
-        {
-            infoTransition[i] = {
-                .sType = VK_STRUCTURE_TYPE_HOST_IMAGE_LAYOUT_TRANSITION_INFO,
-                .pNext = nullptr,
-                .image = swapchain.images[i],
-                .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-                .newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-                .subresourceRange = subresourceRange
-            };
-        }
-        DEBUG_VK_ASSERT(vkTransitionImageLayout(device, swapchain.count, infoTransition));
-    }
-
 }
 
-VkSemaphore VulkanState::CreateSemaphore() const
+VkSemaphore VulkanState::CreateSemaphore()
 {
     VkSemaphore semaphore = VK_NULL_HANDLE;
     VkSemaphoreCreateInfo createInfo{
@@ -235,7 +209,7 @@ VkSemaphore VulkanState::CreateSemaphore() const
     return semaphore;
 }
 
-VkFence VulkanState::CreateFence(const VkFenceCreateFlags flag) const
+VkFence VulkanState::CreateFence(const VkFenceCreateFlags flag)
 {
     VkFence fence = VK_NULL_HANDLE;
     VkFenceCreateInfo createInfo{
@@ -262,7 +236,7 @@ void VulkanState::CreateCommandBuffer()
     DEBUG_VK_ASSERT(vkAllocateCommandBuffers(device, &infoCmdBuffer, &cmdBuf));
 }
 
-void VulkanState::WaitIdle() const
+void VulkanState::WaitIdle()
 {
     DEBUG_VK_ASSERT(vkDeviceWaitIdle(device));
 }
@@ -270,31 +244,45 @@ void VulkanState::WaitIdle() const
 
 void VulkanState::Present()
 {
-
     // Reset fence and command pool
     WaitAndResetFence(renderFence);
     DEBUG_VK_ASSERT(vkResetCommandPool(device, commandPool, VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT));
 
     // Acquire next image in the swapchain for presenting
     uint32_t imageIndex = 0;
-    DEBUG_VK_ASSERT(vkAcquireNextImageKHR(device, swapchain.swapchain, POINT_ONE_SECOND, presentSemaphore, nullptr, &imageIndex));
+    DEBUG_VK_ASSERT(
+        vkAcquireNextImageKHR(device, swapchain.swapchain, POINT_ONE_SECOND, presentSemaphore, nullptr, &imageIndex));
+
+    VkClearColorValue clearColorValue = {{1.0f, 0.0f, 0.0f, 1.0f}};
+    VkImageSubresourceRange clearRange = vk_util::GetSubresourceRange(VK_IMAGE_ASPECT_COLOR_BIT);
 
     BeginCommandBuffer(0);
 
-    // TODO
+    // Layout transition so that we can clear image color
+    vk_util::CmdImageLayoutTransition(cmdBuf, swapchain.images[imageIndex], VK_IMAGE_LAYOUT_UNDEFINED,
+                                      VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_ASPECT_COLOR_BIT, 0,
+                                      VK_ACCESS_TRANSFER_WRITE_BIT);
+    // Clear color image
+    vkCmdClearColorImage(cmdBuf, swapchain.images[imageIndex], VK_IMAGE_LAYOUT_GENERAL, &clearColorValue, 1,
+                         &clearRange);
+
+    // Layout transition for presenting
+    vk_util::CmdImageLayoutTransition(cmdBuf, swapchain.images[imageIndex], VK_IMAGE_LAYOUT_GENERAL,
+                                      VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_IMAGE_ASPECT_COLOR_BIT,
+                                      VK_ACCESS_TRANSFER_WRITE_BIT, 0);
 
     EndAndSubmitCommandBuffer(VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, renderFence, presentSemaphore, renderSemaphore);
 
     QueuePresent(renderSemaphore, imageIndex);
 }
 
-void VulkanState::WaitAndResetFence(VkFence fence, uint64_t timeout) const
+void VulkanState::WaitAndResetFence(VkFence fence, uint64_t timeout)
 {
     DEBUG_VK_ASSERT(vkWaitForFences(device, 1, &fence, true, timeout));
     DEBUG_VK_ASSERT(vkResetFences(device, 1, &fence));
 }
 
-void VulkanState::BeginCommandBuffer(VkCommandBufferUsageFlags const flag) const
+void VulkanState::BeginCommandBuffer(VkCommandBufferUsageFlags const flag)
 {
     VkCommandBufferBeginInfo infoBegin{
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
@@ -305,36 +293,44 @@ void VulkanState::BeginCommandBuffer(VkCommandBufferUsageFlags const flag) const
     DEBUG_VK_ASSERT(vkBeginCommandBuffer(cmdBuf, &infoBegin));
 }
 
-void VulkanState::EndAndSubmitCommandBuffer(VkPipelineStageFlags const waitStageMask, VkFence const fence,
-                                            VkSemaphore const waitSemaphore, VkSemaphore const signalSemaphore)
+void VulkanState::EndAndSubmitCommandBuffer(VkPipelineStageFlags const waitStageMask, VkFence fence,
+                                            VkSemaphore waitSemaphore, VkSemaphore signalSemaphore)
 {
     DEBUG_VK_ASSERT(vkEndCommandBuffer(cmdBuf));
 
     VkSubmitInfo infoSubmit{
         .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
         .pNext = nullptr,
-        .waitSemaphoreCount = 1,
         .pWaitSemaphores = &waitSemaphore,
         .pWaitDstStageMask = &waitStageMask,
-        .commandBufferCount = 1,
         .pCommandBuffers = &cmdBuf,
-        .signalSemaphoreCount = 1,
         .pSignalSemaphores = &signalSemaphore,
     };
+    if (waitSemaphore != VK_NULL_HANDLE)
+    {
+        infoSubmit.waitSemaphoreCount = 1;
+    }
+    if (signalSemaphore != VK_NULL_HANDLE)
+    {
+        infoSubmit.signalSemaphoreCount = 1;
+    }
     DEBUG_VK_ASSERT(vkQueueSubmit(queue, 1, &infoSubmit, fence));
 }
 
-void VulkanState::QueuePresent(VkSemaphore waitSemaphore, uint32_t imageIndex) const
+void VulkanState::QueuePresent(VkSemaphore waitSemaphore, uint32_t imageIndex)
 {
     VkPresentInfoKHR infoPresent{
         .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
         .pNext = nullptr,
-        .waitSemaphoreCount = 1,
         .pWaitSemaphores = &waitSemaphore,
         .swapchainCount = 1,
         .pSwapchains = &swapchain.swapchain,
         .pImageIndices = &imageIndex,
         .pResults = nullptr,
-};
+    };
+    if (waitSemaphore != VK_NULL_HANDLE)
+    {
+        infoPresent.waitSemaphoreCount = 1;
+    }
     DEBUG_VK_ASSERT(vkQueuePresentKHR(queue, &infoPresent));
 }
