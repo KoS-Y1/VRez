@@ -304,6 +304,7 @@ void VulkanState::EndAndSubmitCommandBuffer(VkPipelineStageFlags const waitStage
         .pNext = nullptr,
         .pWaitSemaphores = &waitSemaphore,
         .pWaitDstStageMask = &waitStageMask,
+        .commandBufferCount = 1,
         .pCommandBuffers = &cmdBuf,
         .pSignalSemaphores = &signalSemaphore,
     };

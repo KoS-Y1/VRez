@@ -18,12 +18,18 @@ struct VulkanSwapchain
     uint32_t count = 0;
 };
 
-class VulkanState : public Singleton<VulkanState>
+class VulkanState
 {
 public:
     VulkanState(SDL_Window *window, uint32_t width, uint32_t height);
 
     ~VulkanState();
+
+    // Disallow copy and move
+    VulkanState (const VulkanState &) = delete;
+    VulkanState (VulkanState &&) = delete;
+    VulkanState& operator=(VulkanState const &) = delete;
+    VulkanState& operator=(VulkanState &&) = delete;
 
     [[nodiscard]] VkDevice const &GetDevice() const { return device; };
 
