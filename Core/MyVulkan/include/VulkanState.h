@@ -43,9 +43,9 @@ private:
     VkSemaphore presentSemaphore = VK_NULL_HANDLE;
     VkCommandBuffer cmdBuf = VK_NULL_HANDLE;
 
-    SDL_Window *window = nullptr;
-    uint32_t width = 0;
-    uint32_t height = 0;
+    SDL_Window *m_window = nullptr;
+    uint32_t m_width = 0;
+    uint32_t m_height = 0;
 
     void CreateInstance();
 

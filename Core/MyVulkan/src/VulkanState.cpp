@@ -8,9 +8,9 @@
 
 VulkanState::VulkanState(SDL_Window *window, uint32_t width, uint32_t height)
 {
-    window = window;
-    width = width;
-    height = height;
+    m_window = window;
+    m_width = width;
+    m_height = height;
 
     CreateInstance();
     CreatePhysicalDevice();
@@ -63,6 +63,7 @@ void VulkanState::CreateInstance()
     const char *const *sdlExtensions = SDL_Vulkan_GetInstanceExtensions(&sdlExtensionCount);
     std::vector<const char *> extensions(sdlExtensions, sdlExtensions + sdlExtensionCount);
     extensions.emplace_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+
 
     VkInstanceCreateInfo infoInstance
     {
@@ -154,7 +155,7 @@ void VulkanState::CreateCommandPool()
     {
         .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
         .pNext = nullptr,
-        .flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT,
+        .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
         .queueFamilyIndex = 0,
     };
     DEBUG_VK_ASSERT(vkCreateCommandPool(device, &infoCommandPool, nullptr, &commandPool));
@@ -244,9 +245,9 @@ void VulkanState::WaitIdle()
 
 void VulkanState::Present()
 {
-    // Reset fence and command pool
+    // Reset fence and command buffer
     WaitAndResetFence(renderFence);
-    DEBUG_VK_ASSERT(vkResetCommandPool(device, commandPool, VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT));
+    DEBUG_VK_ASSERT(vkResetCommandBuffer(cmdBuf, 0));
 
     // Acquire next image in the swapchain for presenting
     uint32_t imageIndex = 0;
