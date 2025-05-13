@@ -29,16 +29,13 @@ VulkanState::~VulkanState()
 {
     WaitIdle();
 
-    vkFreeCommandBuffers(device, commandPool, 1, &cmdBuf);
-    vkDestroyFence(device, renderFence, nullptr);
-    vkDestroySemaphore(device, renderSemaphore, nullptr);
-    vkDestroySemaphore(device, presentSemaphore, nullptr);
+    for (size_t i = 0; i < swapchain.count; i++)
+    {
+        vkDestroyImageView(device, swapchain.views[i], nullptr);
+    }
 
-    vkDestroySwapchainKHR(device, swapchain.swapchain, nullptr);
-    vkDestroySurfaceKHR(instance, surface, nullptr);
-    vkDestroyCommandPool(device, commandPool, nullptr);
-    vkDestroyDevice(device, nullptr);
-    vkDestroyInstance(instance, nullptr);
+
+    deletionQueue.flush();
 }
 
 void VulkanState::CreateInstance()
@@ -77,6 +74,11 @@ void VulkanState::CreateInstance()
         .ppEnabledExtensionNames = extensions.data(),
     };
     DEBUG_VK_ASSERT(vkCreateInstance(&infoInstance, nullptr, &instance));
+
+    deletionQueue.pushFunction([&]()
+    {
+        vkDestroyInstance(instance, nullptr);
+    });
 }
 
 void VulkanState::CreatePhysicalDevice()
@@ -147,6 +149,11 @@ void VulkanState::CreateDevice()
 
     // Get queue
     vkGetDeviceQueue(device, 0, 0, &queue);
+
+    deletionQueue.pushFunction([&]()
+    {
+        vkDestroyDevice(device, nullptr);
+    });
 }
 
 void VulkanState::CreateCommandPool()
@@ -164,6 +171,11 @@ void VulkanState::CreateCommandPool()
 void VulkanState::CreateSurface(SDL_Window *window)
 {
     DEBUG_ASSERT(SDL_Vulkan_CreateSurface(window, instance, nullptr, &surface));
+
+    deletionQueue.pushFunction([&]()
+    {
+        vkDestroySurfaceKHR(instance, surface, nullptr);
+    });
 }
 
 
@@ -180,7 +192,7 @@ void VulkanState::CreateSwapchain(uint32_t width, uint32_t height)
         .imageColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR,
         .imageExtent = {width, height},
         .imageArrayLayers = 1,
-        .imageUsage = VK_IMAGE_USAGE_TRANSFER_DST_BIT,
+        .imageUsage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_STORAGE_BIT,
         .imageSharingMode = VK_SHARING_MODE_EXCLUSIVE,
         .queueFamilyIndexCount = 0,
         .pQueueFamilyIndices = nullptr,
@@ -195,6 +207,42 @@ void VulkanState::CreateSwapchain(uint32_t width, uint32_t height)
     // Get swapchain images
     DEBUG_VK_ASSERT(vkGetSwapchainImagesKHR(device, swapchain.swapchain, &swapchain.count, nullptr));
     DEBUG_VK_ASSERT(vkGetSwapchainImagesKHR(device, swapchain.swapchain, &swapchain.count, swapchain.images));
+
+    // Create image view for each swapchian image
+    {
+        VkImageViewCreateInfo infoView
+        {
+            .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+            .pNext = nullptr,
+            .flags = 0,
+            .viewType = VK_IMAGE_VIEW_TYPE_2D,
+            .format = IMG_FORMAT,
+            .components = {
+                VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY,
+                VK_COMPONENT_SWIZZLE_IDENTITY
+            },
+            .subresourceRange = vk_util::GetSubresourceRange(VK_IMAGE_ASPECT_COLOR_BIT)
+        };
+
+        for (size_t i = 0; i < swapchain.count; i++)
+        {
+            infoView.image = swapchain.images[i];
+            DEBUG_VK_ASSERT(vkCreateImageView(device, &infoView, nullptr, &swapchain.views[i]));
+        }
+    }
+
+    // Init drawImage that swapchain images copy from
+    VulkanImage img(device, IMG_FORMAT,
+                    VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_STORAGE_BIT |
+                    VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, {m_width, m_height, 1}, VK_IMAGE_ASPECT_COLOR_BIT);
+
+
+    drawImage = std::move(img);
+
+    deletionQueue.pushFunction([&]()
+    {
+        vkDestroySwapchainKHR(device, swapchain.swapchain, nullptr);
+    });
 }
 
 VkSemaphore VulkanState::CreateSemaphore()
@@ -206,6 +254,12 @@ VkSemaphore VulkanState::CreateSemaphore()
         .flags = 0,
     };
     DEBUG_VK_ASSERT(vkCreateSemaphore(device, &createInfo, nullptr, &semaphore));
+
+    // Pass the copy of the object since there's no such class memeber
+    deletionQueue.pushFunction([this, semaphore]()
+    {
+        vkDestroySemaphore(device, semaphore, nullptr);
+    });
 
     return semaphore;
 }
@@ -219,6 +273,11 @@ VkFence VulkanState::CreateFence(const VkFenceCreateFlags flag)
         .flags = flag,
     };
     DEBUG_VK_ASSERT(vkCreateFence(device, &createInfo, nullptr, &fence));
+
+    deletionQueue.pushFunction([this, fence]()
+    {
+        vkDestroyFence(device, fence, nullptr);
+    });
 
     return fence;
 }
@@ -235,6 +294,11 @@ void VulkanState::CreateCommandBuffer()
         .commandBufferCount = 1,
     };
     DEBUG_VK_ASSERT(vkAllocateCommandBuffers(device, &infoCmdBuffer, &cmdBuf));
+
+    deletionQueue.pushFunction([&]()
+    {
+        vkDestroyCommandPool(device, commandPool, nullptr);
+    });
 }
 
 void VulkanState::WaitIdle()

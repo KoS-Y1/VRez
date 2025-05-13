@@ -1,13 +1,15 @@
 #pragma once
 
 #include <vector>
+#include <deque>
+#include <functional>
 
-#include <Singleton.h>
 #include <Assert.h>
+#include <include/VulkanImage.h>
+
 
 #define MIN_SWAPCHAIN_IMG_COUNT 2
 #define MAX_SWAPCHAIN_IMG_COUNT 16
-#define IMG_FORMAT VK_FORMAT_B8G8R8A8_SRGB
 
 #define POINT_ONE_SECOND 100000000u
 
@@ -15,8 +17,31 @@ struct VulkanSwapchain
 {
     VkSwapchainKHR swapchain = VK_NULL_HANDLE;
     VkImage images[MAX_SWAPCHAIN_IMG_COUNT] = {0};
+    VkImageView views[MAX_SWAPCHAIN_IMG_COUNT] = {0};
     uint32_t count = 0;
 };
+
+struct DeletionQueue
+{
+    std::deque<std::function<void()>> deletors;
+
+    void pushFunction(std::function<void()> &&func)
+    {
+        deletors.push_back(func);
+    }
+
+    void flush()
+    {
+        for (auto it = deletors.rbegin(); it != deletors.rend(); it++)
+        {
+            // Call the function
+            (*it)();
+        }
+
+        deletors.clear();
+    }
+};
+
 
 class VulkanState
 {
@@ -42,16 +67,20 @@ private:
     VkQueue queue = VK_NULL_HANDLE;
     VkCommandPool commandPool = VK_NULL_HANDLE;
     VkSurfaceKHR surface = VK_NULL_HANDLE;
-    VulkanSwapchain swapchain = {0};
+    VulkanSwapchain swapchain;
 
     VkFence renderFence = VK_NULL_HANDLE;
     VkSemaphore renderSemaphore = VK_NULL_HANDLE;
     VkSemaphore presentSemaphore = VK_NULL_HANDLE;
     VkCommandBuffer cmdBuf = VK_NULL_HANDLE;
 
+    VulkanImage drawImage;
+
     SDL_Window *m_window = nullptr;
     uint32_t m_width = 0;
     uint32_t m_height = 0;
+
+    DeletionQueue deletionQueue;
 
     void CreateInstance();
 
