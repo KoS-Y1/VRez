@@ -1,4 +1,5 @@
 #include <include/VulkanUtil.h>
+#include <SDL3/SDL.h>
 
 void vk_util::CmdImageLayoutTransition(VkCommandBuffer cmdBuf, VkImage image, VkImageLayout oldLayout,
                                        VkImageLayout newLayout, VkImageAspectFlags aspect, VkAccessFlags srcAccess,
@@ -35,4 +36,52 @@ VkImageSubresourceRange vk_util::GetSubresourceRange(VkImageAspectFlags aspect)
     };
 
     return subresourceRange;
+}
+
+uint32_t vk_util::FindMemoryType(VkPhysicalDevice physicalDevice, uint32_t memoryTypeBitsRequirement,
+                                 VkMemoryPropertyFlags requiredProperties)
+{
+    // Get physical device properties first
+    VkPhysicalDeviceMemoryProperties memoryProperties;
+    vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memoryProperties);
+
+    for (uint32_t memoryIndex = 0; memoryIndex < memoryProperties.memoryTypeCount; memoryIndex++)
+    {
+        const uint32_t memoryTypeBits = (1 << memoryIndex);
+        const bool isRequiredMemoryType = memoryTypeBitsRequirement & memoryTypeBits;
+
+        const VkMemoryPropertyFlags properties = memoryProperties.memoryTypes[memoryIndex].propertyFlags;
+        const bool hasRequiredProperties = (properties & requiredProperties) == requiredProperties;
+
+        if (isRequiredMemoryType && hasRequiredProperties)
+        {
+            return memoryIndex;
+        }
+    }
+
+    SDL_Log("Failed to find suitable memory type for typeBits %d, properties %d!", memoryTypeBitsRequirement,
+            requiredProperties);
+    return -1;
+}
+
+void vk_util::CopyImageToImage(VkCommandBuffer cmdBuf, VkImage srcImage, VkImage dstImage, VkExtent2D srcExtent,
+                               VkExtent2D dstExtent, VkImageAspectFlags aspect)
+{
+    VkImageBlit blit
+    {
+        
+    };
+}
+
+VkImageSubresourceLayers vk_util::GetImageSubresourceLayers(VkImageAspectFlags aspect)
+{
+    VkImageSubresourceLayers subresourceLayers
+    {
+        .aspectMask = aspect,
+        .mipLevel = 0,
+        .baseArrayLayer = 0,
+        .layerCount = 1,
+    };
+
+    return subresourceLayers;
 }

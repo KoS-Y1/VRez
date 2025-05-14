@@ -232,7 +232,7 @@ void VulkanState::CreateSwapchain(uint32_t width, uint32_t height)
     }
 
     // Init drawImage that swapchain images copy from
-    VulkanImage img(device, IMG_FORMAT,
+    VulkanImage img(physicalDevice, device, IMG_FORMAT,
                     VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_STORAGE_BIT |
                     VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, {m_width, m_height, 1}, VK_IMAGE_ASPECT_COLOR_BIT);
 

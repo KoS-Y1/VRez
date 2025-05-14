@@ -5,20 +5,22 @@
 
 #include "include/VulkanUtil.h"
 
-VulkanImage::VulkanImage(VkDevice device, VkFormat format, VkImageUsageFlags usage, VkExtent3D extent,
+VulkanImage::VulkanImage(VkPhysicalDevice physicalDevice, VkDevice device, VkFormat format, VkImageUsageFlags usage, VkExtent3D extent,
                          VkImageAspectFlags aspect)
 {
+    m_physicalDevice = physicalDevice;
     m_device = device;
     m_format = format;
-
     CreateImage(usage, extent);
+    BindMemory();
     CreateImageView(aspect);
 }
 
 void VulkanImage::Destroy()
 {
-    vkDestroyImage(m_device, image, nullptr);
     vkDestroyImageView(m_device, view, nullptr);
+    vkFreeMemory(m_device, memory, nullptr);
+    vkDestroyImage(m_device, image, nullptr);
 }
 
 
@@ -64,4 +66,26 @@ void VulkanImage::CreateImageView(VkImageAspectFlags aspect)
     };
 
     DEBUG_VK_ASSERT(vkCreateImageView(m_device, &infoView, nullptr, &view));
+}
+
+void VulkanImage::BindMemory()
+{
+
+    // Get image requirement first
+    VkMemoryRequirements memRequirements;
+    vkGetImageMemoryRequirements(m_device, image, &memRequirements);
+
+    // Get memory type index
+    uint32_t memoryTypeIndex = vk_util::FindMemoryType(m_physicalDevice, memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+    VkMemoryAllocateInfo infoMem
+    {
+        .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+        .pNext = nullptr,
+        .allocationSize = memRequirements.size,
+        .memoryTypeIndex = memoryTypeIndex,
+    };
+
+    DEBUG_VK_ASSERT(vkAllocateMemory(m_device, &infoMem, nullptr, &memory));
+    DEBUG_VK_ASSERT(vkBindImageMemory(m_device, image, memory, 0));
 }
