@@ -15,8 +15,8 @@ namespace vk_util
     uint32_t FindMemoryType(VkPhysicalDevice physicalDevice, uint32_t memoryTypeBitsRequirement, VkMemoryPropertyFlags
                             requiredProperties);
 
-    void CopyImageToImage(VkCommandBuffer cmdBuf, VkImage srcImage, VkImage dstImage, VkExtent2D srcExtent,
-                          VkExtent2D dstExtent, VkImageAspectFlags aspect);
+    void CopyImageToImage(VkCommandBuffer cmdBuf, VkImage srcImage, VkImage dstImage, VkExtent3D srcExtent,
+                          VkExtent3D dstExtent, VkImageAspectFlags aspect);
 
     VkImageSubresourceLayers GetImageSubresourceLayers(VkImageAspectFlags aspect);
 }

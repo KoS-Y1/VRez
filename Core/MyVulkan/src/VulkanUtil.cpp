@@ -64,13 +64,23 @@ uint32_t vk_util::FindMemoryType(VkPhysicalDevice physicalDevice, uint32_t memor
     return -1;
 }
 
-void vk_util::CopyImageToImage(VkCommandBuffer cmdBuf, VkImage srcImage, VkImage dstImage, VkExtent2D srcExtent,
-                               VkExtent2D dstExtent, VkImageAspectFlags aspect)
+void vk_util::CopyImageToImage(VkCommandBuffer cmdBuf, VkImage srcImage, VkImage dstImage, VkExtent3D srcExtent,
+                               VkExtent3D dstExtent, VkImageAspectFlags aspect)
 {
     VkImageBlit blit
     {
-        
+        .srcSubresource = GetImageSubresourceLayers(aspect),
+        .dstSubresource = GetImageSubresourceLayers(aspect),
     };
+    blit.srcOffsets[1].x = static_cast<int32_t>(srcExtent.width);
+    blit.srcOffsets[1].y = static_cast<int32_t>(srcExtent.height);
+    blit.srcOffsets[1].z = static_cast<int32_t>(srcExtent.depth);
+    blit.dstOffsets[1].x = static_cast<int32_t>(dstExtent.width);
+    blit.dstOffsets[1].y = static_cast<int32_t>(dstExtent.height);
+    blit.dstOffsets[1].z = static_cast<int32_t>(dstExtent.depth);
+
+    vkCmdBlitImage(cmdBuf, srcImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstImage,
+                   VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_LINEAR);
 }
 
 VkImageSubresourceLayers vk_util::GetImageSubresourceLayers(VkImageAspectFlags aspect)

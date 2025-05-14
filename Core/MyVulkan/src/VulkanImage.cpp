@@ -11,6 +11,7 @@ VulkanImage::VulkanImage(VkPhysicalDevice physicalDevice, VkDevice device, VkFor
     m_physicalDevice = physicalDevice;
     m_device = device;
     m_format = format;
+    m_extent = extent;
     CreateImage(usage, extent);
     BindMemory();
     CreateImageView(aspect);
@@ -18,9 +19,18 @@ VulkanImage::VulkanImage(VkPhysicalDevice physicalDevice, VkDevice device, VkFor
 
 void VulkanImage::Destroy()
 {
-    vkDestroyImageView(m_device, view, nullptr);
-    vkFreeMemory(m_device, memory, nullptr);
-    vkDestroyImage(m_device, image, nullptr);
+    if (m_device != VK_NULL_HANDLE)
+    {
+        vkDestroyImageView(m_device, view, nullptr);
+        vkFreeMemory(m_device, memory, nullptr);
+        vkDestroyImage(m_device, image, nullptr);
+    }
+
+    m_device = VK_NULL_HANDLE;
+    m_physicalDevice = VK_NULL_HANDLE;
+    image = VK_NULL_HANDLE;
+    view = VK_NULL_HANDLE;
+    memory = VK_NULL_HANDLE;
 }
 
 
@@ -88,4 +98,16 @@ void VulkanImage::BindMemory()
 
     DEBUG_VK_ASSERT(vkAllocateMemory(m_device, &infoMem, nullptr, &memory));
     DEBUG_VK_ASSERT(vkBindImageMemory(m_device, image, memory, 0));
+}
+
+void VulkanImage::Swap(VulkanImage &other) noexcept
+{
+    m_device = other.m_device;
+    m_physicalDevice = other.m_physicalDevice;
+    m_extent = other.m_extent;
+    m_format = other.m_format;
+
+    std::swap(image, other.image);
+    std::swap(view, other.view);
+    std::swap(memory, other.memory);
 }

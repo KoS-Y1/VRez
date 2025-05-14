@@ -110,4 +110,6 @@ private:
                                    VkSemaphore waitSemaphore, VkSemaphore signalSemaphore);
 
     void QueuePresent(VkSemaphore waitSemaphore, uint32_t imageIndex) ;
+
+    void DrawBackground();
 };

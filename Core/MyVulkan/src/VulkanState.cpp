@@ -29,6 +29,8 @@ VulkanState::~VulkanState()
 {
     WaitIdle();
 
+    drawImage.Destroy();
+
     for (size_t i = 0; i < swapchain.count; i++)
     {
         vkDestroyImageView(device, swapchain.views[i], nullptr);
@@ -318,21 +320,30 @@ void VulkanState::Present()
     DEBUG_VK_ASSERT(
         vkAcquireNextImageKHR(device, swapchain.swapchain, POINT_ONE_SECOND, presentSemaphore, nullptr, &imageIndex));
 
-    VkClearColorValue clearColorValue = {{1.0f, 0.0f, 0.0f, 1.0f}};
-    VkImageSubresourceRange clearRange = vk_util::GetSubresourceRange(VK_IMAGE_ASPECT_COLOR_BIT);
-
     BeginCommandBuffer(0);
 
+
     // Layout transition so that we can clear image color
-    vk_util::CmdImageLayoutTransition(cmdBuf, swapchain.images[imageIndex], VK_IMAGE_LAYOUT_UNDEFINED,
+    vk_util::CmdImageLayoutTransition(cmdBuf, drawImage.GetImage(), VK_IMAGE_LAYOUT_UNDEFINED,
                                       VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_ASPECT_COLOR_BIT, 0,
                                       VK_ACCESS_TRANSFER_WRITE_BIT);
     // Clear color image
-    vkCmdClearColorImage(cmdBuf, swapchain.images[imageIndex], VK_IMAGE_LAYOUT_GENERAL, &clearColorValue, 1,
-                         &clearRange);
+    DrawBackground();
+
+    // Layout transition for copying image
+    vk_util::CmdImageLayoutTransition(cmdBuf, drawImage.GetImage(), VK_IMAGE_LAYOUT_GENERAL,
+                                      VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT, 0,
+                                      VK_ACCESS_TRANSFER_WRITE_BIT);
+    vk_util::CmdImageLayoutTransition(cmdBuf, swapchain.images[imageIndex], VK_IMAGE_LAYOUT_UNDEFINED,
+                                      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT,
+                                      VK_ACCESS_TRANSFER_WRITE_BIT, 0);
+
+    // Copy draw image to the current swapchian image
+    vk_util::CopyImageToImage(cmdBuf, drawImage.GetImage(), swapchain.images[imageIndex], drawImage.GetExtent(),
+                              {m_width, m_height, 1}, VK_IMAGE_ASPECT_COLOR_BIT);
 
     // Layout transition for presenting
-    vk_util::CmdImageLayoutTransition(cmdBuf, swapchain.images[imageIndex], VK_IMAGE_LAYOUT_GENERAL,
+    vk_util::CmdImageLayoutTransition(cmdBuf, swapchain.images[imageIndex], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                                       VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_IMAGE_ASPECT_COLOR_BIT,
                                       VK_ACCESS_TRANSFER_WRITE_BIT, 0);
 
@@ -399,4 +410,13 @@ void VulkanState::QueuePresent(VkSemaphore waitSemaphore, uint32_t imageIndex)
         infoPresent.waitSemaphoreCount = 1;
     }
     DEBUG_VK_ASSERT(vkQueuePresentKHR(queue, &infoPresent));
+}
+
+void VulkanState::DrawBackground()
+{
+    VkClearColorValue clearColorValue = {{1.0f, 0.0f, 0.0f, 1.0f}};
+    VkImageSubresourceRange subresourceRange = vk_util::GetSubresourceRange(VK_IMAGE_ASPECT_COLOR_BIT);
+
+    // Clear image
+    vkCmdClearColorImage(cmdBuf, drawImage.GetImage(), VK_IMAGE_LAYOUT_GENERAL, &clearColorValue, 1, &subresourceRange);
 }
