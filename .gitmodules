@@ -1,3 +1,6 @@
 [submodule "External/SDL"]
 	path = External/SDL
 	url = https://github.com/KoS-Y1/SDL.git
+[submodule "External/glslang"]
+	path = External/glslang
+	url = https://github.com/KoS-Y1/glslang.git

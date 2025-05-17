@@ -1,0 +1,242 @@
+#include "include/ShaderCompiler.h"
+
+#include <glslang/Public/ShaderLang.h>
+
+#include "SDL3/SDL_log.h"
+#include "SPIRV/GlslangToSpv.h"
+
+// Helper functions for shader compiler
+namespace
+{
+    inline EShLanguage GetShaderType(VkShaderStageFlagBits stage)
+    {
+        switch (stage)
+        {
+            case VK_SHADER_STAGE_VERTEX_BIT:
+                return EShLangVertex;
+
+            case VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT:
+                return EShLangTessControl;
+
+            case VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT:
+                return EShLangTessEvaluation;
+
+            case VK_SHADER_STAGE_GEOMETRY_BIT:
+                return EShLangGeometry;
+
+            case VK_SHADER_STAGE_FRAGMENT_BIT:
+                return EShLangFragment;
+
+            case VK_SHADER_STAGE_COMPUTE_BIT:
+                return EShLangCompute;
+
+            case VK_SHADER_STAGE_RAYGEN_BIT_KHR:
+                return EShLangRayGen;
+
+            case VK_SHADER_STAGE_ANY_HIT_BIT_KHR:
+                return EShLangAnyHit;
+
+            case VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR:
+                return EShLangClosestHit;
+
+            case VK_SHADER_STAGE_MISS_BIT_KHR:
+                return EShLangMiss;
+
+            case VK_SHADER_STAGE_INTERSECTION_BIT_KHR:
+                return EShLangIntersect;
+
+            case VK_SHADER_STAGE_CALLABLE_BIT_KHR:
+                return EShLangCallable;
+
+            case VK_SHADER_STAGE_MESH_BIT_EXT:
+                return EShLangMesh;
+
+            case VK_SHADER_STAGE_TASK_BIT_EXT:
+                return EShLangTask;
+
+            default:
+                return EShLangVertex;
+        }
+    }
+
+    inline TBuiltInResource *GetDefaultTBuiltInResource()
+    {
+        TBuiltInResource resource
+        {
+            .maxLights = 32,
+            .maxClipPlanes = 6,
+            .maxTextureUnits = 32,
+            .maxTextureCoords = 32,
+            .maxVertexAttribs = 64,
+            .maxVertexUniformComponents = 4096,
+            .maxVaryingFloats = 64,
+            .maxVertexTextureImageUnits = 32,
+            .maxCombinedTextureImageUnits = 80,
+            .maxTextureImageUnits = 32,
+            .maxFragmentUniformComponents = 4096,
+            .maxDrawBuffers = 32,
+            .maxVertexUniformVectors = 128,
+            .maxVaryingVectors = 8,
+            .maxFragmentUniformVectors = 16,
+            .maxVertexOutputVectors = 16,
+            .maxFragmentInputVectors = 15,
+            .minProgramTexelOffset = -8,
+            .maxProgramTexelOffset = 7,
+            .maxClipDistances = 8,
+            .maxComputeWorkGroupCountX = 65535,
+            .maxComputeWorkGroupCountY = 65535,
+            .maxComputeWorkGroupCountZ = 65535,
+            .maxComputeWorkGroupSizeX = 1024,
+            .maxComputeWorkGroupSizeY = 1024,
+            .maxComputeWorkGroupSizeZ = 64,
+            .maxComputeUniformComponents = 1024,
+            .maxComputeTextureImageUnits = 16,
+            .maxComputeImageUniforms = 8,
+            .maxComputeAtomicCounters = 8,
+            .maxComputeAtomicCounterBuffers = 1,
+            .maxVaryingComponents = 60,
+            .maxVertexOutputComponents = 64,
+            .maxGeometryInputComponents = 64,
+            .maxGeometryOutputComponents = 128,
+            .maxFragmentInputComponents = 128,
+            .maxImageUnits = 8,
+            .maxCombinedImageUnitsAndFragmentOutputs = 8,
+            .maxCombinedShaderOutputResources = 8,
+            .maxImageSamples = 0,
+            .maxVertexImageUniforms = 0,
+            .maxTessControlImageUniforms = 0,
+            .maxTessEvaluationImageUniforms = 0,
+            .maxGeometryImageUniforms = 0,
+            .maxFragmentImageUniforms = 8,
+            .maxCombinedImageUniforms = 8,
+            .maxGeometryTextureImageUnits = 16,
+            .maxGeometryOutputVertices = 256,
+            .maxGeometryTotalOutputComponents = 1024,
+            .maxGeometryUniformComponents = 1024,
+            .maxGeometryVaryingComponents = 64,
+            .maxTessControlInputComponents = 128,
+            .maxTessControlOutputComponents = 128,
+            .maxTessControlTextureImageUnits = 16,
+            .maxTessControlUniformComponents = 1024,
+            .maxTessControlTotalOutputComponents = 4096,
+            .maxTessEvaluationInputComponents = 128,
+            .maxTessEvaluationOutputComponents = 128,
+            .maxTessEvaluationTextureImageUnits = 16,
+            .maxTessEvaluationUniformComponents = 1024,
+            .maxTessPatchComponents = 120,
+            .maxPatchVertices = 32,
+            .maxTessGenLevel = 64,
+            .maxViewports = 16,
+            .maxVertexAtomicCounters = 0,
+            .maxTessControlAtomicCounters = 0,
+            .maxTessEvaluationAtomicCounters = 0,
+            .maxGeometryAtomicCounters = 0,
+            .maxFragmentAtomicCounters = 8,
+            .maxCombinedAtomicCounters = 8,
+            .maxAtomicCounterBindings = 1,
+            .maxVertexAtomicCounterBuffers = 0,
+            .maxTessControlAtomicCounterBuffers = 0,
+            .maxTessEvaluationAtomicCounterBuffers = 0,
+            .maxGeometryAtomicCounterBuffers = 0,
+            .maxFragmentAtomicCounterBuffers = 1,
+            .maxCombinedAtomicCounterBuffers = 1,
+            .maxAtomicCounterBufferSize = 16384,
+            .maxTransformFeedbackBuffers = 4,
+            .maxTransformFeedbackInterleavedComponents = 64,
+            .maxCullDistances = 8,
+            .maxCombinedClipAndCullDistances = 8,
+            .maxSamples = 4,
+            .maxMeshOutputVerticesNV = 256,
+            .maxMeshOutputPrimitivesNV = 512,
+            .maxMeshWorkGroupSizeX_NV = 32,
+            .maxMeshWorkGroupSizeY_NV = 1,
+            .maxMeshWorkGroupSizeZ_NV = 1,
+            .maxTaskWorkGroupSizeX_NV = 32,
+            .maxTaskWorkGroupSizeY_NV = 1,
+            .maxTaskWorkGroupSizeZ_NV = 1,
+            .maxMeshViewCountNV = 4,
+            .limits.nonInductiveForLoops = 1,
+            .limits.whileLoops = 1,
+            .limits.doWhileLoops = 1,
+            .limits.generalUniformIndexing = 1,
+            .limits.generalAttributeMatrixVectorIndexing = 1,
+            .limits.generalVaryingIndexing = 1,
+            .limits.generalSamplerIndexing = 1,
+            .limits.generalVariableIndexing = 1,
+            .limits.generalConstantMatrixVectorIndexing = 1,
+        };
+        return &resource;
+    }
+
+    inline VkShaderStageFlagBits GetStage(const std::string path)
+    {
+        if (path.ends_with(".vert"))
+        {
+            return VK_SHADER_STAGE_VERTEX_BIT;
+        }
+        else if (path.ends_with(".frag"))
+        {
+            return VK_SHADER_STAGE_FRAGMENT_BIT;
+        }
+        else if (path.ends_with(".comp"))
+        {
+            return VK_SHADER_STAGE_COMPUTE_BIT;
+        }
+        else
+        {
+            SDL_Log("%s is not a valid shader!", path.c_str());
+            exit(EXIT_FAILURE);
+        }
+
+    }
+
+    std::vector<uint32_t> CompileToSpirv(const std::string &source, VkShaderStageFlagBits shaderStage)
+    {
+        EShLanguage shaderType = GetShaderType(shaderStage);
+        glslang::TShader shader(shaderType);
+
+        const char *shaderCode = source.c_str();
+
+        shader.setStrings(&shaderCode, 1);
+        shader.setEnvInput(glslang::EShSourceGlsl, shaderType, glslang::EShClientVulkan, 100);
+        shader.setEnvClient(glslang::EShClientVulkan, glslang::EShTargetVulkan_1_4);
+        shader.setEnvTarget(glslang::EshTargetSpv, glslang::EShTargetSpv_1_6);
+
+        if (!shader.parse(GetDefaultTBuiltInResource(), 100, false, EShMsgDefault))
+        {
+            SDL_Log("GLSL Parsing Failed: %s", shader.getInfoLog());
+            exit(EXIT_FAILURE);
+        }
+
+        glslang::TProgram program;
+        program.addShader(&shader);
+
+        if (!program.link(EShMsgDefault))
+        {
+            SDL_Log("Linking Failed: %s", shader.getInfoLog());
+            exit(EXIT_FAILURE);
+        }
+
+        std::vector<uint32_t> spirv;
+        glslang::GlslangToSpv(*program.getIntermediate(shaderType), spirv);
+
+        return spirv;
+    }
+
+}
+
+void shader_compiler::Initialize()
+{
+    glslang::InitializeProcess();
+}
+
+void shader_compiler::Finalize()
+{
+    glslang::FinalizeProcess();
+}
+
+std::vector<uint32_t> shader_compiler::Compile(const std::string &path)
+{
+    VkShaderStageFlagBits shaderStage = GetStage(path);
+    return CompileToSpirv(path, shaderStage);
+}

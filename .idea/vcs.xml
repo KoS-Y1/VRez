@@ -3,5 +3,9 @@
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/External/SDL" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/External/glslang" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/External/glslang/External/googletest" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/External/glslang/External/spirv-tools" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/External/glslang/External/spirv-tools/external/spirv-headers" vcs="Git" />
   </component>
 </project>

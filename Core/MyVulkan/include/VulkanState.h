@@ -23,7 +23,7 @@ struct VulkanSwapchain
 
 struct DeletionQueue
 {
-    std::deque<std::function<void()>> deletors;
+    std::deque<std::function<void()> > deletors;
 
     void pushFunction(std::function<void()> &&func)
     {
@@ -51,10 +51,13 @@ public:
     ~VulkanState();
 
     // Disallow copy and move
-    VulkanState (const VulkanState &) = delete;
-    VulkanState (VulkanState &&) = delete;
-    VulkanState& operator=(VulkanState const &) = delete;
-    VulkanState& operator=(VulkanState &&) = delete;
+    VulkanState(const VulkanState &) = delete;
+
+    VulkanState(VulkanState &&) = delete;
+
+    VulkanState &operator=(VulkanState const &) = delete;
+
+    VulkanState &operator=(VulkanState &&) = delete;
 
     [[nodiscard]] VkDevice const &GetDevice() const { return device; };
 
@@ -96,20 +99,20 @@ private:
 
     void CreateCommandBuffer();
 
-    VkSemaphore CreateSemaphore() ;
+    VkSemaphore CreateSemaphore();
 
-    VkFence CreateFence(VkFenceCreateFlags const flag) ;
+    VkFence CreateFence(VkFenceCreateFlags const flag);
 
-    void WaitIdle() ;
+    void WaitIdle();
 
-    void WaitAndResetFence(VkFence fence, uint64_t timeout = POINT_ONE_SECOND) ;
+    void WaitAndResetFence(VkFence fence, uint64_t timeout = POINT_ONE_SECOND);
 
-    void BeginCommandBuffer(VkCommandBufferUsageFlags const flag) ;
+    void BeginCommandBuffer(VkCommandBufferUsageFlags const flag);
 
     void EndAndSubmitCommandBuffer(VkPipelineStageFlags const waitStageMask, VkFence fence,
                                    VkSemaphore waitSemaphore, VkSemaphore signalSemaphore);
 
-    void QueuePresent(VkSemaphore waitSemaphore, uint32_t imageIndex) ;
+    void QueuePresent(VkSemaphore waitSemaphore, uint32_t imageIndex);
 
     void DrawBackground();
 };
