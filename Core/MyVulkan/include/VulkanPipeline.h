@@ -26,6 +26,8 @@ public:
             Destroy();
             Swap(other);
         }
+
+        return *this;
     };
 
     void Destroy();

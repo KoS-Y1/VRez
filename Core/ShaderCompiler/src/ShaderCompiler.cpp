@@ -283,8 +283,8 @@ std::vector<uint32_t> shader_compiler::CompileToSpirv(const std::string &source,
     shader.setStrings(&shaderCode, 1);
     shader.setEnvInput(glslang::EShSourceGlsl, shaderType, glslang::EShClientVulkan, 100);
     shader.setEnvClient(glslang::EShClientVulkan, glslang::EShTargetVulkan_1_4);
-    shader.setEnvTarget(glslang::EshTargetSpv, glslang::EShTargetSpv_1_6);
-
+    shader.setEnvTarget(glslang::EshTargetSpv, glslang::EShTargetSpv_1_3);
+    shader.setEntryPoint("main");
     if (!shader.parse(&DefaultTBuiltInResource, 100, false, EShMsgDefault))
     {
         SDL_Log("GLSL Parsing Failed: %s", shader.getInfoLog());

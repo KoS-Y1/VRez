@@ -5,6 +5,8 @@
 #include <include/ShaderCompiler.h>
 #include <include/VulkanUtil.h>
 
+#include <include/FileSystem.h>
+
 VulkanPipeline::VulkanPipeline(VkDevice device, std::vector<std::string> paths)
 {
     m_device = device;
@@ -38,7 +40,8 @@ VkShaderModule VulkanPipeline::CreateShaderModule(std::string path)
     VkShaderModule module = VK_NULL_HANDLE;
 
     VkShaderStageFlagBits stage = vk_util::GetStage(path);
-    std::vector<uint32_t> shaderCode = shader_compiler::CompileToSpirv(path, stage);
+    std::string file = file_system::Read(path);
+    std::vector<uint32_t> shaderCode = shader_compiler::CompileToSpirv(file, stage);
 
     VkShaderModuleCreateInfo infoModule
     {
@@ -111,7 +114,7 @@ void VulkanPipeline::CreateComputePipeline(std::string path)
         .flags = 0,
         .stage = VK_SHADER_STAGE_COMPUTE_BIT,
         .module = shaderModule,
-        .pName = shaderPath.filename().string().c_str(),
+        .pName = "main",
         .pSpecializationInfo = nullptr
     };
 
