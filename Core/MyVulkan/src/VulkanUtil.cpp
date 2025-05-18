@@ -95,3 +95,26 @@ VkImageSubresourceLayers vk_util::GetImageSubresourceLayers(VkImageAspectFlags a
 
     return subresourceLayers;
 }
+
+VkShaderStageFlagBits vk_util::GetStage(const std::string path)
+{
+    if (path.ends_with(".vert"))
+    {
+        return VK_SHADER_STAGE_VERTEX_BIT;
+    }
+    else if (path.ends_with(".frag"))
+    {
+        return VK_SHADER_STAGE_FRAGMENT_BIT;
+    }
+    else if (path.ends_with(".comp"))
+    {
+        return VK_SHADER_STAGE_COMPUTE_BIT;
+    }
+    else
+    {
+        SDL_Log("%s is not a valid shader!", path.c_str());
+        exit(EXIT_FAILURE);
+    }
+
+}
+

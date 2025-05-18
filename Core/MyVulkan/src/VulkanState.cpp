@@ -23,6 +23,11 @@ VulkanState::VulkanState(SDL_Window *window, uint32_t width, uint32_t height)
     renderFence = CreateFence(VK_FENCE_CREATE_SIGNALED_BIT);
     renderSemaphore = CreateSemaphore();
     presentSemaphore = CreateSemaphore();
+
+    std::vector<std::string> paths;
+    paths.push_back("../Assets/Shaders/gradient.comp");
+    VulkanPipeline tempPipeline(device, paths);
+    pipeline = std::move(tempPipeline);
 }
 
 VulkanState::~VulkanState()

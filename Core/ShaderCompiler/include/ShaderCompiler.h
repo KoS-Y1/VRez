@@ -1,4 +1,3 @@
-#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -12,6 +11,5 @@ namespace shader_compiler
 
     void Finalize();
 
-    std::vector<uint32_t> Compile(const std::string &path);
-
+    std::vector<uint32_t> CompileToSpirv(const std::string &source, VkShaderStageFlagBits shaderStage);
 }

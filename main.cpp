@@ -7,6 +7,8 @@
 #include <include/JobSystem.h>
 #include <include/Window.h>
 
+#include <include/ShaderCompiler.h>
+
 
 // class TestJob : public Job
 // {
@@ -38,6 +40,9 @@ int main(void)
     DEBUG_ASSERT(SDL_Vulkan_LoadLibrary(nullptr));
     atexit(SDL_Vulkan_UnloadLibrary);
 
+    // Initi glslang shader compiler
+    shader_compiler::Initialize();
+
     // Init SDL window
     Window window;
     // Init Vulkan state
@@ -52,6 +57,7 @@ int main(void)
     //
     // std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
+    shader_compiler::Finalize();
 
     return 0;
 }

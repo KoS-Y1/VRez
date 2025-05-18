@@ -5,7 +5,9 @@
 #include <functional>
 
 #include <Assert.h>
-#include <include/VulkanImage.h>
+#include "VulkanImage.h"
+
+#include "VulkanPipeline.h"
 
 
 #define MIN_SWAPCHAIN_IMG_COUNT 2
@@ -78,6 +80,7 @@ private:
     VkCommandBuffer cmdBuf = VK_NULL_HANDLE;
 
     VulkanImage drawImage;
+    VulkanPipeline pipeline;
 
     SDL_Window *m_window = nullptr;
     uint32_t m_width = 0;

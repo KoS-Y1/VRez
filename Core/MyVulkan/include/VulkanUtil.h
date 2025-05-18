@@ -1,4 +1,5 @@
 #pragma once
+#include <string>
 #include <vulkan/vulkan_core.h>
 
 #include "VulkanState.h"
@@ -19,4 +20,6 @@ namespace vk_util
                           VkExtent3D dstExtent, VkImageAspectFlags aspect);
 
     VkImageSubresourceLayers GetImageSubresourceLayers(VkImageAspectFlags aspect);
+
+    VkShaderStageFlagBits GetStage(const std::string path);
 }

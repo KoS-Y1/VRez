@@ -11,4 +11,4 @@ add_subdirectory(External)
 
 add_executable(VulkanRayTracer main.cpp)
 
-target_link_libraries(VulkanRayTracer Vulkan::Vulkan JobSystem SDL3::SDL3 Debug MyVulkan Window)
+target_link_libraries(VulkanRayTracer Vulkan::Vulkan JobSystem SDL3::SDL3 Debug MyVulkan Window ShaderCompiler)

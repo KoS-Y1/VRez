@@ -19,7 +19,9 @@ public:
     ~VulkanImage() { Destroy(); };
 
     VulkanImage(const VulkanImage &) = delete;
+    VulkanImage(VulkanImage && other) noexcept {Swap(other);};
 
+    VulkanImage & operator=(const VulkanImage &) = delete;
     VulkanImage &operator=(VulkanImage &&other) noexcept {
         if (this != &other) {
             Destroy();
