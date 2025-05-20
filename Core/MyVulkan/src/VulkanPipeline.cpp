@@ -7,10 +7,11 @@
 
 #include <include/FileSystem.h>
 
-VulkanPipeline::VulkanPipeline(VkDevice device, std::vector<std::string> paths)
+VulkanPipeline::VulkanPipeline(VkDevice device, VkDescriptorPool descriptorPool, std::vector<std::string> paths,
+                               std::vector<VkDescriptorSetLayout> descriptorSetLayouts)
 {
     m_device = device;
-    CreateLayout();
+    CreateLayout(descriptorSetLayouts);
     CreatePipeline(paths);
 }
 
@@ -27,7 +28,7 @@ void VulkanPipeline::Destroy()
     layout = VK_NULL_HANDLE;
 }
 
-void VulkanPipeline::Swap(VulkanPipeline &other) noexcept
+void VulkanPipeline::Swap(VulkanPipeline& other) noexcept
 {
     m_device = other.m_device;
 
@@ -57,15 +58,15 @@ VkShaderModule VulkanPipeline::CreateShaderModule(std::string path)
     return module;
 }
 
-void VulkanPipeline::CreateLayout()
+void VulkanPipeline::CreateLayout(std::vector<VkDescriptorSetLayout> descriptorSetLayouts)
 {
     // TODO: desccription layout and other stuff, right now just for testing if compiling is working
     VkPipelineLayoutCreateInfo infoLayout
     {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
         .pNext = nullptr,
-        .setLayoutCount = 0,
-        .pSetLayouts = nullptr,
+        .setLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size()),
+        .pSetLayouts = descriptorSetLayouts.data(),
         .pushConstantRangeCount = 0,
         .pPushConstantRanges = nullptr
     };
@@ -80,24 +81,24 @@ void VulkanPipeline::CreatePipeline(std::vector<std::string> paths)
 
     switch (stage)
     {
-        case VK_SHADER_STAGE_VERTEX_BIT:
-        case VK_SHADER_STAGE_FRAGMENT_BIT:
-        case VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT:
-        case VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT:
-        case VK_SHADER_STAGE_GEOMETRY_BIT:
-            CreateGraphicsPipeline(paths);
-            break;
+    case VK_SHADER_STAGE_VERTEX_BIT:
+    case VK_SHADER_STAGE_FRAGMENT_BIT:
+    case VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT:
+    case VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT:
+    case VK_SHADER_STAGE_GEOMETRY_BIT:
+        CreateGraphicsPipeline(paths);
+        break;
 
-        case VK_SHADER_STAGE_COMPUTE_BIT:
-            if (paths.size() > 1)
-            {
-                SDL_Log("Warning: passing more than one shaders to computer shader! Program is ignoring the rest!");
-            }
-            CreateComputePipeline(paths[0]);
-            break;
+    case VK_SHADER_STAGE_COMPUTE_BIT:
+        if (paths.size() > 1)
+        {
+            SDL_Log("Warning: passing more than one shaders to computer shader! Program is ignoring the rest!");
+        }
+        CreateComputePipeline(paths[0]);
+        break;
 
-        default:
-            break;
+    default:
+        break;
     }
 }
 

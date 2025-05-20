@@ -6,7 +6,7 @@
 
 #include <include/VulkanUtil.h>
 
-VulkanState::VulkanState(SDL_Window *window, uint32_t width, uint32_t height)
+VulkanState::VulkanState(SDL_Window* window, uint32_t width, uint32_t height)
 {
     m_window = window;
     m_width = width;
@@ -23,6 +23,8 @@ VulkanState::VulkanState(SDL_Window *window, uint32_t width, uint32_t height)
     renderFence = CreateFence(VK_FENCE_CREATE_SIGNALED_BIT);
     renderSemaphore = CreateSemaphore();
     presentSemaphore = CreateSemaphore();
+
+    CreateDescriptorPool();
 
     std::vector<std::string> paths;
     paths.push_back("../Assets/Shaders/gradient.comp");
@@ -58,14 +60,14 @@ void VulkanState::CreateInstance()
     };
 
     // Enable validation layer
-    std::vector<const char *> layers
+    std::vector<const char*> layers
     {
         "VK_LAYER_KHRONOS_validation",
     };
 
     uint32_t sdlExtensionCount = 0;
-    const char *const *sdlExtensions = SDL_Vulkan_GetInstanceExtensions(&sdlExtensionCount);
-    std::vector<const char *> extensions(sdlExtensions, sdlExtensions + sdlExtensionCount);
+    const char* const * sdlExtensions = SDL_Vulkan_GetInstanceExtensions(&sdlExtensionCount);
+    std::vector<const char*> extensions(sdlExtensions, sdlExtensions + sdlExtensionCount);
     extensions.emplace_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 
 
@@ -100,7 +102,7 @@ void VulkanState::CreatePhysicalDevice()
 
     // Get the physical device with the max api version(usually the best one)
     uint32_t maxApiVersion = 0;
-    for (VkPhysicalDevice p: physicalDevices)
+    for (VkPhysicalDevice p : physicalDevices)
     {
         VkPhysicalDeviceProperties properties = {0};
         vkGetPhysicalDeviceProperties(p, &properties);
@@ -134,7 +136,7 @@ void VulkanState::CreateDevice()
     };
 
     // Enable swapchain extension for presenting on screen
-    std::vector<const char *> extensions
+    std::vector<const char*> extensions
     {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME,
     };
@@ -175,7 +177,7 @@ void VulkanState::CreateCommandPool()
     DEBUG_VK_ASSERT(vkCreateCommandPool(device, &infoCommandPool, nullptr, &commandPool));
 }
 
-void VulkanState::CreateSurface(SDL_Window *window)
+void VulkanState::CreateSurface(SDL_Window* window)
 {
     DEBUG_ASSERT(SDL_Vulkan_CreateSurface(window, instance, nullptr, &surface));
 
@@ -307,6 +309,72 @@ void VulkanState::CreateCommandBuffer()
         vkDestroyCommandPool(device, commandPool, nullptr);
     });
 }
+
+void VulkanState::CreateDescriptorPool()
+{
+    VkDescriptorPoolSize poolSize
+    {
+        .type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
+        .descriptorCount = 1,
+    };
+
+    // TODO: This is just for testing for now
+    // Needs to update in the future
+    VkDescriptorPoolCreateInfo infoPool
+    {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0,
+        .maxSets = MAX_DESCRIPTOR_SET_COUNT,
+        .poolSizeCount = 1,
+        .pPoolSizes = &poolSize
+    };
+
+    DEBUG_VK_ASSERT(vkCreateDescriptorPool(device, &infoPool, nullptr, &descriptorPool));
+
+    deletionQueue.pushFunction([&]()
+    {
+        vkDestroyDescriptorPool(device, descriptorPool, nullptr);
+    });
+}
+
+void VulkanState::CreateDescriptor(const DescriptorConfig& config)
+{
+    Descriptor descriptor;
+
+    VkDescriptorSetLayoutCreateInfo infoLayout
+    {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+        .flags = config.flag,
+        .bindingCount = static_cast<uint32_t>(config.bindings.size()),
+        .pBindings = config.bindings.data(),
+    };
+
+    DEBUG_VK_ASSERT(vkCreateDescriptorSetLayout(device, &infoLayout, nullptr, &descriptor.layout));
+
+    VkDescriptorSetAllocateInfo infoSet
+    {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+        .pNext = nullptr,
+        .descriptorPool = descriptorPool,
+        .descriptorSetCount = 1,
+        .pSetLayouts = &descriptor.layout,
+    };
+
+    DEBUG_VK_ASSERT(vkAllocateDescriptorSets(device, &infoSet, &descriptor.set));
+
+    descriptor.config = config;
+
+
+    deletionQueue.pushFunction([&]()
+    {
+        vkFreeDescriptorSets(device, descriptorPool, 1, &descriptor.set);
+        vkDestroyDescriptorSetLayout(device, descriptor.layout, nullptr);
+    });
+
+    descriptors.push_back(std::move(descriptor));
+}
+
 
 void VulkanState::WaitIdle()
 {

@@ -13,6 +13,7 @@
 #define MIN_SWAPCHAIN_IMG_COUNT 2
 #define MAX_SWAPCHAIN_IMG_COUNT 16
 
+
 #define POINT_ONE_SECOND 100000000u
 
 struct VulkanSwapchain
@@ -79,6 +80,9 @@ private:
     VkSemaphore presentSemaphore = VK_NULL_HANDLE;
     VkCommandBuffer cmdBuf = VK_NULL_HANDLE;
 
+    VkDescriptorPool descriptorPool = VK_NULL_HANDLE;
+    std::vector<Descriptor> descriptors;
+
     VulkanImage drawImage;
     VulkanPipeline pipeline;
 
@@ -105,6 +109,10 @@ private:
     VkSemaphore CreateSemaphore();
 
     VkFence CreateFence(VkFenceCreateFlags const flag);
+
+    void CreateDescriptorPool();
+
+    void CreateDescriptor(const DescriptorConfig &config);
 
     void WaitIdle();
 
