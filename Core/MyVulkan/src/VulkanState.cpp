@@ -6,7 +6,7 @@
 
 #include <include/VulkanUtil.h>
 
-VulkanState::VulkanState(SDL_Window* window, uint32_t width, uint32_t height)
+VulkanState::VulkanState(SDL_Window *window, uint32_t width, uint32_t height)
 {
     m_window = window;
     m_width = width;
@@ -26,15 +26,49 @@ VulkanState::VulkanState(SDL_Window* window, uint32_t width, uint32_t height)
 
     CreateDescriptorPool();
 
+    // TODO: This is just for testing, update this in the future, need better writing
+    std::vector<VkDescriptorSetLayoutBinding> bindings;
+    VkDescriptorSetLayoutBinding binding
+    {
+        .binding = 0,
+        .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
+        .descriptorCount = 1,
+        .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
+        .pImmutableSamplers = nullptr
+    };
+    bindings.push_back(binding);
+
+    DescriptorSetLayoutConfig config
+    {
+        .flag = 0,
+        .bindings = bindings,
+    };
+
+    std::vector<DescriptorSetLayoutConfig> configs;
+    configs.push_back(config);
+
     std::vector<std::string> paths;
     paths.push_back("../Assets/Shaders/gradient.comp");
-    VulkanPipeline tempPipeline(device, paths);
+
+
+    VulkanPipeline tempPipeline(device, paths, configs);
     pipeline = std::move(tempPipeline);
+
+    for (auto &setLayout: pipeline.GetDescriptorSetLayouts())
+    {
+        CreateDescriptorSet(setLayout);
+    }
+
+    UpdateDescriptorSets();
 }
 
 VulkanState::~VulkanState()
 {
     WaitIdle();
+
+    vkFreeDescriptorSets(device, descriptorPool, descriptorSets.size(), descriptorSets.data());
+
+    pipeline.Destroy();
 
     drawImage.Destroy();
 
@@ -60,14 +94,14 @@ void VulkanState::CreateInstance()
     };
 
     // Enable validation layer
-    std::vector<const char*> layers
+    std::vector<const char *> layers
     {
         "VK_LAYER_KHRONOS_validation",
     };
 
     uint32_t sdlExtensionCount = 0;
-    const char* const * sdlExtensions = SDL_Vulkan_GetInstanceExtensions(&sdlExtensionCount);
-    std::vector<const char*> extensions(sdlExtensions, sdlExtensions + sdlExtensionCount);
+    const char *const *sdlExtensions = SDL_Vulkan_GetInstanceExtensions(&sdlExtensionCount);
+    std::vector<const char *> extensions(sdlExtensions, sdlExtensions + sdlExtensionCount);
     extensions.emplace_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 
 
@@ -102,7 +136,7 @@ void VulkanState::CreatePhysicalDevice()
 
     // Get the physical device with the max api version(usually the best one)
     uint32_t maxApiVersion = 0;
-    for (VkPhysicalDevice p : physicalDevices)
+    for (VkPhysicalDevice p: physicalDevices)
     {
         VkPhysicalDeviceProperties properties = {0};
         vkGetPhysicalDeviceProperties(p, &properties);
@@ -136,7 +170,7 @@ void VulkanState::CreateDevice()
     };
 
     // Enable swapchain extension for presenting on screen
-    std::vector<const char*> extensions
+    std::vector<const char *> extensions
     {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME,
     };
@@ -177,7 +211,7 @@ void VulkanState::CreateCommandPool()
     DEBUG_VK_ASSERT(vkCreateCommandPool(device, &infoCommandPool, nullptr, &commandPool));
 }
 
-void VulkanState::CreateSurface(SDL_Window* window)
+void VulkanState::CreateSurface(SDL_Window *window)
 {
     DEBUG_ASSERT(SDL_Vulkan_CreateSurface(window, instance, nullptr, &surface));
 
@@ -324,7 +358,7 @@ void VulkanState::CreateDescriptorPool()
     {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
         .pNext = nullptr,
-        .flags = 0,
+        .flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
         .maxSets = MAX_DESCRIPTOR_SET_COUNT,
         .poolSizeCount = 1,
         .pPoolSizes = &poolSize
@@ -338,19 +372,9 @@ void VulkanState::CreateDescriptorPool()
     });
 }
 
-void VulkanState::CreateDescriptor(const DescriptorConfig& config)
+void VulkanState::CreateDescriptorSet(const VkDescriptorSetLayout layout)
 {
-    Descriptor descriptor;
-
-    VkDescriptorSetLayoutCreateInfo infoLayout
-    {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-        .flags = config.flag,
-        .bindingCount = static_cast<uint32_t>(config.bindings.size()),
-        .pBindings = config.bindings.data(),
-    };
-
-    DEBUG_VK_ASSERT(vkCreateDescriptorSetLayout(device, &infoLayout, nullptr, &descriptor.layout));
+    VkDescriptorSet set = VK_NULL_HANDLE;
 
     VkDescriptorSetAllocateInfo infoSet
     {
@@ -358,21 +382,12 @@ void VulkanState::CreateDescriptor(const DescriptorConfig& config)
         .pNext = nullptr,
         .descriptorPool = descriptorPool,
         .descriptorSetCount = 1,
-        .pSetLayouts = &descriptor.layout,
+        .pSetLayouts = &layout
     };
 
-    DEBUG_VK_ASSERT(vkAllocateDescriptorSets(device, &infoSet, &descriptor.set));
+    DEBUG_VK_ASSERT(vkAllocateDescriptorSets(device, &infoSet, &set));
 
-    descriptor.config = config;
-
-
-    deletionQueue.pushFunction([&]()
-    {
-        vkFreeDescriptorSets(device, descriptorPool, 1, &descriptor.set);
-        vkDestroyDescriptorSetLayout(device, descriptor.layout, nullptr);
-    });
-
-    descriptors.push_back(std::move(descriptor));
+    descriptorSets.push_back(std::move(set));
 }
 
 
@@ -402,6 +417,12 @@ void VulkanState::Present()
                                       VK_ACCESS_TRANSFER_WRITE_BIT);
     // Clear color image
     DrawBackground();
+
+    // Compute pipeline to dispatch
+    vkCmdBindPipeline(cmdBuf, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline.GetPipeline());
+    vkCmdBindDescriptorSets(cmdBuf, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline.GetLayout(), 0, 1, &descriptorSets[0], 0,
+                            nullptr);
+    vkCmdDispatch(cmdBuf, std::ceil(m_width / 16.0), std::ceil(m_height / 16.0), 1);
 
     // Layout transition for copying image
     vk_util::CmdImageLayoutTransition(cmdBuf, drawImage.GetImage(), VK_IMAGE_LAYOUT_GENERAL,
@@ -492,4 +513,31 @@ void VulkanState::DrawBackground()
 
     // Clear image
     vkCmdClearColorImage(cmdBuf, drawImage.GetImage(), VK_IMAGE_LAYOUT_GENERAL, &clearColorValue, 1, &subresourceRange);
+}
+
+// TODO: This should not belong here
+void VulkanState::UpdateDescriptorSets()
+{
+    VkDescriptorImageInfo infoImage
+    {
+        .sampler = VK_NULL_HANDLE,
+        .imageView = drawImage.GetImageView(),
+        .imageLayout = VK_IMAGE_LAYOUT_GENERAL,
+    };
+
+    VkWriteDescriptorSet writeSet
+    {
+        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .pNext = nullptr,
+        .dstSet = descriptorSets[0],
+        .dstBinding = 0,
+        .dstArrayElement = 0,
+        .descriptorCount = 1,
+        .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
+        .pImageInfo = &infoImage,
+        .pBufferInfo = nullptr,
+        .pTexelBufferView = nullptr,
+    };
+
+    vkUpdateDescriptorSets(device, 1, &writeSet, 0, nullptr);
 }

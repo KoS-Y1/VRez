@@ -19,11 +19,15 @@ public:
     ~VulkanImage() { Destroy(); };
 
     VulkanImage(const VulkanImage &) = delete;
-    VulkanImage(VulkanImage && other) noexcept {Swap(other);};
 
-    VulkanImage & operator=(const VulkanImage &) = delete;
-    VulkanImage &operator=(VulkanImage &&other) noexcept {
-        if (this != &other) {
+    VulkanImage(VulkanImage &&other) noexcept { Swap(other); };
+
+    VulkanImage &operator=(const VulkanImage &) = delete;
+
+    VulkanImage &operator=(VulkanImage &&other) noexcept
+    {
+        if (this != &other)
+        {
             Destroy();
             Swap(other);
         }
@@ -31,11 +35,12 @@ public:
     }
 
     void Swap(VulkanImage &other) noexcept;
+
     void Destroy();
 
     [[nodiscard]] const VkImage &GetImage() const { return image; }
-    [[nodiscard]] const VkImageView &GetImageView() { return view; }
-    [[nodiscard]] const VkExtent3D &GetExtent() { return m_extent; }
+    [[nodiscard]] const VkImageView &GetImageView() const { return view; }
+    [[nodiscard]] const VkExtent3D &GetExtent() const { return m_extent; }
 
 private:
     VkImage image = VK_NULL_HANDLE;
@@ -51,5 +56,4 @@ private:
     void CreateImageView(VkImageAspectFlags aspect);
 
     void BindMemory();
-
 };

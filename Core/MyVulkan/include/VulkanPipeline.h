@@ -23,18 +23,17 @@ class VulkanPipeline
 public:
     VulkanPipeline() = default;
 
-    VulkanPipeline(VkDevice device, VkDescriptorPool descriptorPool, std::vector<std::string> paths,
-                   std::vector<VkDescriptorSetLayout> descriptorSetLayouts);
+    VulkanPipeline(VkDevice device, std::vector<std::string> paths, std::vector<DescriptorSetLayoutConfig> configs);
 
     ~VulkanPipeline() { Destroy(); };
 
-    VulkanPipeline(const VulkanPipeline&) = delete;
+    VulkanPipeline(const VulkanPipeline &) = delete;
 
-    VulkanPipeline(VulkanPipeline&& other) noexcept { Swap(other); };
+    VulkanPipeline(VulkanPipeline &&other) noexcept { Swap(other); };
 
-    VulkanPipeline& operator=(const VulkanPipeline&) = delete;
+    VulkanPipeline &operator=(const VulkanPipeline &) = delete;
 
-    VulkanPipeline& operator=(VulkanPipeline&& other)
+    VulkanPipeline &operator=(VulkanPipeline &&other)
     {
         if (this != &other)
         {
@@ -47,21 +46,28 @@ public:
 
     void Destroy();
 
-    void Swap(VulkanPipeline& other) noexcept;
+    void Swap(VulkanPipeline &other) noexcept;
+
+    [[nodiscard]] const std::vector<VkDescriptorSetLayout> &GetDescriptorSetLayouts() const  { return descriptorSetLayouts; };
+    [[nodiscard]] const VkPipeline &GetPipeline() const { return pipeline; };
+    [[nodiscard]] const VkPipelineLayout &GetLayout() const { return layout; };
 
 private:
     VkPipelineLayout layout = VK_NULL_HANDLE;
     VkPipeline pipeline = VK_NULL_HANDLE;
+    std::vector<VkShaderModule> shaderModules;
     VkDevice m_device = VK_NULL_HANDLE;
 
     std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
 
     void CreatePipeline(std::vector<std::string> paths);
-    void CreateLayout(std::vector<VkDescriptorSetLayout> descriptorSetLayouts);
 
-    VkShaderModule CreateShaderModule(std::string path);
+    void CreateLayout();
+
+    void CreateShaderModule(std::string path);
 
     void CreateGraphicsPipeline(std::vector<std::string> paths);
+
     void CreateComputePipeline(std::string path);
 
     void CreateDescriptorSetLayout(const std::vector<DescriptorSetLayoutConfig> &configs);

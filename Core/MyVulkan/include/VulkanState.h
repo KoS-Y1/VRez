@@ -81,7 +81,6 @@ private:
     VkCommandBuffer cmdBuf = VK_NULL_HANDLE;
 
     VkDescriptorPool descriptorPool = VK_NULL_HANDLE;
-    std::vector<Descriptor> descriptors;
 
     VulkanImage drawImage;
     VulkanPipeline pipeline;
@@ -91,6 +90,8 @@ private:
     uint32_t m_height = 0;
 
     DeletionQueue deletionQueue;
+
+    std::vector<VkDescriptorSet> descriptorSets;
 
     void CreateInstance();
 
@@ -112,7 +113,7 @@ private:
 
     void CreateDescriptorPool();
 
-    void CreateDescriptor(const DescriptorConfig &config);
+    void CreateDescriptorSet(const VkDescriptorSetLayout layout);
 
     void WaitIdle();
 
@@ -126,4 +127,6 @@ private:
     void QueuePresent(VkSemaphore waitSemaphore, uint32_t imageIndex);
 
     void DrawBackground();
+
+    void UpdateDescriptorSets();
 };
