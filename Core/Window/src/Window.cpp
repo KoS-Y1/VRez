@@ -1,8 +1,14 @@
 #include "include/Window.h"
 
+#include "imgui.h"
+
 #include <Assert.h>
 
 #include <include/VulkanState.h>
+#include <include/UI.h>
+
+#include "imgui_impl_sdl3.h"
+#include "imgui_impl_vulkan.h"
 
 Window::Window()
 {
@@ -17,7 +23,7 @@ Window::~Window()
 void Window::CreateWindow()
 {
     window = SDL_CreateWindow("VulkanRayTracer", WINDOW_WIDTH, WINDOW_HEIGHT,
-    SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_VULKAN);
+                              SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_VULKAN);
     width = WINDOW_WIDTH;
     height = WINDOW_HEIGHT;
     DEBUG_ASSERT(window);
@@ -30,21 +36,40 @@ void Window::Run()
 
     VulkanState vulkanState(window, width, height);
 
+    UI myUI(window,
+            vulkanState.GetInstance(),
+            vulkanState.GetPhysicalDevice(),
+            vulkanState.GetDevice(),
+            vulkanState.GetQueue(),
+            vulkanState.GetImGuiDescriptorPool());
+
     while (running)
     {
         SDL_Event event;
-        while (SDL_PollEvent(&event)) {
-            switch (event.type) {
+        while (SDL_PollEvent(&event))
+        {
+            switch (event.type)
+            {
                 case SDL_EVENT_QUIT:
                     running = false;
                     break;
                 default:
                     break;
             }
+            ImGui_ImplSDL3_ProcessEvent(&event);
         }
+        // imgui new frame
+        ImGui_ImplVulkan_NewFrame();
+        ImGui_ImplSDL3_NewFrame();
+        ImGui::NewFrame();
+
+        //some imgui UI to test
+        ImGui::ShowDemoWindow();
+
+        //make imgui calculate internal draw structures
+        ImGui::Render();
 
         vulkanState.Present();
-
     }
     SDL_Log("SDL Window(%dx%d) quitting", WINDOW_WIDTH, WINDOW_HEIGHT);
 }

@@ -9,8 +9,12 @@ target_link_libraries(MyVulkan PUBLIC Vulkan::Vulkan Debug Util SDL3::SDL3 Shade
 
 add_library(Window Window/include/Window.h Window/src/Window.cpp)
 target_include_directories(Window PUBLIC Window)
-target_link_libraries(Window PUBLIC SDL3::SDL3 Util Debug MyVulkan)
+target_link_libraries(Window PUBLIC SDL3::SDL3 Util Debug MyVulkan UI imgui)
 
 add_library(ShaderCompiler ShaderCompiler/include/ShaderCompiler.h ShaderCompiler/src/ShaderCompiler.cpp)
 target_include_directories(ShaderCompiler PUBLIC ShaderCompiler)
 target_link_libraries(ShaderCompiler PUBLIC glslang Vulkan::Vulkan SDL3::SDL3 FileSystem)
+
+add_library(UI UI/include/UI.h UI/src/UI.cpp)
+target_include_directories(UI PUBLIC UI)
+target_link_libraries(UI PUBLIC imgui Window MyVulkan)

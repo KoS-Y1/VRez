@@ -10,6 +10,7 @@
 #include <include/ShaderCompiler.h>
 
 
+
 // class TestJob : public Job
 // {
 // public:
@@ -45,6 +46,7 @@ int main(void)
 
     // Init SDL window
     Window window;
+
     // Init Vulkan state
     window.Run();
 

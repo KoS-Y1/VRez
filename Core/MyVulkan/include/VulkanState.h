@@ -62,7 +62,11 @@ public:
 
     VulkanState &operator=(VulkanState &&) = delete;
 
+    [[nodiscard]] VkInstance const &GetInstance() const { return instance; };
+    [[nodiscard]] VkPhysicalDevice const &GetPhysicalDevice() const { return physicalDevice; };
     [[nodiscard]] VkDevice const &GetDevice() const { return device; };
+    [[nodiscard]] VkQueue const &GetQueue() const { return queue; };
+    [[nodiscard]] VkDescriptorPool &GetImGuiDescriptorPool() { return imguiDescriptorPool; };
 
     void Present();
 
@@ -81,6 +85,7 @@ private:
     VkCommandBuffer cmdBuf = VK_NULL_HANDLE;
 
     VkDescriptorPool descriptorPool = VK_NULL_HANDLE;
+    VkDescriptorPool imguiDescriptorPool = VK_NULL_HANDLE;
 
     VulkanImage drawImage;
     VulkanPipeline pipeline;

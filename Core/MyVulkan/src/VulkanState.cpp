@@ -173,6 +173,7 @@ void VulkanState::CreateDevice()
     std::vector<const char *> extensions
     {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+        "VK_KHR_dynamic_rendering"
     };
 
     VkDeviceCreateInfo infoDevice
@@ -370,6 +371,32 @@ void VulkanState::CreateDescriptorPool()
     {
         vkDestroyDescriptorPool(device, descriptorPool, nullptr);
     });
+
+    // Create descriptor pool for ImGui
+    VkDescriptorPoolSize poolSizes[]
+    {
+        { VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
+        { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
+        { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
+        { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
+        { VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
+        { VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
+        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
+        { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
+        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
+        { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
+        { VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
+    };
+
+    infoPool.maxSets = 1000;
+    infoPool.poolSizeCount = (uint32_t)std::size(poolSizes);
+    infoPool.pPoolSizes = poolSizes;
+
+    DEBUG_VK_ASSERT(vkCreateDescriptorPool(device, &infoPool, nullptr, &imguiDescriptorPool));
+    deletionQueue.pushFunction([&]()
+   {
+       vkDestroyDescriptorPool(device, imguiDescriptorPool, nullptr);
+   });
 }
 
 void VulkanState::CreateDescriptorSet(const VkDescriptorSetLayout layout)
