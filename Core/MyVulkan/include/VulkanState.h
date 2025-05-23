@@ -4,7 +4,7 @@
 #include <deque>
 #include <functional>
 
-#include <Assert.h>
+#include <Debug.h>
 #include "VulkanImage.h"
 
 #include "VulkanPipeline.h"
@@ -69,6 +69,7 @@ public:
     [[nodiscard]] VkDescriptorPool &GetImGuiDescriptorPool() { return imguiDescriptorPool; };
 
     void Present();
+    void WaitIdle();
 
 private:
     VkInstance instance = VK_NULL_HANDLE;
@@ -91,8 +92,8 @@ private:
     VulkanPipeline pipeline;
 
     SDL_Window *m_window = nullptr;
-    uint32_t m_width = 0;
-    uint32_t m_height = 0;
+    uint32_t m_width;
+    uint32_t m_height;
 
     DeletionQueue deletionQueue;
 
@@ -120,7 +121,7 @@ private:
 
     void CreateDescriptorSet(const VkDescriptorSetLayout layout);
 
-    void WaitIdle();
+
 
     void WaitAndResetFence(VkFence fence, uint64_t timeout = POINT_ONE_SECOND);
 
@@ -134,4 +135,6 @@ private:
     void DrawBackground();
 
     void UpdateDescriptorSets();
+
+    void DrawImgui(VkImageView view);
 };

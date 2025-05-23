@@ -1,6 +1,8 @@
 #include <include/VulkanUtil.h>
 #include <SDL3/SDL.h>
 
+#include "../../../External/SDL/src/render/gpu/shaders/linepoint.vert.dxil.h"
+
 void vk_util::CmdImageLayoutTransition(VkCommandBuffer cmdBuf, VkImage image, VkImageLayout oldLayout,
                                        VkImageLayout newLayout, VkImageAspectFlags aspect, VkAccessFlags srcAccess,
                                        VkAccessFlags dstAccess)
@@ -115,6 +117,47 @@ VkShaderStageFlagBits vk_util::GetStage(const std::string path)
         SDL_Log("%s is not a valid shader!", path.c_str());
         exit(EXIT_FAILURE);
     }
-
 }
 
+VkRenderingAttachmentInfo vk_util::GetRenderingAttachmentInfo(VkImageView view, VkImageLayout layout,
+                                                              VkClearValue *clear)
+{
+    VkRenderingAttachmentInfo infoAttachment
+    {
+        .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+        .pNext = nullptr,
+        .imageView = view,
+        .imageLayout = layout,
+        .resolveMode = VK_RESOLVE_MODE_NONE,
+        .resolveImageView = VK_NULL_HANDLE,
+        .resolveImageLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+        .loadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
+        .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+    };
+
+    if (clear != nullptr)
+    {
+        infoAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+        infoAttachment.clearValue = *(clear);
+    }
+
+    return infoAttachment;
+}
+
+VkRenderingInfo vk_util::GetRenderingInfo(VkRect2D area, VkRenderingAttachmentInfo *colorAttachement)
+{
+    VkRenderingInfo infoRendering
+    {
+        .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
+        .pNext = nullptr,
+        .flags = 0,
+        .renderArea = area,
+        .layerCount = 1,
+        .viewMask = 0,
+        .colorAttachmentCount = 1,
+        .pColorAttachments = colorAttachement,
+        .pDepthAttachment = nullptr,
+        .pStencilAttachment = nullptr,
+    };
+    return infoRendering;
+}

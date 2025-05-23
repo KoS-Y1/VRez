@@ -12,7 +12,6 @@ public:
     UI(SDL_Window *window, VkInstance instance, VkPhysicalDevice physicalDevice, VkDevice device, VkQueue queue,
        VkDescriptorPool descriptorPool);
 
-    ~UI();
+    ~UI() = default;
 
-private:
 };

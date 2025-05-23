@@ -30,7 +30,7 @@ UI::UI(SDL_Window *window, VkInstance instance, VkPhysicalDevice physicalDevice,
 
     ImGui_ImplVulkan_InitInfo infoInit
     {
-        .ApiVersion =  VK_API_VERSION_1_0,
+        .ApiVersion =  VK_API_VERSION_1_4,
         .Instance = instance,
         .PhysicalDevice = physicalDevice,
         .Device = device,
@@ -47,11 +47,4 @@ UI::UI(SDL_Window *window, VkInstance instance, VkPhysicalDevice physicalDevice,
 
     ImGui_ImplVulkan_Init(&infoInit);
     ImGui_ImplVulkan_CreateFontsTexture();
-}
-
-UI::~UI()
-{
-    ImGui_ImplVulkan_Shutdown();
-    ImGui_ImplSDL3_Shutdown();
-    ImGui::DestroyContext();
 }

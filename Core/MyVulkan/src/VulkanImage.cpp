@@ -1,6 +1,6 @@
 #include "include/VulkanImage.h"
 
-#include <Assert.h>
+#include <Debug.h>
 #include <format>
 
 #include "include/VulkanUtil.h"

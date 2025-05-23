@@ -22,4 +22,8 @@ namespace vk_util
     VkImageSubresourceLayers GetImageSubresourceLayers(VkImageAspectFlags aspect);
 
     VkShaderStageFlagBits GetStage(const std::string path);
+
+    VkRenderingAttachmentInfo GetRenderingAttachmentInfo(VkImageView view, VkImageLayout layout, VkClearValue *clear);
+
+    VkRenderingInfo GetRenderingInfo(VkRect2D area,  VkRenderingAttachmentInfo *colorAttachement);
 }

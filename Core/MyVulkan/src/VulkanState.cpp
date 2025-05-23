@@ -6,6 +6,8 @@
 
 #include <include/VulkanUtil.h>
 
+#include "../../../External/imgui/imgui_impl_vulkan.h"
+
 VulkanState::VulkanState(SDL_Window *window, uint32_t width, uint32_t height)
 {
     m_window = window;
@@ -90,7 +92,7 @@ void VulkanState::CreateInstance()
         .pApplicationName = "VulkanRayTracerApp",
         .applicationVersion = VK_MAKE_API_VERSION(0, 1, 0, 0),
         .pEngineName = "VulkanRayTracerEngine",
-        .apiVersion = VK_API_VERSION_1_0,
+        .apiVersion = VK_API_VERSION_1_4,
     };
 
     // Enable validation layer
@@ -173,13 +175,22 @@ void VulkanState::CreateDevice()
     std::vector<const char *> extensions
     {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+        "VK_KHR_create_renderpass2",
+        "VK_KHR_depth_stencil_resolve",
         "VK_KHR_dynamic_rendering"
+    };
+
+    VkPhysicalDeviceVulkan13Features feature13
+    {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES,
+        .pNext = nullptr,
+        .dynamicRendering = VK_TRUE,
     };
 
     VkDeviceCreateInfo infoDevice
     {
         .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-        .pNext = nullptr,
+        .pNext = &feature13,
         .flags = 0,
         .queueCreateInfoCount = 1,
         .pQueueCreateInfos = &infoQueue,
@@ -236,7 +247,8 @@ void VulkanState::CreateSwapchain(uint32_t width, uint32_t height)
         .imageColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR,
         .imageExtent = {width, height},
         .imageArrayLayers = 1,
-        .imageUsage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_STORAGE_BIT,
+        .imageUsage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_STORAGE_BIT |
+                      VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
         .imageSharingMode = VK_SHARING_MODE_EXCLUSIVE,
         .queueFamilyIndexCount = 0,
         .pQueueFamilyIndices = nullptr,
@@ -375,28 +387,28 @@ void VulkanState::CreateDescriptorPool()
     // Create descriptor pool for ImGui
     VkDescriptorPoolSize poolSizes[]
     {
-        { VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
-        { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
-        { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
-        { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
-        { VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
-        { VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
-        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
-        { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
-        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
-        { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
-        { VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
+        {VK_DESCRIPTOR_TYPE_SAMPLER, 1000},
+        {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000},
+        {VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000},
+        {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000},
+        {VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000},
+        {VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000},
+        {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000},
+        {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000},
+        {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000},
+        {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000},
+        {VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000}
     };
 
     infoPool.maxSets = 1000;
-    infoPool.poolSizeCount = (uint32_t)std::size(poolSizes);
+    infoPool.poolSizeCount = (uint32_t) std::size(poolSizes);
     infoPool.pPoolSizes = poolSizes;
 
     DEBUG_VK_ASSERT(vkCreateDescriptorPool(device, &infoPool, nullptr, &imguiDescriptorPool));
     deletionQueue.pushFunction([&]()
-   {
-       vkDestroyDescriptorPool(device, imguiDescriptorPool, nullptr);
-   });
+    {
+        vkDestroyDescriptorPool(device, imguiDescriptorPool, nullptr);
+    });
 }
 
 void VulkanState::CreateDescriptorSet(const VkDescriptorSetLayout layout)
@@ -457,14 +469,21 @@ void VulkanState::Present()
                                       VK_ACCESS_TRANSFER_WRITE_BIT);
     vk_util::CmdImageLayoutTransition(cmdBuf, swapchain.images[imageIndex], VK_IMAGE_LAYOUT_UNDEFINED,
                                       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT,
-                                      VK_ACCESS_TRANSFER_WRITE_BIT, 0);
+                                      VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_TRANSFER_WRITE_BIT);
 
     // Copy draw image to the current swapchian image
     vk_util::CopyImageToImage(cmdBuf, drawImage.GetImage(), swapchain.images[imageIndex], drawImage.GetExtent(),
                               {m_width, m_height, 1}, VK_IMAGE_ASPECT_COLOR_BIT);
 
-    // Layout transition for presenting
+    // Layout transition for imgui draw
     vk_util::CmdImageLayoutTransition(cmdBuf, swapchain.images[imageIndex], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                                      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT,
+                                      VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_TRANSFER_WRITE_BIT);
+    DrawImgui(swapchain.views[imageIndex]);
+
+
+    // Layout transition for presenting
+    vk_util::CmdImageLayoutTransition(cmdBuf, swapchain.images[imageIndex], VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
                                       VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_IMAGE_ASPECT_COLOR_BIT,
                                       VK_ACCESS_TRANSFER_WRITE_BIT, 0);
 
@@ -567,4 +586,22 @@ void VulkanState::UpdateDescriptorSets()
     };
 
     vkUpdateDescriptorSets(device, 1, &writeSet, 0, nullptr);
+}
+
+void VulkanState::DrawImgui(VkImageView view)
+{
+    VkRect2D renderAreas
+    {
+        .offset = {0, 0},
+        .extent = {m_width, m_height}
+    };
+    VkRenderingAttachmentInfo infoColorAttachment = vk_util::GetRenderingAttachmentInfo(
+        view, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, nullptr);
+    VkRenderingInfo infoRendering = vk_util::GetRenderingInfo(renderAreas, &infoColorAttachment);
+
+    vkCmdBeginRendering(cmdBuf, &infoRendering);
+
+    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmdBuf);
+
+    vkCmdEndRendering(cmdBuf);
 }

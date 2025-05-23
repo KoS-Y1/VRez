@@ -2,7 +2,7 @@
 
 #include "imgui.h"
 
-#include <Assert.h>
+#include <Debug.h>
 
 #include <include/VulkanState.h>
 #include <include/UI.h>
@@ -72,4 +72,11 @@ void Window::Run()
         vulkanState.Present();
     }
     SDL_Log("SDL Window(%dx%d) quitting", WINDOW_WIDTH, WINDOW_HEIGHT);
+
+    vulkanState.WaitIdle();
+
+    ImGui_ImplVulkan_Shutdown();
+    ImGui_ImplSDL3_Shutdown();
+    ImGui::DestroyContext();
+
 }
