@@ -4,17 +4,17 @@
 
 #include <include/ShaderCompiler.h>
 #include <include/VulkanUtil.h>
-
 #include <include/FileSystem.h>
 
-VulkanPipeline::VulkanPipeline(VkDevice device, std::vector<std::string> paths,
-                               std::vector<DescriptorSetLayoutConfig> configs)
-{
-    m_device = device;
-    CreateDescriptorSetLayout(configs);
-    CreateLayout();
-    CreatePipeline(paths);
-}
+// VulkanPipeline::VulkanPipeline(VkDevice device, const std::vector<std::string> &paths,
+//                                const std::vector<DescriptorSetLayoutConfig> &configs,
+//                                const std::vector<VkPushConstantRange> &constantRange)
+// {
+//     m_device = device;
+//     CreateDescriptorSetLayout(configs);
+//     CreateLayout(constantRange);
+//     CreatePipeline(paths);
+// }
 
 void VulkanPipeline::Destroy()
 {
@@ -50,7 +50,7 @@ void VulkanPipeline::Swap(VulkanPipeline &other) noexcept
     std::swap(descriptorSetLayouts, other.descriptorSetLayouts);
 }
 
-void VulkanPipeline::CreateShaderModule(std::string path)
+void VulkanPipeline::CreateShaderModule(const std::string path)
 {
     VkShaderModule shaderModule = VK_NULL_HANDLE;
 
@@ -70,10 +70,9 @@ void VulkanPipeline::CreateShaderModule(std::string path)
     DEBUG_VK_ASSERT(vkCreateShaderModule(m_device, &infoModule, nullptr, &shaderModule));
 
     shaderModules.push_back(std::move(shaderModule));
-
 }
 
-void VulkanPipeline::CreateLayout()
+void VulkanPipeline::CreateLayout(const std::vector<VkPushConstantRange> &constantRange)
 {
     // TODO: desccription layout and other stuff, right now just for testing if compiling is working
     VkPipelineLayoutCreateInfo infoLayout
@@ -82,76 +81,76 @@ void VulkanPipeline::CreateLayout()
         .pNext = nullptr,
         .setLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size()),
         .pSetLayouts = descriptorSetLayouts.data(),
-        .pushConstantRangeCount = 0,
-        .pPushConstantRanges = nullptr
+        .pushConstantRangeCount = static_cast<uint32_t>(constantRange.size()),
+        .pPushConstantRanges = constantRange.data()
     };
 
     vkCreatePipelineLayout(m_device, &infoLayout, nullptr, &layout);
 }
 
-void VulkanPipeline::CreatePipeline(std::vector<std::string> paths)
-{
-    // Get the shader stage from the first passed shader code
-    VkShaderStageFlagBits stage = vk_util::GetStage(paths[0]);
-
-    switch (stage)
-    {
-        case VK_SHADER_STAGE_VERTEX_BIT:
-        case VK_SHADER_STAGE_FRAGMENT_BIT:
-        case VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT:
-        case VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT:
-        case VK_SHADER_STAGE_GEOMETRY_BIT:
-            CreateGraphicsPipeline(paths);
-            break;
-
-        case VK_SHADER_STAGE_COMPUTE_BIT:
-            if (paths.size() > 1)
-            {
-                SDL_Log("Warning: passing more than one shaders to computer shader! Program is ignoring the rest!");
-            }
-            CreateComputePipeline(paths[0]);
-            break;
-
-        default:
-            break;
-    }
-}
-
-void VulkanPipeline::CreateComputePipeline(std::string path)
-{
-    CreateShaderModule(path);
-
-    std::filesystem::path shaderPath(path);
-
-    VkPipelineShaderStageCreateInfo infoStage
-    {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0,
-        .stage = VK_SHADER_STAGE_COMPUTE_BIT,
-        .module = shaderModules[0],
-        .pName = "main",
-        .pSpecializationInfo = nullptr
-    };
-
-    VkComputePipelineCreateInfo infoCompute
-    {
-        .sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0,
-        .stage = infoStage,
-        .layout = layout,
-        .basePipelineHandle = VK_NULL_HANDLE,
-        .basePipelineIndex = -1
-    };
-
-    DEBUG_VK_ASSERT(vkCreateComputePipelines(m_device, VK_NULL_HANDLE, 1, &infoCompute, nullptr, &pipeline));
-}
-
-void VulkanPipeline::CreateGraphicsPipeline(std::vector<std::string> paths)
-{
-    // TODO
-}
+// void VulkanPipeline::CreatePipeline(const std::vector<std::string> &paths)
+// {
+//     // Get the shader stage from the first passed shader code
+//     VkShaderStageFlagBits stage = vk_util::GetStage(paths[0]);
+//
+//     switch (stage)
+//     {
+//         case VK_SHADER_STAGE_VERTEX_BIT:
+//         case VK_SHADER_STAGE_FRAGMENT_BIT:
+//         case VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT:
+//         case VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT:
+//         case VK_SHADER_STAGE_GEOMETRY_BIT:
+//             CreateGraphicsPipeline(paths);
+//             break;
+//
+//         case VK_SHADER_STAGE_COMPUTE_BIT:
+//             if (paths.size() > 1)
+//             {
+//                 SDL_Log("Warning: passing more than one shaders to computer shader! Program is ignoring the rest!");
+//             }
+//             CreateComputePipeline(paths[0]);
+//             break;
+//
+//         default:
+//             break;
+//     }
+// }
+//
+// void VulkanPipeline::CreateComputePipeline(std::string path)
+// {
+//     CreateShaderModule(path);
+//
+//     std::filesystem::path shaderPath(path);
+//
+//     VkPipelineShaderStageCreateInfo infoStage
+//     {
+//         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+//         .pNext = nullptr,
+//         .flags = 0,
+//         .stage = VK_SHADER_STAGE_COMPUTE_BIT,
+//         .module = shaderModules[0],
+//         .pName = "main",
+//         .pSpecializationInfo = nullptr
+//     };
+//
+//     VkComputePipelineCreateInfo infoCompute
+//     {
+//         .sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO,
+//         .pNext = nullptr,
+//         .flags = 0,
+//         .stage = infoStage,
+//         .layout = layout,
+//         .basePipelineHandle = VK_NULL_HANDLE,
+//         .basePipelineIndex = -1
+//     };
+//
+//     DEBUG_VK_ASSERT(vkCreateComputePipelines(m_device, VK_NULL_HANDLE, 1, &infoCompute, nullptr, &pipeline));
+// }
+//
+// void VulkanPipeline::CreateGraphicsPipeline(std::vector<std::string> paths)
+// {
+//     // TODO
+// }
 
 void VulkanPipeline::CreateDescriptorSetLayout(const std::vector<DescriptorSetLayoutConfig> &configs)
 {

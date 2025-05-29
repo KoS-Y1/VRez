@@ -3,10 +3,11 @@
 #include <vector>
 
 #include <SDL3/SDL_vulkan.h>
-
 #include <include/VulkanUtil.h>
+#include <imgui_impl_vulkan.h>
+#include <glm/glm.hpp>
 
-#include "../../../External/imgui/imgui_impl_vulkan.h"
+#include <include/VulkanComputePipeline.h>
 
 VulkanState::VulkanState(SDL_Window *window, uint32_t width, uint32_t height)
 {
@@ -27,36 +28,9 @@ VulkanState::VulkanState(SDL_Window *window, uint32_t width, uint32_t height)
     presentSemaphore = CreateSemaphore();
 
     CreateDescriptorPool();
+    CreatePipelines();
 
-    // TODO: This is just for testing, update this in the future, need better writing
-    std::vector<VkDescriptorSetLayoutBinding> bindings;
-    VkDescriptorSetLayoutBinding binding
-    {
-        .binding = 0,
-        .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
-        .descriptorCount = 1,
-        .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
-        .pImmutableSamplers = nullptr
-    };
-    bindings.push_back(binding);
-
-    DescriptorSetLayoutConfig config
-    {
-        .flag = 0,
-        .bindings = bindings,
-    };
-
-    std::vector<DescriptorSetLayoutConfig> configs;
-    configs.push_back(config);
-
-    std::vector<std::string> paths;
-    paths.push_back("../Assets/Shaders/gradient.comp");
-
-
-    VulkanPipeline tempPipeline(device, paths, configs);
-    pipeline = std::move(tempPipeline);
-
-    for (auto &setLayout: pipeline.GetDescriptorSetLayouts())
+    for (auto &setLayout: pipelines[0]->GetDescriptorSetLayouts())
     {
         CreateDescriptorSet(setLayout);
     }
@@ -70,7 +44,7 @@ VulkanState::~VulkanState()
 
     vkFreeDescriptorSets(device, descriptorPool, descriptorSets.size(), descriptorSets.data());
 
-    pipeline.Destroy();
+    pipelines[0]->Destroy();
 
     drawImage.Destroy();
 
@@ -458,9 +432,17 @@ void VulkanState::Present()
     DrawBackground();
 
     // Compute pipeline to dispatch
-    vkCmdBindPipeline(cmdBuf, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline.GetPipeline());
-    vkCmdBindDescriptorSets(cmdBuf, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline.GetLayout(), 0, 1, &descriptorSets[0], 0,
+    vkCmdBindPipeline(cmdBuf, VK_PIPELINE_BIND_POINT_COMPUTE, pipelines[0]->GetPipeline());
+    vkCmdBindDescriptorSets(cmdBuf, VK_PIPELINE_BIND_POINT_COMPUTE, pipelines[0]->GetLayout(), 0, 1, &descriptorSets[0], 0,
                             nullptr);
+
+    std::vector<glm::vec4> constants
+    {
+        glm::vec4(1.0f, 1.0f, 0.0f, 1.0f),
+        glm::vec4(1.0f, 0.0f, 0.0f, 1.0f),
+    };
+    vkCmdPushConstants(cmdBuf, pipelines[0]->GetLayout(), VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(constants),
+                       constants.data());
     vkCmdDispatch(cmdBuf, std::ceil(m_width / 16.0), std::ceil(m_height / 16.0), 1);
 
     // Layout transition for copying image
@@ -490,6 +472,73 @@ void VulkanState::Present()
     EndAndSubmitCommandBuffer(VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, renderFence, presentSemaphore, renderSemaphore);
 
     QueuePresent(renderSemaphore, imageIndex);
+}
+
+void VulkanState::CreatePipelines()
+{
+    std::vector<std::vector<std::string> > shaderPaths
+    {
+        {"../Assets/Shaders/gradient.comp"},
+    };
+
+    // TODO: This is just for testing, update this in the future, need better writing
+    std::vector<VkDescriptorSetLayoutBinding> bindings;
+    VkDescriptorSetLayoutBinding binding
+    {
+        .binding = 0,
+        .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
+        .descriptorCount = 1,
+        .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
+        .pImmutableSamplers = nullptr
+    };
+    bindings.push_back(binding);
+
+    DescriptorSetLayoutConfig config
+    {
+        .flag = 0,
+        .bindings = bindings,
+    };
+
+    std::vector<DescriptorSetLayoutConfig> configs;
+    configs.push_back(config);
+
+    std::vector<glm::vec4> constants
+    {
+        glm::vec4(0.0f, 0.0f, 0.0f, 1.0f),
+        glm::vec4(1.0f, 0.0f, 0.0f, 1.0f),
+    };
+    std::vector<VkPushConstantRange> pushConstants
+    {
+        {
+            .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
+            .offset = 0,
+            .size = sizeof(constants)
+        }
+    };
+
+    for (const auto &paths: shaderPaths)
+    {
+        // Get the shader stage from the first passed shader code
+        VkShaderStageFlagBits stage = vk_util::GetStage(paths[0]);
+
+        switch (stage)
+        {
+            case VK_SHADER_STAGE_VERTEX_BIT:
+            case VK_SHADER_STAGE_FRAGMENT_BIT:
+            case VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT:
+            case VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT:
+            case VK_SHADER_STAGE_GEOMETRY_BIT:
+                // TODO: graphics pipeline
+                break;
+
+            case VK_SHADER_STAGE_COMPUTE_BIT:
+                pipelines.emplace_back(std::make_unique<VulkanComputePipeline>(device, paths, configs, pushConstants));
+                break;
+
+            default:
+                break;
+        }
+    }
 }
 
 void VulkanState::WaitAndResetFence(VkFence fence, uint64_t timeout)
@@ -558,7 +607,8 @@ void VulkanState::DrawBackground()
     VkImageSubresourceRange subresourceRange = vk_util::GetSubresourceRange(VK_IMAGE_ASPECT_COLOR_BIT);
 
     // Clear image
-    vkCmdClearColorImage(cmdBuf, drawImage.GetImage(), VK_IMAGE_LAYOUT_GENERAL, &clearColorValue, 1, &subresourceRange);
+    vkCmdClearColorImage(cmdBuf, drawImage.GetImage(), VK_IMAGE_LAYOUT_GENERAL, &clearColorValue, 1,
+                         &subresourceRange);
 }
 
 // TODO: This should not belong here

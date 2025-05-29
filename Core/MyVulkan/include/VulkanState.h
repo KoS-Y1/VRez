@@ -3,8 +3,10 @@
 #include <vector>
 #include <deque>
 #include <functional>
+#include <memory>
 
 #include <Debug.h>
+
 #include "VulkanImage.h"
 
 #include "VulkanPipeline.h"
@@ -89,7 +91,7 @@ private:
     VkDescriptorPool imguiDescriptorPool = VK_NULL_HANDLE;
 
     VulkanImage drawImage;
-    VulkanPipeline pipeline;
+    std::vector<std::unique_ptr<VulkanPipeline>> pipelines;
 
     SDL_Window *m_window = nullptr;
     uint32_t m_width;
@@ -121,7 +123,7 @@ private:
 
     void CreateDescriptorSet(const VkDescriptorSetLayout layout);
 
-
+    void CreatePipelines();
 
     void WaitAndResetFence(VkFence fence, uint64_t timeout = POINT_ONE_SECOND);
 

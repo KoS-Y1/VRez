@@ -21,10 +21,8 @@ struct DescriptorSetLayoutConfig
 class VulkanPipeline
 {
 public:
+
     VulkanPipeline() = default;
-
-    VulkanPipeline(VkDevice device, std::vector<std::string> paths, std::vector<DescriptorSetLayoutConfig> configs);
-
     ~VulkanPipeline() { Destroy(); };
 
     VulkanPipeline(const VulkanPipeline &) = delete;
@@ -48,11 +46,14 @@ public:
 
     void Swap(VulkanPipeline &other) noexcept;
 
-    [[nodiscard]] const std::vector<VkDescriptorSetLayout> &GetDescriptorSetLayouts() const  { return descriptorSetLayouts; };
+    [[nodiscard]] const std::vector<VkDescriptorSetLayout> &GetDescriptorSetLayouts() const
+    {
+        return descriptorSetLayouts;
+    };
     [[nodiscard]] const VkPipeline &GetPipeline() const { return pipeline; };
     [[nodiscard]] const VkPipelineLayout &GetLayout() const { return layout; };
 
-private:
+protected:
     VkPipelineLayout layout = VK_NULL_HANDLE;
     VkPipeline pipeline = VK_NULL_HANDLE;
     std::vector<VkShaderModule> shaderModules;
@@ -60,15 +61,15 @@ private:
 
     std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
 
-    void CreatePipeline(std::vector<std::string> paths);
+    virtual void CreatePipeline(const std::vector<std::string> &paths) = 0;
 
-    void CreateLayout();
+    void CreateLayout(const std::vector<VkPushConstantRange> &constantRange);
 
-    void CreateShaderModule(std::string path);
+    void CreateShaderModule(const std::string path);
 
-    void CreateGraphicsPipeline(std::vector<std::string> paths);
+    // void CreateGraphicsPipeline(std::vector<std::string> paths);
 
-    void CreateComputePipeline(std::string path);
+    // void CreateComputePipeline(std::string path);
 
     void CreateDescriptorSetLayout(const std::vector<DescriptorSetLayoutConfig> &configs);
 };
