@@ -438,8 +438,8 @@ void VulkanState::Present()
 
     std::vector<glm::vec4> constants
     {
-        glm::vec4(1.0f, 1.0f, 0.0f, 1.0f),
-        glm::vec4(1.0f, 0.0f, 0.0f, 1.0f),
+        glm::vec4(0.0f, 1.0f, 0.0f, 1.0f),
+        glm::vec4(0.0f, 0.0f, 1.0f, 1.0f),
     };
     vkCmdPushConstants(cmdBuf, pipelines[0]->GetLayout(), VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(constants),
                        constants.data());
@@ -504,8 +504,8 @@ void VulkanState::CreatePipelines()
 
     std::vector<glm::vec4> constants
     {
-        glm::vec4(0.0f, 0.0f, 0.0f, 1.0f),
-        glm::vec4(1.0f, 0.0f, 0.0f, 1.0f),
+        glm::vec4(0.0f, 1.0f, 0.0f, 1.0f),
+        glm::vec4(0.0f, 0.0f, 1.0f, 1.0f),
     };
     std::vector<VkPushConstantRange> pushConstants
     {

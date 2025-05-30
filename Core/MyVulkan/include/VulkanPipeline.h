@@ -72,4 +72,6 @@ protected:
     // void CreateComputePipeline(std::string path);
 
     void CreateDescriptorSetLayout(const std::vector<DescriptorSetLayoutConfig> &configs);
+
+    VkPipelineShaderStageCreateInfo  CreateShaderStage(std::string path, size_t shaderModuleIdx);
 };

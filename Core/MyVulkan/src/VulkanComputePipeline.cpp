@@ -26,23 +26,12 @@ void VulkanComputePipeline::CreatePipeline(const std::vector<std::string> &paths
 
     std::filesystem::path shaderPath(path);
 
-    VkPipelineShaderStageCreateInfo infoStage
-    {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0,
-        .stage = VK_SHADER_STAGE_COMPUTE_BIT,
-        .module = shaderModules[0],
-        .pName = "main",
-        .pSpecializationInfo = nullptr
-    };
-
     VkComputePipelineCreateInfo infoCompute
     {
         .sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0,
-        .stage = infoStage,
+        .stage = CreateShaderStage(path, 0),
         .layout = layout,
         .basePipelineHandle = VK_NULL_HANDLE,
         .basePipelineIndex = -1
