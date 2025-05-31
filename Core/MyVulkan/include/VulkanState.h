@@ -136,6 +136,8 @@ private:
 
     void DrawBackground();
 
+    void DrawGeometry();
+
     void UpdateDescriptorSets();
 
     void DrawImgui(VkImageView view);

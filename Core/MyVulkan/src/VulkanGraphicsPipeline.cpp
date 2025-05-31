@@ -3,7 +3,7 @@
 #include "Debug.h"
 
 VulkanGraphicsPipeline::VulkanGraphicsPipeline(VkDevice device, const std::vector<std::string> &paths,
-                                               GraphicsPipelineConfig config,
+                                               const GraphicsPipelineConfig config,
                                                const std::vector<DescriptorSetLayoutConfig> &configs,
                                                const std::vector<VkPushConstantRange> &constantRange,
                                                const std::vector<VkFormat> &colorFormats,
@@ -178,6 +178,7 @@ void VulkanGraphicsPipeline::CreatePipeline(const std::vector<std::string> &path
         .pVertexInputState = &infoVertex,
         .pInputAssemblyState = &infoInputAssembly,
         .pTessellationState = nullptr,
+        .pViewportState = &infoViewport,
         .pRasterizationState = &infoRasterization,
         .pMultisampleState = &infoMultisample,
         .pDepthStencilState = &infoDepthStencil,

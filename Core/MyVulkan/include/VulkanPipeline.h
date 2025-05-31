@@ -67,10 +67,6 @@ protected:
 
     void CreateShaderModule(const std::string path);
 
-    // void CreateGraphicsPipeline(std::vector<std::string> paths);
-
-    // void CreateComputePipeline(std::string path);
-
     void CreateDescriptorSetLayout(const std::vector<DescriptorSetLayoutConfig> &configs);
 
     VkPipelineShaderStageCreateInfo  CreateShaderStage(std::string path, size_t shaderModuleIdx);

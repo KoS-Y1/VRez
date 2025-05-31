@@ -21,7 +21,7 @@ class VulkanGraphicsPipeline : public VulkanPipeline
 public:
     VulkanGraphicsPipeline() = delete;
 
-    VulkanGraphicsPipeline(VkDevice device, const std::vector<std::string> &paths, GraphicsPipelineConfig config,
+    VulkanGraphicsPipeline(VkDevice device, const std::vector<std::string> &paths, const GraphicsPipelineConfig config,
                            const std::vector<DescriptorSetLayoutConfig> &configs = {},
                            const std::vector<VkPushConstantRange> &constantRange = {},
                            const std::vector<VkFormat> &colorFormats = {},

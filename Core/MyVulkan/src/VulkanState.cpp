@@ -8,6 +8,7 @@
 #include <glm/glm.hpp>
 
 #include <include/VulkanComputePipeline.h>
+#include <include/VulkanGraphicsPipeline.h>
 
 VulkanState::VulkanState(SDL_Window *window, uint32_t width, uint32_t height)
 {
@@ -44,7 +45,10 @@ VulkanState::~VulkanState()
 
     vkFreeDescriptorSets(device, descriptorPool, descriptorSets.size(), descriptorSets.data());
 
-    pipelines[0]->Destroy();
+    for (size_t i = 0; i < pipelines.size(); ++i)
+    {
+        pipelines[i]->Destroy();
+    }
 
     drawImage.Destroy();
 
@@ -431,27 +435,22 @@ void VulkanState::Present()
     // Clear color image
     DrawBackground();
 
-    // Compute pipeline to dispatch
-    vkCmdBindPipeline(cmdBuf, VK_PIPELINE_BIND_POINT_COMPUTE, pipelines[0]->GetPipeline());
-    vkCmdBindDescriptorSets(cmdBuf, VK_PIPELINE_BIND_POINT_COMPUTE, pipelines[0]->GetLayout(), 0, 1, &descriptorSets[0], 0,
-                            nullptr);
+    // Layout transition for drawing
+    vk_util::CmdImageLayoutTransition(cmdBuf, drawImage.GetImage(), VK_IMAGE_LAYOUT_GENERAL,
+                                      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT,
+                                      VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
 
-    std::vector<glm::vec4> constants
-    {
-        glm::vec4(0.0f, 1.0f, 0.0f, 1.0f),
-        glm::vec4(0.0f, 0.0f, 1.0f, 1.0f),
-    };
-    vkCmdPushConstants(cmdBuf, pipelines[0]->GetLayout(), VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(constants),
-                       constants.data());
-    vkCmdDispatch(cmdBuf, std::ceil(m_width / 16.0), std::ceil(m_height / 16.0), 1);
+    // Draw geometry
+    DrawGeometry();
 
     // Layout transition for copying image
-    vk_util::CmdImageLayoutTransition(cmdBuf, drawImage.GetImage(), VK_IMAGE_LAYOUT_GENERAL,
-                                      VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT, 0,
+    vk_util::CmdImageLayoutTransition(cmdBuf, drawImage.GetImage(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                                      VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT,
+                                      VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
                                       VK_ACCESS_TRANSFER_WRITE_BIT);
     vk_util::CmdImageLayoutTransition(cmdBuf, swapchain.images[imageIndex], VK_IMAGE_LAYOUT_UNDEFINED,
                                       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT,
-                                      VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_TRANSFER_WRITE_BIT);
+                                      0, VK_ACCESS_TRANSFER_WRITE_BIT);
 
     // Copy draw image to the current swapchian image
     vk_util::CopyImageToImage(cmdBuf, drawImage.GetImage(), swapchain.images[imageIndex], drawImage.GetExtent(),
@@ -479,6 +478,10 @@ void VulkanState::CreatePipelines()
     std::vector<std::vector<std::string> > shaderPaths
     {
         {"../Assets/Shaders/gradient.comp"},
+        {
+            "../Assets/Shaders/colored_triangle.vert",
+            "../Assets/Shaders/colored_triangle.frag"
+        }
     };
 
     // TODO: This is just for testing, update this in the future, need better writing
@@ -516,6 +519,8 @@ void VulkanState::CreatePipelines()
         }
     };
 
+    GraphicsPipelineConfig graphicsConfig;
+
     for (const auto &paths: shaderPaths)
     {
         // Get the shader stage from the first passed shader code
@@ -528,7 +533,9 @@ void VulkanState::CreatePipelines()
             case VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT:
             case VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT:
             case VK_SHADER_STAGE_GEOMETRY_BIT:
-                // TODO: graphics pipeline
+                pipelines.emplace_back(std::make_unique<VulkanGraphicsPipeline>(device, paths, graphicsConfig,
+                    std::vector<DescriptorSetLayoutConfig>{}, std::vector<VkPushConstantRange>{},
+                    std::vector<VkFormat>{IMG_FORMAT}));
                 break;
 
             case VK_SHADER_STAGE_COMPUTE_BIT:
@@ -603,12 +610,20 @@ void VulkanState::QueuePresent(VkSemaphore waitSemaphore, uint32_t imageIndex)
 
 void VulkanState::DrawBackground()
 {
-    VkClearColorValue clearColorValue = {{1.0f, 0.0f, 0.0f, 1.0f}};
-    VkImageSubresourceRange subresourceRange = vk_util::GetSubresourceRange(VK_IMAGE_ASPECT_COLOR_BIT);
+    // Compute pipeline to dispatch
+    vkCmdBindPipeline(cmdBuf, VK_PIPELINE_BIND_POINT_COMPUTE, pipelines[0]->GetPipeline());
+    vkCmdBindDescriptorSets(cmdBuf, VK_PIPELINE_BIND_POINT_COMPUTE, pipelines[0]->GetLayout(), 0, 1, &descriptorSets[0],
+                            0,
+                            nullptr);
 
-    // Clear image
-    vkCmdClearColorImage(cmdBuf, drawImage.GetImage(), VK_IMAGE_LAYOUT_GENERAL, &clearColorValue, 1,
-                         &subresourceRange);
+    std::vector<glm::vec4> constants
+    {
+        glm::vec4(0.0f, 1.0f, 0.0f, 1.0f),
+        glm::vec4(0.0f, 0.0f, 1.0f, 1.0f),
+    };
+    vkCmdPushConstants(cmdBuf, pipelines[0]->GetLayout(), VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(constants),
+                       constants.data());
+    vkCmdDispatch(cmdBuf, std::ceil(m_width / 16.0), std::ceil(m_height / 16.0), 1);
 }
 
 // TODO: This should not belong here
@@ -652,6 +667,40 @@ void VulkanState::DrawImgui(VkImageView view)
     vkCmdBeginRendering(cmdBuf, &infoRendering);
 
     ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmdBuf);
+
+    vkCmdEndRendering(cmdBuf);
+}
+
+void VulkanState::DrawGeometry()
+{
+    VkRect2D renderAreas
+    {
+        .offset = {0, 0},
+        .extent = {m_width, m_height}
+    };
+    VkRenderingAttachmentInfo infoAttachment = vk_util::GetRenderingAttachmentInfo(
+        drawImage.GetImageView(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, nullptr);
+    VkRenderingInfo infoRender = vk_util::GetRenderingInfo(renderAreas, &infoAttachment);
+
+    vkCmdBeginRendering(cmdBuf, &infoRender);
+
+    vkCmdBindPipeline(cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines[1]->GetPipeline());
+
+    // Set dynamic viewport and scissor
+    VkViewport viewport
+    {
+        .x = 0.f,
+        .y = 0.f,
+        .width = (float) m_width,
+        .height = (float) m_height,
+        .minDepth = 0.f,
+        .maxDepth = 1.f
+    };
+
+    vkCmdSetViewport(cmdBuf, 0, 1, &viewport);
+    vkCmdSetScissor(cmdBuf, 0, 1, &renderAreas);
+
+    vkCmdDraw(cmdBuf, 3, 1, 0, 0);
 
     vkCmdEndRendering(cmdBuf);
 }
