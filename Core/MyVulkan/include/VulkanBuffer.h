@@ -1,19 +1,23 @@
 #pragma once
 
+#include <vulkan/vulkan.h>
+
 class VulkanBuffer
 {
 public:
     VulkanBuffer() = default;
 
-    ~VulkanBuffer(){ Destroy(); }
+    VulkanBuffer(VkPhysicalDevice physicalDevice, VkDevice device, VkDeviceSize size, VkBufferUsageFlags usage);
 
-    VulkanBuffer(const VulkanBuffer&) = delete;
+    ~VulkanBuffer() { Destroy(); }
 
-    VulkanBuffer(VulkanBuffer&&) noexcept { Swap(other); }
+    VulkanBuffer(const VulkanBuffer &) = delete;
 
-    VulkanBuffer& operator=(const VulkanBuffer&) = delete;
+    VulkanBuffer(VulkanBuffer &&other) noexcept { Swap(other); }
 
-    VulkanBuffer& operator=(VulkanBuffer &&) noexcept
+    VulkanBuffer &operator=(const VulkanBuffer &) = delete;
+
+    VulkanBuffer &operator=(VulkanBuffer &&other) noexcept
     {
         if (this != &other)
         {
@@ -23,14 +27,21 @@ public:
         return *this;
     }
 
-    void Swap(VUlkanBuffer &other);
+    void Swap(VulkanBuffer &other) noexcept;
 
     void Destroy();
 
-    [[nodiscard]] const VkBuffer &GetBuffer() const { return buffer; }
+    void Upload(size_t size, const void *data);
+
+    [[nodiscard]] const VkBuffer &GetBuffer() const { return m_buffer; }
 
 private:
-    VkBuffer buffer = VK_NULL_HANDLE;
-    VkDeviceMemory memory = VK_NULL_HANDLE;
+    VkBuffer m_buffer = VK_NULL_HANDLE;
+    VkDeviceMemory m_memory = VK_NULL_HANDLE;
     VkDevice m_device = VK_NULL_HANDLE;
+    VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;
+
+    void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage);
+
+    void BindMemory(VkPhysicalDevice physicalDevice);
 };

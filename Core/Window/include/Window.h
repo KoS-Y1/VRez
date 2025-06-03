@@ -13,15 +13,15 @@ public:
 
     ~Window();
 
-    [[nodiscard]] SDL_Window *const &GetSDLWindow() const { return window; };
+    [[nodiscard]] SDL_Window *const &GetSDLWindow() const { return m_window; };
 
     void Run();
 
 private:
-    SDL_Window *window = nullptr;
+    SDL_Window *m_window = nullptr;
 
-    uint32_t width = 0;
-    uint32_t height = 0;
+    uint32_t m_width = 0;
+    uint32_t m_height = 0;
 
     bool running = false;
 

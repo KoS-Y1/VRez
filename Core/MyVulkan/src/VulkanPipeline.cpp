@@ -10,13 +10,13 @@ void VulkanPipeline::Destroy()
 {
     if (m_device != VK_NULL_HANDLE)
     {
-        for (size_t i = 0; i < shaderModules.size(); i++)
+        for (size_t i = 0; i < m_shaderModules.size(); i++)
         {
-            vkDestroyShaderModule(m_device, shaderModules[i], nullptr);
+            vkDestroyShaderModule(m_device, m_shaderModules[i], nullptr);
         }
 
-        vkDestroyPipeline(m_device, pipeline, nullptr);
-        vkDestroyPipelineLayout(m_device, layout, nullptr);
+        vkDestroyPipeline(m_device, m_pipeline, nullptr);
+        vkDestroyPipelineLayout(m_device, m_layout, nullptr);
         for (size_t i = 0; i < descriptorSetLayouts.size(); i++)
         {
             vkDestroyDescriptorSetLayout(m_device, descriptorSetLayouts[i], nullptr);
@@ -24,23 +24,23 @@ void VulkanPipeline::Destroy()
     }
 
     descriptorSetLayouts.clear();
-    shaderModules.clear();
+    m_shaderModules.clear();
     m_device = VK_NULL_HANDLE;
-    pipeline = VK_NULL_HANDLE;
-    layout = VK_NULL_HANDLE;
+    m_pipeline = VK_NULL_HANDLE;
+    m_layout = VK_NULL_HANDLE;
 }
 
 void VulkanPipeline::Swap(VulkanPipeline &other) noexcept
 {
     m_device = other.m_device;
 
-    std::swap(pipeline, other.pipeline);
-    std::swap(layout, other.layout);
-    std::swap(shaderModules, other.shaderModules);
+    std::swap(m_pipeline, other.m_pipeline);
+    std::swap(m_layout, other.m_layout);
+    std::swap(m_shaderModules, other.m_shaderModules);
     std::swap(descriptorSetLayouts, other.descriptorSetLayouts);
 }
 
-void VulkanPipeline::CreateShaderModule(const std::string path)
+void VulkanPipeline::CreateShaderModule(const std::string &path)
 {
     VkShaderModule shaderModule = VK_NULL_HANDLE;
 
@@ -59,7 +59,7 @@ void VulkanPipeline::CreateShaderModule(const std::string path)
 
     DEBUG_VK_ASSERT(vkCreateShaderModule(m_device, &infoModule, nullptr, &shaderModule));
 
-    shaderModules.push_back(std::move(shaderModule));
+    m_shaderModules.push_back(std::move(shaderModule));
 }
 
 void VulkanPipeline::CreateLayout(const std::vector<VkPushConstantRange> &constantRange)
@@ -75,7 +75,7 @@ void VulkanPipeline::CreateLayout(const std::vector<VkPushConstantRange> &consta
         .pPushConstantRanges = constantRange.data()
     };
 
-    vkCreatePipelineLayout(m_device, &infoLayout, nullptr, &layout);
+    vkCreatePipelineLayout(m_device, &infoLayout, nullptr, &m_layout);
 }
 
 void VulkanPipeline::CreateDescriptorSetLayout(const std::vector<DescriptorSetLayoutConfig> &configs)
@@ -96,7 +96,7 @@ void VulkanPipeline::CreateDescriptorSetLayout(const std::vector<DescriptorSetLa
     }
 }
 
-VkPipelineShaderStageCreateInfo  VulkanPipeline::CreateShaderStage(std::string path, size_t shaderModuleIdx)
+VkPipelineShaderStageCreateInfo VulkanPipeline::CreateShaderStage(const std::string &path, size_t shaderModuleIdx)
 {
     VkPipelineShaderStageCreateInfo infoStage
     {
@@ -104,7 +104,7 @@ VkPipelineShaderStageCreateInfo  VulkanPipeline::CreateShaderStage(std::string p
         .pNext = nullptr,
         .flags = 0,
         .stage = vk_util::GetStage(path),
-        .module = shaderModules[shaderModuleIdx],
+        .module = m_shaderModules[shaderModuleIdx],
         .pName = "main",
         .pSpecializationInfo = nullptr
     };

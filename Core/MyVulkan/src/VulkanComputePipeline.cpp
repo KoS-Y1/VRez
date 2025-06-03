@@ -32,10 +32,10 @@ void VulkanComputePipeline::CreatePipeline(const std::vector<std::string> &paths
         .pNext = nullptr,
         .flags = 0,
         .stage = CreateShaderStage(path, 0),
-        .layout = layout,
+        .layout = m_layout,
         .basePipelineHandle = VK_NULL_HANDLE,
         .basePipelineIndex = -1
     };
 
-    DEBUG_VK_ASSERT(vkCreateComputePipelines(m_device, VK_NULL_HANDLE, 1, &infoCompute, nullptr, &pipeline));
+    DEBUG_VK_ASSERT(vkCreateComputePipelines(m_device, VK_NULL_HANDLE, 1, &infoCompute, nullptr, &m_pipeline));
 }

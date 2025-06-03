@@ -33,6 +33,7 @@ void VulkanGraphicsPipeline::CreatePipeline(const std::vector<std::string> &path
     {
         shaderStages.push_back(CreateShaderStage(paths[i], i));
     }
+
     // Using dynamic rendering
     VkPipelineRenderingCreateInfo infoRendering
     {
@@ -184,12 +185,12 @@ void VulkanGraphicsPipeline::CreatePipeline(const std::vector<std::string> &path
         .pDepthStencilState = &infoDepthStencil,
         .pColorBlendState = &infoColorBlend,
         .pDynamicState = &infoDynamic,
-        .layout = layout,
+        .layout = m_layout,
         .renderPass = VK_NULL_HANDLE,
         .subpass = 0,
         .basePipelineHandle = VK_NULL_HANDLE,
         .basePipelineIndex = 0,
     };
 
-    DEBUG_VK_ASSERT(vkCreateGraphicsPipelines(m_device, VK_NULL_HANDLE, 1, &infoPipeline, nullptr, &pipeline));
+    DEBUG_VK_ASSERT(vkCreateGraphicsPipelines(m_device, VK_NULL_HANDLE, 1, &infoPipeline, nullptr, &m_pipeline));
 }

@@ -24,14 +24,14 @@ VulkanState::VulkanState(SDL_Window *window, uint32_t width, uint32_t height)
     CreateSurface(window);
     CreateSwapchain(width, height);
 
-    renderFence = CreateFence(VK_FENCE_CREATE_SIGNALED_BIT);
-    renderSemaphore = CreateSemaphore();
-    presentSemaphore = CreateSemaphore();
+    m_renderFence = CreateFence(VK_FENCE_CREATE_SIGNALED_BIT);
+    m_renderSemaphore = CreateSemaphore();
+    m_presentSemaphore = CreateSemaphore();
 
     CreateDescriptorPool();
     CreatePipelines();
 
-    for (auto &setLayout: pipelines[0]->GetDescriptorSetLayouts())
+    for (auto &setLayout: m_pipelines[0]->GetDescriptorSetLayouts())
     {
         CreateDescriptorSet(setLayout);
     }
@@ -43,18 +43,18 @@ VulkanState::~VulkanState()
 {
     WaitIdle();
 
-    vkFreeDescriptorSets(device, descriptorPool, descriptorSets.size(), descriptorSets.data());
+    vkFreeDescriptorSets(m_device, m_descriptorPool, descriptorSets.size(), descriptorSets.data());
 
-    for (size_t i = 0; i < pipelines.size(); ++i)
+    for (size_t i = 0; i < m_pipelines.size(); ++i)
     {
-        pipelines[i]->Destroy();
+        m_pipelines[i]->Destroy();
     }
 
-    drawImage.Destroy();
+    m_drawImage.Destroy();
 
-    for (size_t i = 0; i < swapchain.count; i++)
+    for (size_t i = 0; i < m_swapchain.count; i++)
     {
-        vkDestroyImageView(device, swapchain.views[i], nullptr);
+        vkDestroyImageView(m_device, m_swapchain.views[i], nullptr);
     }
 
 
@@ -96,11 +96,11 @@ void VulkanState::CreateInstance()
         .enabledExtensionCount = static_cast<uint32_t>(extensions.size()),
         .ppEnabledExtensionNames = extensions.data(),
     };
-    DEBUG_VK_ASSERT(vkCreateInstance(&infoInstance, nullptr, &instance));
+    DEBUG_VK_ASSERT(vkCreateInstance(&infoInstance, nullptr, &m_instance));
 
     deletionQueue.pushFunction([&]()
     {
-        vkDestroyInstance(instance, nullptr);
+        vkDestroyInstance(m_instance, nullptr);
     });
 }
 
@@ -108,11 +108,11 @@ void VulkanState::CreatePhysicalDevice()
 {
     // Query the num of physical devices
     uint32_t physicalDeviceCount = 0;
-    DEBUG_VK_ASSERT(vkEnumeratePhysicalDevices(instance, &physicalDeviceCount, nullptr));
+    DEBUG_VK_ASSERT(vkEnumeratePhysicalDevices(m_instance, &physicalDeviceCount, nullptr));
     DEBUG_ASSERT(physicalDeviceCount > 0);
     // Query all physical devices
     std::vector<VkPhysicalDevice> physicalDevices(physicalDeviceCount);
-    DEBUG_VK_ASSERT(vkEnumeratePhysicalDevices(instance, &physicalDeviceCount, physicalDevices.data()));
+    DEBUG_VK_ASSERT(vkEnumeratePhysicalDevices(m_instance, &physicalDeviceCount, physicalDevices.data()));
 
     // Get the physical device with the max api version(usually the best one)
     uint32_t maxApiVersion = 0;
@@ -123,13 +123,13 @@ void VulkanState::CreatePhysicalDevice()
 
         if (properties.apiVersion > maxApiVersion)
         {
-            physicalDevice = p;
+            m_physicalDevice = p;
             maxApiVersion = properties.apiVersion;
         }
     }
 
     VkPhysicalDeviceProperties properties = {0};
-    vkGetPhysicalDeviceProperties(physicalDevice, &properties);
+    vkGetPhysicalDeviceProperties(m_physicalDevice, &properties);
     SDL_Log("Selected physical device: %s %d.%d.%d", properties.deviceName,
             VK_API_VERSION_MAJOR(properties.apiVersion), VK_API_VERSION_MINOR(properties.apiVersion),
             VK_API_VERSION_PATCH(properties.apiVersion));
@@ -178,14 +178,14 @@ void VulkanState::CreateDevice()
         .ppEnabledExtensionNames = extensions.data(),
         .pEnabledFeatures = nullptr,
     };
-    DEBUG_VK_ASSERT(vkCreateDevice(physicalDevice, &infoDevice, nullptr, &device));
+    DEBUG_VK_ASSERT(vkCreateDevice(m_physicalDevice, &infoDevice, nullptr, &m_device));
 
     // Get queue
-    vkGetDeviceQueue(device, 0, 0, &queue);
+    vkGetDeviceQueue(m_device, 0, 0, &m_queue);
 
     deletionQueue.pushFunction([&]()
     {
-        vkDestroyDevice(device, nullptr);
+        vkDestroyDevice(m_device, nullptr);
     });
 }
 
@@ -198,16 +198,16 @@ void VulkanState::CreateCommandPool()
         .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
         .queueFamilyIndex = 0,
     };
-    DEBUG_VK_ASSERT(vkCreateCommandPool(device, &infoCommandPool, nullptr, &commandPool));
+    DEBUG_VK_ASSERT(vkCreateCommandPool(m_device, &infoCommandPool, nullptr, &m_commandPool));
 }
 
 void VulkanState::CreateSurface(SDL_Window *window)
 {
-    DEBUG_ASSERT(SDL_Vulkan_CreateSurface(window, instance, nullptr, &surface));
+    DEBUG_ASSERT(SDL_Vulkan_CreateSurface(window, m_instance, nullptr, &m_surface));
 
     deletionQueue.pushFunction([&]()
     {
-        vkDestroySurfaceKHR(instance, surface, nullptr);
+        vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
     });
 }
 
@@ -219,7 +219,7 @@ void VulkanState::CreateSwapchain(uint32_t width, uint32_t height)
         .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
         .pNext = nullptr,
         .flags = 0,
-        .surface = surface,
+        .surface = m_surface,
         .minImageCount = MIN_SWAPCHAIN_IMG_COUNT,
         .imageFormat = IMG_FORMAT,
         .imageColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR,
@@ -236,11 +236,11 @@ void VulkanState::CreateSwapchain(uint32_t width, uint32_t height)
         .clipped = false,
         .oldSwapchain = nullptr,
     };
-    DEBUG_VK_ASSERT(vkCreateSwapchainKHR(device, &infoSwapchain, nullptr, &swapchain.swapchain));
+    DEBUG_VK_ASSERT(vkCreateSwapchainKHR(m_device, &infoSwapchain, nullptr, &m_swapchain.swapchain));
 
     // Get swapchain images
-    DEBUG_VK_ASSERT(vkGetSwapchainImagesKHR(device, swapchain.swapchain, &swapchain.count, nullptr));
-    DEBUG_VK_ASSERT(vkGetSwapchainImagesKHR(device, swapchain.swapchain, &swapchain.count, swapchain.images));
+    DEBUG_VK_ASSERT(vkGetSwapchainImagesKHR(m_device, m_swapchain.swapchain, &m_swapchain.count, nullptr));
+    DEBUG_VK_ASSERT(vkGetSwapchainImagesKHR(m_device, m_swapchain.swapchain, &m_swapchain.count, m_swapchain.images));
 
     // Create image view for each swapchian image
     {
@@ -258,24 +258,24 @@ void VulkanState::CreateSwapchain(uint32_t width, uint32_t height)
             .subresourceRange = vk_util::GetSubresourceRange(VK_IMAGE_ASPECT_COLOR_BIT)
         };
 
-        for (size_t i = 0; i < swapchain.count; i++)
+        for (size_t i = 0; i < m_swapchain.count; i++)
         {
-            infoView.image = swapchain.images[i];
-            DEBUG_VK_ASSERT(vkCreateImageView(device, &infoView, nullptr, &swapchain.views[i]));
+            infoView.image = m_swapchain.images[i];
+            DEBUG_VK_ASSERT(vkCreateImageView(m_device, &infoView, nullptr, &m_swapchain.views[i]));
         }
     }
 
     // Init drawImage that swapchain images copy from
-    VulkanImage img(physicalDevice, device, IMG_FORMAT,
+    VulkanImage img(m_physicalDevice, m_device, IMG_FORMAT,
                     VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_STORAGE_BIT |
                     VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, {m_width, m_height, 1}, VK_IMAGE_ASPECT_COLOR_BIT);
 
 
-    drawImage = std::move(img);
+    m_drawImage = std::move(img);
 
     deletionQueue.pushFunction([&]()
     {
-        vkDestroySwapchainKHR(device, swapchain.swapchain, nullptr);
+        vkDestroySwapchainKHR(m_device, m_swapchain.swapchain, nullptr);
     });
 }
 
@@ -287,12 +287,12 @@ VkSemaphore VulkanState::CreateSemaphore()
         .pNext = nullptr,
         .flags = 0,
     };
-    DEBUG_VK_ASSERT(vkCreateSemaphore(device, &createInfo, nullptr, &semaphore));
+    DEBUG_VK_ASSERT(vkCreateSemaphore(m_device, &createInfo, nullptr, &semaphore));
 
     // Pass the copy of the object since there's no such class memeber
     deletionQueue.pushFunction([this, semaphore]()
     {
-        vkDestroySemaphore(device, semaphore, nullptr);
+        vkDestroySemaphore(m_device, semaphore, nullptr);
     });
 
     return semaphore;
@@ -306,11 +306,11 @@ VkFence VulkanState::CreateFence(const VkFenceCreateFlags flag)
         .pNext = nullptr,
         .flags = flag,
     };
-    DEBUG_VK_ASSERT(vkCreateFence(device, &createInfo, nullptr, &fence));
+    DEBUG_VK_ASSERT(vkCreateFence(m_device, &createInfo, nullptr, &fence));
 
     deletionQueue.pushFunction([this, fence]()
     {
-        vkDestroyFence(device, fence, nullptr);
+        vkDestroyFence(m_device, fence, nullptr);
     });
 
     return fence;
@@ -323,15 +323,15 @@ void VulkanState::CreateCommandBuffer()
     {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
         .pNext = nullptr,
-        .commandPool = commandPool,
+        .commandPool = m_commandPool,
         .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
         .commandBufferCount = 1,
     };
-    DEBUG_VK_ASSERT(vkAllocateCommandBuffers(device, &infoCmdBuffer, &cmdBuf));
+    DEBUG_VK_ASSERT(vkAllocateCommandBuffers(m_device, &infoCmdBuffer, &cmdBuf));
 
     deletionQueue.pushFunction([&]()
     {
-        vkDestroyCommandPool(device, commandPool, nullptr);
+        vkDestroyCommandPool(m_device, m_commandPool, nullptr);
     });
 }
 
@@ -355,11 +355,11 @@ void VulkanState::CreateDescriptorPool()
         .pPoolSizes = &poolSize
     };
 
-    DEBUG_VK_ASSERT(vkCreateDescriptorPool(device, &infoPool, nullptr, &descriptorPool));
+    DEBUG_VK_ASSERT(vkCreateDescriptorPool(m_device, &infoPool, nullptr, &m_descriptorPool));
 
     deletionQueue.pushFunction([&]()
     {
-        vkDestroyDescriptorPool(device, descriptorPool, nullptr);
+        vkDestroyDescriptorPool(m_device, m_descriptorPool, nullptr);
     });
 
     // Create descriptor pool for ImGui
@@ -379,13 +379,13 @@ void VulkanState::CreateDescriptorPool()
     };
 
     infoPool.maxSets = 1000;
-    infoPool.poolSizeCount = (uint32_t) std::size(poolSizes);
+    infoPool.poolSizeCount = static_cast<uint32_t>(std::size(poolSizes));
     infoPool.pPoolSizes = poolSizes;
 
-    DEBUG_VK_ASSERT(vkCreateDescriptorPool(device, &infoPool, nullptr, &imguiDescriptorPool));
+    DEBUG_VK_ASSERT(vkCreateDescriptorPool(m_device, &infoPool, nullptr, &m_imguiDescriptorPool));
     deletionQueue.pushFunction([&]()
     {
-        vkDestroyDescriptorPool(device, imguiDescriptorPool, nullptr);
+        vkDestroyDescriptorPool(m_device, m_imguiDescriptorPool, nullptr);
     });
 }
 
@@ -397,12 +397,12 @@ void VulkanState::CreateDescriptorSet(const VkDescriptorSetLayout layout)
     {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
         .pNext = nullptr,
-        .descriptorPool = descriptorPool,
+        .descriptorPool = m_descriptorPool,
         .descriptorSetCount = 1,
         .pSetLayouts = &layout
     };
 
-    DEBUG_VK_ASSERT(vkAllocateDescriptorSets(device, &infoSet, &set));
+    DEBUG_VK_ASSERT(vkAllocateDescriptorSets(m_device, &infoSet, &set));
 
     descriptorSets.push_back(std::move(set));
 }
@@ -410,33 +410,33 @@ void VulkanState::CreateDescriptorSet(const VkDescriptorSetLayout layout)
 
 void VulkanState::WaitIdle()
 {
-    DEBUG_VK_ASSERT(vkDeviceWaitIdle(device));
+    DEBUG_VK_ASSERT(vkDeviceWaitIdle(m_device));
 }
 
 
 void VulkanState::Present()
 {
     // Reset fence and command buffer
-    WaitAndResetFence(renderFence);
+    WaitAndResetFence(m_renderFence);
     DEBUG_VK_ASSERT(vkResetCommandBuffer(cmdBuf, 0));
 
     // Acquire next image in the swapchain for presenting
     uint32_t imageIndex = 0;
     DEBUG_VK_ASSERT(
-        vkAcquireNextImageKHR(device, swapchain.swapchain, POINT_ONE_SECOND, presentSemaphore, nullptr, &imageIndex));
+        vkAcquireNextImageKHR(m_device, m_swapchain.swapchain, POINT_ONE_SECOND, m_presentSemaphore, nullptr, &imageIndex));
 
     BeginCommandBuffer(0);
 
 
     // Layout transition so that we can clear image color
-    vk_util::CmdImageLayoutTransition(cmdBuf, drawImage.GetImage(), VK_IMAGE_LAYOUT_UNDEFINED,
+    vk_util::CmdImageLayoutTransition(cmdBuf, m_drawImage.GetImage(), VK_IMAGE_LAYOUT_UNDEFINED,
                                       VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_ASPECT_COLOR_BIT, 0,
                                       VK_ACCESS_TRANSFER_WRITE_BIT);
     // Clear color image
     DrawBackground();
 
     // Layout transition for drawing
-    vk_util::CmdImageLayoutTransition(cmdBuf, drawImage.GetImage(), VK_IMAGE_LAYOUT_GENERAL,
+    vk_util::CmdImageLayoutTransition(cmdBuf, m_drawImage.GetImage(), VK_IMAGE_LAYOUT_GENERAL,
                                       VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT,
                                       VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
 
@@ -444,33 +444,33 @@ void VulkanState::Present()
     DrawGeometry();
 
     // Layout transition for copying image
-    vk_util::CmdImageLayoutTransition(cmdBuf, drawImage.GetImage(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+    vk_util::CmdImageLayoutTransition(cmdBuf, m_drawImage.GetImage(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
                                       VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT,
                                       VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
                                       VK_ACCESS_TRANSFER_WRITE_BIT);
-    vk_util::CmdImageLayoutTransition(cmdBuf, swapchain.images[imageIndex], VK_IMAGE_LAYOUT_UNDEFINED,
+    vk_util::CmdImageLayoutTransition(cmdBuf, m_swapchain.images[imageIndex], VK_IMAGE_LAYOUT_UNDEFINED,
                                       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT,
                                       0, VK_ACCESS_TRANSFER_WRITE_BIT);
 
     // Copy draw image to the current swapchian image
-    vk_util::CopyImageToImage(cmdBuf, drawImage.GetImage(), swapchain.images[imageIndex], drawImage.GetExtent(),
+    vk_util::CopyImageToImage(cmdBuf, m_drawImage.GetImage(), m_swapchain.images[imageIndex], m_drawImage.GetExtent(),
                               {m_width, m_height, 1}, VK_IMAGE_ASPECT_COLOR_BIT);
 
     // Layout transition for imgui draw
-    vk_util::CmdImageLayoutTransition(cmdBuf, swapchain.images[imageIndex], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+    vk_util::CmdImageLayoutTransition(cmdBuf, m_swapchain.images[imageIndex], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                                       VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT,
                                       VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_TRANSFER_WRITE_BIT);
-    DrawImgui(swapchain.views[imageIndex]);
+    DrawImgui(m_swapchain.views[imageIndex]);
 
 
     // Layout transition for presenting
-    vk_util::CmdImageLayoutTransition(cmdBuf, swapchain.images[imageIndex], VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+    vk_util::CmdImageLayoutTransition(cmdBuf, m_swapchain.images[imageIndex], VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
                                       VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_IMAGE_ASPECT_COLOR_BIT,
                                       VK_ACCESS_TRANSFER_WRITE_BIT, 0);
 
-    EndAndSubmitCommandBuffer(VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, renderFence, presentSemaphore, renderSemaphore);
+    EndAndSubmitCommandBuffer(VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, m_renderFence, m_presentSemaphore, m_renderSemaphore);
 
-    QueuePresent(renderSemaphore, imageIndex);
+    QueuePresent(m_renderSemaphore, imageIndex);
 }
 
 void VulkanState::CreatePipelines()
@@ -533,13 +533,13 @@ void VulkanState::CreatePipelines()
             case VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT:
             case VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT:
             case VK_SHADER_STAGE_GEOMETRY_BIT:
-                pipelines.emplace_back(std::make_unique<VulkanGraphicsPipeline>(device, paths, graphicsConfig,
+                m_pipelines.emplace_back(std::make_unique<VulkanGraphicsPipeline>(m_device, paths, graphicsConfig,
                     std::vector<DescriptorSetLayoutConfig>{}, std::vector<VkPushConstantRange>{},
                     std::vector<VkFormat>{IMG_FORMAT}));
                 break;
 
             case VK_SHADER_STAGE_COMPUTE_BIT:
-                pipelines.emplace_back(std::make_unique<VulkanComputePipeline>(device, paths, configs, pushConstants));
+                m_pipelines.emplace_back(std::make_unique<VulkanComputePipeline>(m_device, paths, configs, pushConstants));
                 break;
 
             default:
@@ -550,8 +550,8 @@ void VulkanState::CreatePipelines()
 
 void VulkanState::WaitAndResetFence(VkFence fence, uint64_t timeout)
 {
-    DEBUG_VK_ASSERT(vkWaitForFences(device, 1, &fence, true, timeout));
-    DEBUG_VK_ASSERT(vkResetFences(device, 1, &fence));
+    DEBUG_VK_ASSERT(vkWaitForFences(m_device, 1, &fence, true, timeout));
+    DEBUG_VK_ASSERT(vkResetFences(m_device, 1, &fence));
 }
 
 void VulkanState::BeginCommandBuffer(VkCommandBufferUsageFlags const flag)
@@ -587,7 +587,7 @@ void VulkanState::EndAndSubmitCommandBuffer(VkPipelineStageFlags const waitStage
     {
         infoSubmit.signalSemaphoreCount = 1;
     }
-    DEBUG_VK_ASSERT(vkQueueSubmit(queue, 1, &infoSubmit, fence));
+    DEBUG_VK_ASSERT(vkQueueSubmit(m_queue, 1, &infoSubmit, fence));
 }
 
 void VulkanState::QueuePresent(VkSemaphore waitSemaphore, uint32_t imageIndex)
@@ -597,7 +597,7 @@ void VulkanState::QueuePresent(VkSemaphore waitSemaphore, uint32_t imageIndex)
         .pNext = nullptr,
         .pWaitSemaphores = &waitSemaphore,
         .swapchainCount = 1,
-        .pSwapchains = &swapchain.swapchain,
+        .pSwapchains = &m_swapchain.swapchain,
         .pImageIndices = &imageIndex,
         .pResults = nullptr,
     };
@@ -605,14 +605,14 @@ void VulkanState::QueuePresent(VkSemaphore waitSemaphore, uint32_t imageIndex)
     {
         infoPresent.waitSemaphoreCount = 1;
     }
-    DEBUG_VK_ASSERT(vkQueuePresentKHR(queue, &infoPresent));
+    DEBUG_VK_ASSERT(vkQueuePresentKHR(m_queue, &infoPresent));
 }
 
 void VulkanState::DrawBackground()
 {
     // Compute pipeline to dispatch
-    vkCmdBindPipeline(cmdBuf, VK_PIPELINE_BIND_POINT_COMPUTE, pipelines[0]->GetPipeline());
-    vkCmdBindDescriptorSets(cmdBuf, VK_PIPELINE_BIND_POINT_COMPUTE, pipelines[0]->GetLayout(), 0, 1, &descriptorSets[0],
+    vkCmdBindPipeline(cmdBuf, VK_PIPELINE_BIND_POINT_COMPUTE, m_pipelines[0]->GetPipeline());
+    vkCmdBindDescriptorSets(cmdBuf, VK_PIPELINE_BIND_POINT_COMPUTE, m_pipelines[0]->GetLayout(), 0, 1, &descriptorSets[0],
                             0,
                             nullptr);
 
@@ -621,7 +621,7 @@ void VulkanState::DrawBackground()
         glm::vec4(0.0f, 1.0f, 0.0f, 1.0f),
         glm::vec4(0.0f, 0.0f, 1.0f, 1.0f),
     };
-    vkCmdPushConstants(cmdBuf, pipelines[0]->GetLayout(), VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(constants),
+    vkCmdPushConstants(cmdBuf, m_pipelines[0]->GetLayout(), VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(constants),
                        constants.data());
     vkCmdDispatch(cmdBuf, std::ceil(m_width / 16.0), std::ceil(m_height / 16.0), 1);
 }
@@ -632,7 +632,7 @@ void VulkanState::UpdateDescriptorSets()
     VkDescriptorImageInfo infoImage
     {
         .sampler = VK_NULL_HANDLE,
-        .imageView = drawImage.GetImageView(),
+        .imageView = m_drawImage.GetImageView(),
         .imageLayout = VK_IMAGE_LAYOUT_GENERAL,
     };
 
@@ -650,7 +650,7 @@ void VulkanState::UpdateDescriptorSets()
         .pTexelBufferView = nullptr,
     };
 
-    vkUpdateDescriptorSets(device, 1, &writeSet, 0, nullptr);
+    vkUpdateDescriptorSets(m_device, 1, &writeSet, 0, nullptr);
 }
 
 void VulkanState::DrawImgui(VkImageView view)
@@ -679,12 +679,12 @@ void VulkanState::DrawGeometry()
         .extent = {m_width, m_height}
     };
     VkRenderingAttachmentInfo infoAttachment = vk_util::GetRenderingAttachmentInfo(
-        drawImage.GetImageView(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, nullptr);
+        m_drawImage.GetImageView(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, nullptr);
     VkRenderingInfo infoRender = vk_util::GetRenderingInfo(renderAreas, &infoAttachment);
 
     vkCmdBeginRendering(cmdBuf, &infoRender);
 
-    vkCmdBindPipeline(cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines[1]->GetPipeline());
+    vkCmdBindPipeline(cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[1]->GetPipeline());
 
     // Set dynamic viewport and scissor
     VkViewport viewport

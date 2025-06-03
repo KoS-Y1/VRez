@@ -64,34 +64,34 @@ public:
 
     VulkanState &operator=(VulkanState &&) = delete;
 
-    [[nodiscard]] VkInstance const &GetInstance() const { return instance; };
-    [[nodiscard]] VkPhysicalDevice const &GetPhysicalDevice() const { return physicalDevice; };
-    [[nodiscard]] VkDevice const &GetDevice() const { return device; };
-    [[nodiscard]] VkQueue const &GetQueue() const { return queue; };
-    [[nodiscard]] VkDescriptorPool &GetImGuiDescriptorPool() { return imguiDescriptorPool; };
+    [[nodiscard]] VkInstance const &GetInstance() const { return m_instance; };
+    [[nodiscard]] VkPhysicalDevice const &GetPhysicalDevice() const { return m_physicalDevice; };
+    [[nodiscard]] VkDevice const &GetDevice() const { return m_device; };
+    [[nodiscard]] VkQueue const &GetQueue() const { return m_queue; };
+    [[nodiscard]] VkDescriptorPool &GetImGuiDescriptorPool() { return m_imguiDescriptorPool; };
 
     void Present();
     void WaitIdle();
 
 private:
-    VkInstance instance = VK_NULL_HANDLE;
-    VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
-    VkDevice device = VK_NULL_HANDLE;
-    VkQueue queue = VK_NULL_HANDLE;
-    VkCommandPool commandPool = VK_NULL_HANDLE;
-    VkSurfaceKHR surface = VK_NULL_HANDLE;
-    VulkanSwapchain swapchain;
+    VkInstance m_instance = VK_NULL_HANDLE;
+    VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;
+    VkDevice m_device = VK_NULL_HANDLE;
+    VkQueue m_queue = VK_NULL_HANDLE;
+    VkCommandPool m_commandPool = VK_NULL_HANDLE;
+    VkSurfaceKHR m_surface = VK_NULL_HANDLE;
+    VulkanSwapchain m_swapchain;
 
-    VkFence renderFence = VK_NULL_HANDLE;
-    VkSemaphore renderSemaphore = VK_NULL_HANDLE;
-    VkSemaphore presentSemaphore = VK_NULL_HANDLE;
+    VkFence m_renderFence = VK_NULL_HANDLE;
+    VkSemaphore m_renderSemaphore = VK_NULL_HANDLE;
+    VkSemaphore m_presentSemaphore = VK_NULL_HANDLE;
     VkCommandBuffer cmdBuf = VK_NULL_HANDLE;
 
-    VkDescriptorPool descriptorPool = VK_NULL_HANDLE;
-    VkDescriptorPool imguiDescriptorPool = VK_NULL_HANDLE;
+    VkDescriptorPool m_descriptorPool = VK_NULL_HANDLE;
+    VkDescriptorPool m_imguiDescriptorPool = VK_NULL_HANDLE;
 
-    VulkanImage drawImage;
-    std::vector<std::unique_ptr<VulkanPipeline>> pipelines;
+    VulkanImage m_drawImage;
+    std::vector<std::unique_ptr<VulkanPipeline>> m_pipelines;
 
     SDL_Window *m_window = nullptr;
     uint32_t m_width;

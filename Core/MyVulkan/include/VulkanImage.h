@@ -38,22 +38,21 @@ public:
 
     void Destroy();
 
-    [[nodiscard]] const VkImage &GetImage() const { return image; }
-    [[nodiscard]] const VkImageView &GetImageView() const { return view; }
+    [[nodiscard]] const VkImage &GetImage() const { return m_image; }
+    [[nodiscard]] const VkImageView &GetImageView() const { return m_view; }
     [[nodiscard]] const VkExtent3D &GetExtent() const { return m_extent; }
 
 private:
-    VkImage image = VK_NULL_HANDLE;
-    VkImageView view = VK_NULL_HANDLE;
-    VkDeviceMemory memory = VK_NULL_HANDLE;
+    VkImage m_image = VK_NULL_HANDLE;
+    VkImageView m_view = VK_NULL_HANDLE;
+    VkDeviceMemory m_memory = VK_NULL_HANDLE;
     VkExtent3D m_extent = {0};
     VkDevice m_device = VK_NULL_HANDLE;
-    VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;
     VkFormat m_format = VK_FORMAT_UNDEFINED;
 
     void CreateImage(VkImageUsageFlags usage, VkExtent3D extent);
 
     void CreateImageView(VkImageAspectFlags aspect);
 
-    void BindMemory();
+    void BindMemory(VkPhysicalDevice physicalDevice);
 };

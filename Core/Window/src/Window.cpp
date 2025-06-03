@@ -17,16 +17,16 @@ Window::Window()
 
 Window::~Window()
 {
-    SDL_DestroyWindow(window);
+    SDL_DestroyWindow(m_window);
 }
 
 void Window::CreateWindow()
 {
-    window = SDL_CreateWindow("VulkanRayTracer", WINDOW_WIDTH, WINDOW_HEIGHT,
+    m_window = SDL_CreateWindow("VulkanRayTracer", WINDOW_WIDTH, WINDOW_HEIGHT,
                               SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_VULKAN);
-    width = WINDOW_WIDTH;
-    height = WINDOW_HEIGHT;
-    DEBUG_ASSERT(window);
+    m_width = WINDOW_WIDTH;
+    m_height = WINDOW_HEIGHT;
+    DEBUG_ASSERT(m_window);
 }
 
 void Window::Run()
@@ -34,9 +34,9 @@ void Window::Run()
     SDL_Log("SDL Window(%dx%d) running", WINDOW_WIDTH, WINDOW_HEIGHT);
     running = true;
 
-    VulkanState vulkanState(window, width, height);
+    VulkanState vulkanState(m_window, m_width, m_height);
 
-    UI myUI(window,
+    UI myUI(m_window,
             vulkanState.GetInstance(),
             vulkanState.GetPhysicalDevice(),
             vulkanState.GetDevice(),

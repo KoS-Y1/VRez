@@ -50,13 +50,13 @@ public:
     {
         return descriptorSetLayouts;
     };
-    [[nodiscard]] const VkPipeline &GetPipeline() const { return pipeline; };
-    [[nodiscard]] const VkPipelineLayout &GetLayout() const { return layout; };
+    [[nodiscard]] const VkPipeline &GetPipeline() const { return m_pipeline; };
+    [[nodiscard]] const VkPipelineLayout &GetLayout() const { return m_layout; };
 
 protected:
-    VkPipelineLayout layout = VK_NULL_HANDLE;
-    VkPipeline pipeline = VK_NULL_HANDLE;
-    std::vector<VkShaderModule> shaderModules;
+    VkPipelineLayout m_layout = VK_NULL_HANDLE;
+    VkPipeline m_pipeline = VK_NULL_HANDLE;
+    std::vector<VkShaderModule> m_shaderModules;
     VkDevice m_device = VK_NULL_HANDLE;
 
     std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
@@ -65,9 +65,9 @@ protected:
 
     void CreateLayout(const std::vector<VkPushConstantRange> &constantRange);
 
-    void CreateShaderModule(const std::string path);
+    void CreateShaderModule(const std::string &path);
 
     void CreateDescriptorSetLayout(const std::vector<DescriptorSetLayoutConfig> &configs);
 
-    VkPipelineShaderStageCreateInfo  CreateShaderStage(std::string path, size_t shaderModuleIdx);
+    VkPipelineShaderStageCreateInfo  CreateShaderStage(const std::string &path, size_t shaderModuleIdx);
 };
