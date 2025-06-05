@@ -25,5 +25,5 @@ namespace vk_util
 
     VkRenderingAttachmentInfo GetRenderingAttachmentInfo(VkImageView view, VkImageLayout layout, VkClearValue *clear);
 
-    VkRenderingInfo GetRenderingInfo(VkRect2D area,  VkRenderingAttachmentInfo *colorAttachement);
+    VkRenderingInfo GetRenderingInfo(VkRect2D area, VkRenderingAttachmentInfo *colorAttachement);
 }

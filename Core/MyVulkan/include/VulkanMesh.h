@@ -1,11 +1,16 @@
 #pragma once
 
+#include "include/VulkanState.h"
+#include "include/VulkanBuffer.h"
+
 class VulkanMesh
 {
 public:
     VulkanMesh() = default;
 
     ~VulkanMesh() { Destroy(); }
+
+    VulkanMesh(VulkanState &state, size_t count, size_t size, const void* data);
 
     VulkanMesh(const VulkanMesh&) = delete;
     VulkanMesh& operator=(const VulkanMesh&) = delete;
@@ -26,9 +31,7 @@ public:
     void Destroy();
 
 private:
-    VulkanBuffer m_stagingBuffer;
     VulkanBuffer m_vertexBuffer;
-    VulkanBuffer m_indexBuffer;
+    size_t m_vertexCount;
 
-    VkDevice m_device = VK_NULL_HANDLE;
 };

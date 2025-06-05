@@ -71,7 +71,21 @@ public:
     [[nodiscard]] VkDescriptorPool &GetImGuiDescriptorPool() { return m_imguiDescriptorPool; };
 
     void Present();
+
     void WaitIdle();
+
+    template<class Func>
+    void ImmediateSubmit(Func &&func)
+    {
+        // Wait and reset command buffer and fence
+        WaitAndResetFence(m_immediateFence);
+        DEBUG_VK_ASSERT(vkResetCommandBuffer(m_cmdBuf, 0));
+
+        BeginCommandBuffer(m_immediateCmdBuf, 0);
+        func(m_cmdBuf);
+        EndAndSubmitCommandBuffer(m_immediateCmdBuf, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, m_immediateFence,
+                                  VK_NULL_HANDLE, VK_NULL_HANDLE);
+    }
 
 private:
     VkInstance m_instance = VK_NULL_HANDLE;
@@ -85,13 +99,16 @@ private:
     VkFence m_renderFence = VK_NULL_HANDLE;
     VkSemaphore m_renderSemaphore = VK_NULL_HANDLE;
     VkSemaphore m_presentSemaphore = VK_NULL_HANDLE;
-    VkCommandBuffer cmdBuf = VK_NULL_HANDLE;
+    VkCommandBuffer m_cmdBuf = VK_NULL_HANDLE;
+
+    VkCommandBuffer m_immediateCmdBuf = VK_NULL_HANDLE;
+    VkFence m_immediateFence = VK_NULL_HANDLE;
 
     VkDescriptorPool m_descriptorPool = VK_NULL_HANDLE;
     VkDescriptorPool m_imguiDescriptorPool = VK_NULL_HANDLE;
 
     VulkanImage m_drawImage;
-    std::vector<std::unique_ptr<VulkanPipeline>> m_pipelines;
+    std::vector<std::unique_ptr<VulkanPipeline> > m_pipelines;
 
     SDL_Window *m_window = nullptr;
     uint32_t m_width;
@@ -127,9 +144,9 @@ private:
 
     void WaitAndResetFence(VkFence fence, uint64_t timeout = POINT_ONE_SECOND);
 
-    void BeginCommandBuffer(VkCommandBufferUsageFlags const flag);
+    void BeginCommandBuffer(VkCommandBuffer cmdBuf, VkCommandBufferUsageFlags const flag);
 
-    void EndAndSubmitCommandBuffer(VkPipelineStageFlags const waitStageMask, VkFence fence,
+    void EndAndSubmitCommandBuffer(VkCommandBuffer cmdBuf, VkPipelineStageFlags const waitStageMask, VkFence fence,
                                    VkSemaphore waitSemaphore, VkSemaphore signalSemaphore);
 
     void QueuePresent(VkSemaphore waitSemaphore, uint32_t imageIndex);

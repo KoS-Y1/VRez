@@ -25,6 +25,7 @@ VulkanState::VulkanState(SDL_Window *window, uint32_t width, uint32_t height)
     CreateSwapchain(width, height);
 
     m_renderFence = CreateFence(VK_FENCE_CREATE_SIGNALED_BIT);
+    m_immediateFence = CreateFence(VK_FENCE_CREATE_SIGNALED_BIT);
     m_renderSemaphore = CreateSemaphore();
     m_presentSemaphore = CreateSemaphore();
 
@@ -199,6 +200,11 @@ void VulkanState::CreateCommandPool()
         .queueFamilyIndex = 0,
     };
     DEBUG_VK_ASSERT(vkCreateCommandPool(m_device, &infoCommandPool, nullptr, &m_commandPool));
+
+    deletionQueue.pushFunction([&]()
+    {
+        vkDestroyCommandPool(m_device, m_commandPool, nullptr);
+    });
 }
 
 void VulkanState::CreateSurface(SDL_Window *window)
@@ -327,11 +333,16 @@ void VulkanState::CreateCommandBuffer()
         .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
         .commandBufferCount = 1,
     };
-    DEBUG_VK_ASSERT(vkAllocateCommandBuffers(m_device, &infoCmdBuffer, &cmdBuf));
+    DEBUG_VK_ASSERT(vkAllocateCommandBuffers(m_device, &infoCmdBuffer, &m_cmdBuf));
+    DEBUG_VK_ASSERT(vkAllocateCommandBuffers(m_device, &infoCmdBuffer, &m_immediateCmdBuf));
 
     deletionQueue.pushFunction([&]()
     {
-        vkDestroyCommandPool(m_device, m_commandPool, nullptr);
+        vkFreeCommandBuffers(m_device, m_commandPool, 1, &m_cmdBuf);
+    });
+    deletionQueue.pushFunction([&]()
+    {
+        vkFreeCommandBuffers(m_device, m_commandPool, 1, &m_immediateCmdBuf);
     });
 }
 
@@ -418,25 +429,26 @@ void VulkanState::Present()
 {
     // Reset fence and command buffer
     WaitAndResetFence(m_renderFence);
-    DEBUG_VK_ASSERT(vkResetCommandBuffer(cmdBuf, 0));
+    DEBUG_VK_ASSERT(vkResetCommandBuffer(m_cmdBuf, 0));
 
     // Acquire next image in the swapchain for presenting
     uint32_t imageIndex = 0;
     DEBUG_VK_ASSERT(
-        vkAcquireNextImageKHR(m_device, m_swapchain.swapchain, POINT_ONE_SECOND, m_presentSemaphore, nullptr, &imageIndex));
+        vkAcquireNextImageKHR(m_device, m_swapchain.swapchain, POINT_ONE_SECOND, m_presentSemaphore, nullptr, &
+            imageIndex));
 
-    BeginCommandBuffer(0);
+    BeginCommandBuffer(m_cmdBuf, 0);
 
 
     // Layout transition so that we can clear image color
-    vk_util::CmdImageLayoutTransition(cmdBuf, m_drawImage.GetImage(), VK_IMAGE_LAYOUT_UNDEFINED,
+    vk_util::CmdImageLayoutTransition(m_cmdBuf, m_drawImage.GetImage(), VK_IMAGE_LAYOUT_UNDEFINED,
                                       VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_ASPECT_COLOR_BIT, 0,
                                       VK_ACCESS_TRANSFER_WRITE_BIT);
     // Clear color image
     DrawBackground();
 
     // Layout transition for drawing
-    vk_util::CmdImageLayoutTransition(cmdBuf, m_drawImage.GetImage(), VK_IMAGE_LAYOUT_GENERAL,
+    vk_util::CmdImageLayoutTransition(m_cmdBuf, m_drawImage.GetImage(), VK_IMAGE_LAYOUT_GENERAL,
                                       VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT,
                                       VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
 
@@ -444,31 +456,32 @@ void VulkanState::Present()
     DrawGeometry();
 
     // Layout transition for copying image
-    vk_util::CmdImageLayoutTransition(cmdBuf, m_drawImage.GetImage(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+    vk_util::CmdImageLayoutTransition(m_cmdBuf, m_drawImage.GetImage(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
                                       VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT,
                                       VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
                                       VK_ACCESS_TRANSFER_WRITE_BIT);
-    vk_util::CmdImageLayoutTransition(cmdBuf, m_swapchain.images[imageIndex], VK_IMAGE_LAYOUT_UNDEFINED,
+    vk_util::CmdImageLayoutTransition(m_cmdBuf, m_swapchain.images[imageIndex], VK_IMAGE_LAYOUT_UNDEFINED,
                                       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT,
                                       0, VK_ACCESS_TRANSFER_WRITE_BIT);
 
     // Copy draw image to the current swapchian image
-    vk_util::CopyImageToImage(cmdBuf, m_drawImage.GetImage(), m_swapchain.images[imageIndex], m_drawImage.GetExtent(),
+    vk_util::CopyImageToImage(m_cmdBuf, m_drawImage.GetImage(), m_swapchain.images[imageIndex], m_drawImage.GetExtent(),
                               {m_width, m_height, 1}, VK_IMAGE_ASPECT_COLOR_BIT);
 
     // Layout transition for imgui draw
-    vk_util::CmdImageLayoutTransition(cmdBuf, m_swapchain.images[imageIndex], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+    vk_util::CmdImageLayoutTransition(m_cmdBuf, m_swapchain.images[imageIndex], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                                       VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT,
                                       VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_TRANSFER_WRITE_BIT);
     DrawImgui(m_swapchain.views[imageIndex]);
 
 
     // Layout transition for presenting
-    vk_util::CmdImageLayoutTransition(cmdBuf, m_swapchain.images[imageIndex], VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+    vk_util::CmdImageLayoutTransition(m_cmdBuf, m_swapchain.images[imageIndex],
+                                      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
                                       VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_IMAGE_ASPECT_COLOR_BIT,
                                       VK_ACCESS_TRANSFER_WRITE_BIT, 0);
 
-    EndAndSubmitCommandBuffer(VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, m_renderFence, m_presentSemaphore, m_renderSemaphore);
+    EndAndSubmitCommandBuffer(m_cmdBuf, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, m_renderFence, m_presentSemaphore, m_renderSemaphore);
 
     QueuePresent(m_renderSemaphore, imageIndex);
 }
@@ -539,7 +552,8 @@ void VulkanState::CreatePipelines()
                 break;
 
             case VK_SHADER_STAGE_COMPUTE_BIT:
-                m_pipelines.emplace_back(std::make_unique<VulkanComputePipeline>(m_device, paths, configs, pushConstants));
+                m_pipelines.emplace_back(
+                    std::make_unique<VulkanComputePipeline>(m_device, paths, configs, pushConstants));
                 break;
 
             default:
@@ -554,7 +568,7 @@ void VulkanState::WaitAndResetFence(VkFence fence, uint64_t timeout)
     DEBUG_VK_ASSERT(vkResetFences(m_device, 1, &fence));
 }
 
-void VulkanState::BeginCommandBuffer(VkCommandBufferUsageFlags const flag)
+void VulkanState::BeginCommandBuffer(VkCommandBuffer cmdBuf, VkCommandBufferUsageFlags const flag)
 {
     VkCommandBufferBeginInfo infoBegin{
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
@@ -565,7 +579,8 @@ void VulkanState::BeginCommandBuffer(VkCommandBufferUsageFlags const flag)
     DEBUG_VK_ASSERT(vkBeginCommandBuffer(cmdBuf, &infoBegin));
 }
 
-void VulkanState::EndAndSubmitCommandBuffer(VkPipelineStageFlags const waitStageMask, VkFence fence,
+void VulkanState::EndAndSubmitCommandBuffer(VkCommandBuffer cmdBuf, VkPipelineStageFlags const waitStageMask,
+                                            VkFence fence,
                                             VkSemaphore waitSemaphore, VkSemaphore signalSemaphore)
 {
     DEBUG_VK_ASSERT(vkEndCommandBuffer(cmdBuf));
@@ -576,7 +591,7 @@ void VulkanState::EndAndSubmitCommandBuffer(VkPipelineStageFlags const waitStage
         .pWaitSemaphores = &waitSemaphore,
         .pWaitDstStageMask = &waitStageMask,
         .commandBufferCount = 1,
-        .pCommandBuffers = &cmdBuf,
+        .pCommandBuffers = &m_cmdBuf,
         .pSignalSemaphores = &signalSemaphore,
     };
     if (waitSemaphore != VK_NULL_HANDLE)
@@ -611,8 +626,9 @@ void VulkanState::QueuePresent(VkSemaphore waitSemaphore, uint32_t imageIndex)
 void VulkanState::DrawBackground()
 {
     // Compute pipeline to dispatch
-    vkCmdBindPipeline(cmdBuf, VK_PIPELINE_BIND_POINT_COMPUTE, m_pipelines[0]->GetPipeline());
-    vkCmdBindDescriptorSets(cmdBuf, VK_PIPELINE_BIND_POINT_COMPUTE, m_pipelines[0]->GetLayout(), 0, 1, &descriptorSets[0],
+    vkCmdBindPipeline(m_cmdBuf, VK_PIPELINE_BIND_POINT_COMPUTE, m_pipelines[0]->GetPipeline());
+    vkCmdBindDescriptorSets(m_cmdBuf, VK_PIPELINE_BIND_POINT_COMPUTE, m_pipelines[0]->GetLayout(), 0, 1,
+                            &descriptorSets[0],
                             0,
                             nullptr);
 
@@ -621,9 +637,9 @@ void VulkanState::DrawBackground()
         glm::vec4(0.0f, 1.0f, 0.0f, 1.0f),
         glm::vec4(0.0f, 0.0f, 1.0f, 1.0f),
     };
-    vkCmdPushConstants(cmdBuf, m_pipelines[0]->GetLayout(), VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(constants),
+    vkCmdPushConstants(m_cmdBuf, m_pipelines[0]->GetLayout(), VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(constants),
                        constants.data());
-    vkCmdDispatch(cmdBuf, std::ceil(m_width / 16.0), std::ceil(m_height / 16.0), 1);
+    vkCmdDispatch(m_cmdBuf, std::ceil(m_width / 16.0), std::ceil(m_height / 16.0), 1);
 }
 
 // TODO: This should not belong here
@@ -664,11 +680,11 @@ void VulkanState::DrawImgui(VkImageView view)
         view, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, nullptr);
     VkRenderingInfo infoRendering = vk_util::GetRenderingInfo(renderAreas, &infoColorAttachment);
 
-    vkCmdBeginRendering(cmdBuf, &infoRendering);
+    vkCmdBeginRendering(m_cmdBuf, &infoRendering);
 
-    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmdBuf);
+    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), m_cmdBuf);
 
-    vkCmdEndRendering(cmdBuf);
+    vkCmdEndRendering(m_cmdBuf);
 }
 
 void VulkanState::DrawGeometry()
@@ -682,9 +698,9 @@ void VulkanState::DrawGeometry()
         m_drawImage.GetImageView(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, nullptr);
     VkRenderingInfo infoRender = vk_util::GetRenderingInfo(renderAreas, &infoAttachment);
 
-    vkCmdBeginRendering(cmdBuf, &infoRender);
+    vkCmdBeginRendering(m_cmdBuf, &infoRender);
 
-    vkCmdBindPipeline(cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[1]->GetPipeline());
+    vkCmdBindPipeline(m_cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[1]->GetPipeline());
 
     // Set dynamic viewport and scissor
     VkViewport viewport
@@ -697,10 +713,10 @@ void VulkanState::DrawGeometry()
         .maxDepth = 1.f
     };
 
-    vkCmdSetViewport(cmdBuf, 0, 1, &viewport);
-    vkCmdSetScissor(cmdBuf, 0, 1, &renderAreas);
+    vkCmdSetViewport(m_cmdBuf, 0, 1, &viewport);
+    vkCmdSetScissor(m_cmdBuf, 0, 1, &renderAreas);
 
-    vkCmdDraw(cmdBuf, 3, 1, 0, 0);
+    vkCmdDraw(m_cmdBuf, 3, 1, 0, 0);
 
-    vkCmdEndRendering(cmdBuf);
+    vkCmdEndRendering(m_cmdBuf);
 }
