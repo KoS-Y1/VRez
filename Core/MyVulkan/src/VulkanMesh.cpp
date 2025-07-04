@@ -1,7 +1,8 @@
 #include "include/VulkanMesh.h"
 
-VulkanMesh::VulkanMesh(VulkanState &state, size_t count, size_t size, const void *data)
+VulkanMesh::VulkanMesh(VulkanState &state, size_t vertexCount, size_t vertexSize, const void *data)
 {
+    VkDeviceSize size = vertexCount * vertexSize;
     VulkanBuffer stagingBuffer(state.GetPhysicalDevice(), state.GetDevice(), size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
     stagingBuffer.Upload(size, data);
 
@@ -19,7 +20,7 @@ VulkanMesh::VulkanMesh(VulkanState &state, size_t count, size_t size, const void
         vkCmdCopyBuffer(cmdBuf, stagingBuffer.GetBuffer(), vertexBuffer.GetBuffer(), 1, &copy);
     });
     m_vertexBuffer = std::move(vertexBuffer);
-    m_vertexCount = count;
+    m_vertexCount = vertexCount;
 }
 
 void VulkanMesh::Swap(VulkanMesh &other)

@@ -10,7 +10,7 @@ public:
 
     ~VulkanMesh() { Destroy(); }
 
-    VulkanMesh(VulkanState &state, size_t count, size_t size, const void* data);
+    VulkanMesh(VulkanState &state, size_t vertexCount, size_t vertexSize, const void* data);
 
     VulkanMesh(const VulkanMesh&) = delete;
     VulkanMesh& operator=(const VulkanMesh&) = delete;
@@ -36,5 +36,4 @@ public:
 private:
     VulkanBuffer m_vertexBuffer;
     size_t m_vertexCount;
-
 };

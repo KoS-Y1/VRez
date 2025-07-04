@@ -21,3 +21,7 @@ target_link_libraries(ShaderCompiler PUBLIC glslang Vulkan::Vulkan SDL3::SDL3 Fi
 add_library(UI UI/include/UI.h UI/src/UI.cpp)
 target_include_directories(UI PUBLIC UI)
 target_link_libraries(UI PUBLIC imgui Window MyVulkan)
+
+add_library(MeshLoader MeshLoader/include/MeshLoader.h MeshLoader/src/MeshLoader.cpp)
+target_include_directories(MeshLoader PUBLIC MeshLoader)
+target_link_libraries(MeshLoader PUBLIC MyVulkan SDL3::SDL3 tinyobjloader glm)
