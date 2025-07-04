@@ -30,6 +30,9 @@ public:
 
     void Destroy();
 
+    [[nodiscard]] VkBuffer const &GetVertexBuffer() const { return m_vertexBuffer.GetBuffer(); }
+    [[nodiscard]] size_t const GetVertexCount() const { return m_vertexCount; }
+
 private:
     VulkanBuffer m_vertexBuffer;
     size_t m_vertexCount;

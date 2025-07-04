@@ -8,9 +8,8 @@
 #include <Debug.h>
 
 #include "VulkanImage.h"
-
 #include "VulkanPipeline.h"
-
+#include "VulkanMesh.h"
 
 #define MIN_SWAPCHAIN_IMG_COUNT 2
 #define MAX_SWAPCHAIN_IMG_COUNT 16
@@ -68,7 +67,7 @@ public:
     [[nodiscard]] VkPhysicalDevice const &GetPhysicalDevice() const { return m_physicalDevice; };
     [[nodiscard]] VkDevice const &GetDevice() const { return m_device; };
     [[nodiscard]] VkQueue const &GetQueue() const { return m_queue; };
-    [[nodiscard]] VkDescriptorPool &GetImGuiDescriptorPool() { return m_imguiDescriptorPool; };
+    [[nodiscard]] VkDescriptorPool const &GetImGuiDescriptorPool() { return m_imguiDescriptorPool; };
 
     void Present();
 
@@ -158,4 +157,7 @@ private:
     void UpdateDescriptorSets();
 
     void DrawImgui(VkImageView view);
+
+    void BindAndDrawMesh(const VulkanMesh &mesh);
+
 };

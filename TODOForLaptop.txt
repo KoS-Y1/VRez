@@ -1,2 +1,0 @@
-build SDL
-move SDL3.dll to ./build(cmake-build)

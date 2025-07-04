@@ -720,3 +720,10 @@ void VulkanState::DrawGeometry()
 
     vkCmdEndRendering(m_cmdBuf);
 }
+
+void VulkanState::BindAndDrawMesh(const VulkanMesh &mesh)
+{
+    const VkDeviceSize offset = 0;
+    vkCmdBindVertexBuffers(m_cmdBuf, 0, 1, &mesh.GetVertexBuffer(), &offset);
+    vkCmdDraw(m_cmdBuf, mesh.GetVertexCount(), 1, 0, 0);
+}

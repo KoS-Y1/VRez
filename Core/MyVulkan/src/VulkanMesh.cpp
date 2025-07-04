@@ -21,3 +21,15 @@ VulkanMesh::VulkanMesh(VulkanState &state, size_t count, size_t size, const void
     m_vertexBuffer = std::move(vertexBuffer);
     m_vertexCount = count;
 }
+
+void VulkanMesh::Swap(VulkanMesh &other)
+{
+    std::swap(m_vertexBuffer, other.m_vertexBuffer);
+    std::swap(m_vertexCount, other.m_vertexCount);
+}
+
+void VulkanMesh::Destroy()
+{
+    m_vertexBuffer.Destroy();
+    m_vertexCount = 0;
+}
