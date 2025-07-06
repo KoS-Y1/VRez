@@ -10,6 +10,8 @@
 #include <include/VulkanComputePipeline.h>
 #include <include/VulkanGraphicsPipeline.h>
 
+#include "include/MeshLoader.h"
+
 VulkanState::VulkanState(SDL_Window *window, uint32_t width, uint32_t height)
 {
     m_window = window;
@@ -36,6 +38,7 @@ VulkanState::VulkanState(SDL_Window *window, uint32_t width, uint32_t height)
     {
         CreateDescriptorSet(setLayout);
     }
+
 
     UpdateDescriptorSets();
 }
@@ -481,7 +484,8 @@ void VulkanState::Present()
                                       VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_IMAGE_ASPECT_COLOR_BIT,
                                       VK_ACCESS_TRANSFER_WRITE_BIT, 0);
 
-    EndAndSubmitCommandBuffer(m_cmdBuf, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, m_renderFence, m_presentSemaphore, m_renderSemaphore);
+    EndAndSubmitCommandBuffer(m_cmdBuf, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, m_renderFence, m_presentSemaphore,
+                              m_renderSemaphore);
 
     QueuePresent(m_renderSemaphore, imageIndex);
 }
@@ -491,9 +495,13 @@ void VulkanState::CreatePipelines()
     std::vector<std::vector<std::string> > shaderPaths
     {
         {"../Assets/Shaders/gradient.comp"},
+        // {
+        //     "../Assets/Shaders/colored_triangle.vert",
+        //     "../Assets/Shaders/colored_triangle.frag"
+        // }
         {
-            "../Assets/Shaders/colored_triangle.vert",
-            "../Assets/Shaders/colored_triangle.frag"
+            "../Assets/Shaders/BasicModelShader/basic.vert",
+            "../Assets/Shaders/BasicModelShader/basic.frag"
         }
     };
 
@@ -716,14 +724,14 @@ void VulkanState::DrawGeometry()
     vkCmdSetViewport(m_cmdBuf, 0, 1, &viewport);
     vkCmdSetScissor(m_cmdBuf, 0, 1, &renderAreas);
 
-    vkCmdDraw(m_cmdBuf, 3, 1, 0, 0);
-
+    // vkCmdDraw(m_cmdBuf, 3, 1, 0, 0);
+    BindAndDrawMesh(m_meshLoader->LoadMesh("Cube.obj", *this));
     vkCmdEndRendering(m_cmdBuf);
 }
 
-void VulkanState::BindAndDrawMesh(const VulkanMesh &mesh)
+void VulkanState::BindAndDrawMesh(const VulkanMesh *mesh)
 {
     const VkDeviceSize offset = 0;
-    vkCmdBindVertexBuffers(m_cmdBuf, 0, 1, &mesh.GetVertexBuffer(), &offset);
-    vkCmdDraw(m_cmdBuf, mesh.GetVertexCount(), 1, 0, 0);
+    vkCmdBindVertexBuffers(m_cmdBuf, 0, 1, &mesh->GetVertexBuffer(), &offset);
+    vkCmdDraw(m_cmdBuf, mesh->GetVertexCount(), 1, 0, 0);
 }

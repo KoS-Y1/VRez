@@ -4,7 +4,7 @@
 
 #include "include/MeshLoader.h"
 
-VulkanMesh *MeshLoader::LoadMesh(const std::string &file)
+VulkanMesh *MeshLoader::LoadMesh(const std::string &file, VulkanState &state)
 {
     auto pair = m_meshes.find(file);
 
@@ -13,7 +13,7 @@ VulkanMesh *MeshLoader::LoadMesh(const std::string &file)
     {
         SDL_Log("Loading mesh from file %s", file);
         const std::vector<VertexPNT> vertices = Load(file);
-        pair = m_meshes.emplace(file, VulkanMesh(m_state, vertices.size(), sizeof(VertexPNT), vertices.data())).first;
+        pair = m_meshes.emplace(file, VulkanMesh(state, vertices.size(), sizeof(VertexPNT), vertices.data())).first;
     }
 
     return &pair->second;

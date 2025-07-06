@@ -8,7 +8,7 @@ add_library(MyVulkan MyVulkan/include/VulkanState.h MyVulkan/src/VulkanState.cpp
         MyVulkan/src/VulkanGraphicsPipeline.cpp MyVulkan/include/VulkanBuffer.h MyVulkan/src/VulkanBuffer.cpp MyVulkan/include/VulkanMesh.h
         MyVulkan/src/VulkanMesh.cpp MyVulkan/include/VertexFormats.h MyVulkan/src/VertexFormats.cpp)
 target_include_directories(MyVulkan PUBLIC MyVulkan)
-target_link_libraries(MyVulkan PUBLIC Vulkan::Vulkan Debug Util SDL3::SDL3 ShaderCompiler FileSystem glm imgui)
+target_link_libraries(MyVulkan PUBLIC Vulkan::Vulkan Debug Util SDL3::SDL3 ShaderCompiler FileSystem glm imgui MeshLoader)
 
 add_library(Window Window/include/Window.h Window/src/Window.cpp)
 target_include_directories(Window PUBLIC Window)

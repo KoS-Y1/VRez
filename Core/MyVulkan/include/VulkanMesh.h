@@ -8,15 +8,17 @@ class VulkanMesh
 public:
     VulkanMesh() = default;
 
+    VulkanMesh(VulkanState &state, size_t vertexCount, size_t vertexSize, const void *data);
+
     ~VulkanMesh() { Destroy(); }
 
-    VulkanMesh(VulkanState &state, size_t vertexCount, size_t vertexSize, const void* data);
+    VulkanMesh(const VulkanMesh &) = delete;
 
-    VulkanMesh(const VulkanMesh&) = delete;
-    VulkanMesh& operator=(const VulkanMesh&) = delete;
+    VulkanMesh &operator=(const VulkanMesh &) = delete;
 
-    VulkanMesh(VulkanMesh&& other) noexcept { Swap(other); }
-    VulkanMesh& operator=(VulkanMesh&& other) noexcept
+    VulkanMesh(VulkanMesh &&other) noexcept { Swap(other); }
+
+    VulkanMesh &operator=(VulkanMesh &&other) noexcept
     {
         if (this != &other)
         {

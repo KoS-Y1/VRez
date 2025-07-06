@@ -9,7 +9,7 @@
 
 #include "VulkanImage.h"
 #include "VulkanPipeline.h"
-#include "VulkanMesh.h"
+
 
 #define MIN_SWAPCHAIN_IMG_COUNT 2
 #define MAX_SWAPCHAIN_IMG_COUNT 16
@@ -17,11 +17,12 @@
 
 #define POINT_ONE_SECOND 100000000u
 
+
 struct VulkanSwapchain
 {
     VkSwapchainKHR swapchain = VK_NULL_HANDLE;
-    VkImage images[MAX_SWAPCHAIN_IMG_COUNT] = {0};
-    VkImageView views[MAX_SWAPCHAIN_IMG_COUNT] = {0};
+    VkImage images[MAX_SWAPCHAIN_IMG_COUNT] = {nullptr};
+    VkImageView views[MAX_SWAPCHAIN_IMG_COUNT] = {nullptr};
     uint32_t count = 0;
 };
 
@@ -46,6 +47,8 @@ struct DeletionQueue
     }
 };
 
+class MeshLoader;
+class VulkanMesh;
 
 class VulkanState
 {
@@ -57,7 +60,7 @@ public:
     // Disallow copy and move
     VulkanState(const VulkanState &) = delete;
 
-    VulkanState(VulkanState &&) = delete;
+    // VulkanState(VulkanState &&) = delete;
 
     VulkanState &operator=(VulkanState const &) = delete;
 
@@ -109,6 +112,8 @@ private:
     VulkanImage m_drawImage;
     std::vector<std::unique_ptr<VulkanPipeline> > m_pipelines;
 
+    std::unique_ptr<MeshLoader> m_meshLoader;
+
     SDL_Window *m_window = nullptr;
     uint32_t m_width;
     uint32_t m_height;
@@ -133,19 +138,19 @@ private:
 
     VkSemaphore CreateSemaphore();
 
-    VkFence CreateFence(VkFenceCreateFlags const flag);
+    VkFence CreateFence(VkFenceCreateFlags flag);
 
     void CreateDescriptorPool();
 
-    void CreateDescriptorSet(const VkDescriptorSetLayout layout);
+    void CreateDescriptorSet(VkDescriptorSetLayout layout);
 
     void CreatePipelines();
 
     void WaitAndResetFence(VkFence fence, uint64_t timeout = POINT_ONE_SECOND);
 
-    void BeginCommandBuffer(VkCommandBuffer cmdBuf, VkCommandBufferUsageFlags const flag);
+    void BeginCommandBuffer(VkCommandBuffer cmdBuf, VkCommandBufferUsageFlags  flag);
 
-    void EndAndSubmitCommandBuffer(VkCommandBuffer cmdBuf, VkPipelineStageFlags const waitStageMask, VkFence fence,
+    void EndAndSubmitCommandBuffer(VkCommandBuffer cmdBuf, VkPipelineStageFlags  waitStageMask, VkFence fence,
                                    VkSemaphore waitSemaphore, VkSemaphore signalSemaphore);
 
     void QueuePresent(VkSemaphore waitSemaphore, uint32_t imageIndex);
@@ -158,6 +163,5 @@ private:
 
     void DrawImgui(VkImageView view);
 
-    void BindAndDrawMesh(const VulkanMesh &mesh);
-
+    void BindAndDrawMesh(const VulkanMesh *mesh);
 };
