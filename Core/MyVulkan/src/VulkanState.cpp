@@ -41,6 +41,9 @@ VulkanState::VulkanState(SDL_Window *window, uint32_t width, uint32_t height)
 
 
     UpdateDescriptorSets();
+
+    m_meshLoader = std::make_unique<MeshLoader>();
+    m_meshes.push_back(m_meshLoader->LoadMesh("../Assets/Models/Cube.obj", *this));
 }
 
 VulkanState::~VulkanState()
@@ -59,6 +62,11 @@ VulkanState::~VulkanState()
     for (size_t i = 0; i < m_swapchain.count; i++)
     {
         vkDestroyImageView(m_device, m_swapchain.views[i], nullptr);
+    }
+
+    for (size_t i = 0; i < m_meshes.size(); i++)
+    {
+        m_meshes[i]->Destroy();
     }
 
 
@@ -541,6 +549,7 @@ void VulkanState::CreatePipelines()
     };
 
     GraphicsPipelineConfig graphicsConfig;
+    graphicsConfig.infoVertex = VertexPNT::GetVertexInputStateCreateInfo();
 
     for (const auto &paths: shaderPaths)
     {
@@ -599,7 +608,7 @@ void VulkanState::EndAndSubmitCommandBuffer(VkCommandBuffer cmdBuf, VkPipelineSt
         .pWaitSemaphores = &waitSemaphore,
         .pWaitDstStageMask = &waitStageMask,
         .commandBufferCount = 1,
-        .pCommandBuffers = &m_cmdBuf,
+        .pCommandBuffers = &cmdBuf,
         .pSignalSemaphores = &signalSemaphore,
     };
     if (waitSemaphore != VK_NULL_HANDLE)
@@ -725,7 +734,8 @@ void VulkanState::DrawGeometry()
     vkCmdSetScissor(m_cmdBuf, 0, 1, &renderAreas);
 
     // vkCmdDraw(m_cmdBuf, 3, 1, 0, 0);
-    BindAndDrawMesh(m_meshLoader->LoadMesh("Cube.obj", *this));
+    BindAndDrawMesh(m_meshes[0]);
+
     vkCmdEndRendering(m_cmdBuf);
 }
 

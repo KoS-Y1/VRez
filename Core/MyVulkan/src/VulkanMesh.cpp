@@ -7,7 +7,7 @@ VulkanMesh::VulkanMesh(VulkanState &state, size_t vertexCount, size_t vertexSize
     stagingBuffer.Upload(size, data);
 
     VulkanBuffer vertexBuffer(state.GetPhysicalDevice(), state.GetDevice(), size,
-                              VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+                              VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
     // Copy data from staging buffer to vertex buffer
     state.ImmediateSubmit([size, &stagingBuffer, &vertexBuffer](VkCommandBuffer cmdBuf)
     {

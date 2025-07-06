@@ -8,8 +8,6 @@
 #include <Debug.h>
 
 #include "VulkanImage.h"
-#include "VulkanPipeline.h"
-
 
 #define MIN_SWAPCHAIN_IMG_COUNT 2
 #define MAX_SWAPCHAIN_IMG_COUNT 16
@@ -37,7 +35,7 @@ struct DeletionQueue
 
     void flush()
     {
-        for (auto it = deletors.rbegin(); it != deletors.rend(); it++)
+        for (auto it = deletors.rbegin(); it != deletors.rend(); ++it)
         {
             // Call the function
             (*it)();
@@ -49,6 +47,7 @@ struct DeletionQueue
 
 class MeshLoader;
 class VulkanMesh;
+class VulkanPipeline;
 
 class VulkanState
 {
@@ -60,7 +59,7 @@ public:
     // Disallow copy and move
     VulkanState(const VulkanState &) = delete;
 
-    // VulkanState(VulkanState &&) = delete;
+    VulkanState(VulkanState &&) = delete;
 
     VulkanState &operator=(VulkanState const &) = delete;
 
@@ -79,15 +78,15 @@ public:
     template<class Func>
     void ImmediateSubmit(Func &&func)
     {
-        // Wait and reset command buffer and fence
-        WaitAndResetFence(m_immediateFence);
         DEBUG_VK_ASSERT(vkResetCommandBuffer(m_cmdBuf, 0));
+        WaitAndResetFence(m_immediateFence);
 
         BeginCommandBuffer(m_immediateCmdBuf, 0);
-        func(m_cmdBuf);
+        func(m_immediateCmdBuf);
         EndAndSubmitCommandBuffer(m_immediateCmdBuf, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, m_immediateFence,
                                   VK_NULL_HANDLE, VK_NULL_HANDLE);
-    }
+        WaitAndResetFence(m_immediateFence);
+  }
 
 private:
     VkInstance m_instance = VK_NULL_HANDLE;
@@ -113,6 +112,7 @@ private:
     std::vector<std::unique_ptr<VulkanPipeline> > m_pipelines;
 
     std::unique_ptr<MeshLoader> m_meshLoader;
+    std::vector<VulkanMesh*> m_meshes;
 
     SDL_Window *m_window = nullptr;
     uint32_t m_width;
@@ -148,7 +148,7 @@ private:
 
     void WaitAndResetFence(VkFence fence, uint64_t timeout = POINT_ONE_SECOND);
 
-    void BeginCommandBuffer(VkCommandBuffer cmdBuf, VkCommandBufferUsageFlags  flag);
+    static void BeginCommandBuffer(VkCommandBuffer cmdBuf, VkCommandBufferUsageFlags  flag);
 
     void EndAndSubmitCommandBuffer(VkCommandBuffer cmdBuf, VkPipelineStageFlags  waitStageMask, VkFence fence,
                                    VkSemaphore waitSemaphore, VkSemaphore signalSemaphore);

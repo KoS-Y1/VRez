@@ -7,3 +7,4 @@ target_link_libraries(Debug INTERFACE SDL3::SDL3 Vulkan::Vulkan)
 
 add_library(FileSystem FileSystem/include/FileSystem.h FileSystem/src/FileSystem.cpp)
 target_include_directories(FileSystem PUBLIC FileSystem)
+target_link_libraries(FileSystem PUBLIC SDL3::SDL3)

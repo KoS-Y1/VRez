@@ -21,7 +21,7 @@ void VulkanComputePipeline::CreatePipeline(const std::vector<std::string> &paths
         SDL_Log("Warning: passing more than one shaders to computer shader! Program is ignoring the rest!");
     }
 
-    std::string path = paths[0];
+    const std::string &path = paths[0];
     CreateShaderModule(path);
 
     std::filesystem::path shaderPath(path);

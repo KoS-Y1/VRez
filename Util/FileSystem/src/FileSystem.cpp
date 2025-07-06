@@ -2,11 +2,16 @@
 
 #include <fstream>
 
+#include <SDL3/SDL_log.h>
+
 std::string file_system::Read(const std::string &path)
 {
     std::ifstream file(path, std::ios::binary | std::ios::ate);
     if (!file.is_open())
-        throw std::runtime_error("File could not be opened");
+    {
+        SDL_Log("Failed to open file %s", path.c_str());
+        exit(EXIT_FAILURE);
+ }
 
     size_t fileSize = file.tellg();
     std::string buf(fileSize, '\0');

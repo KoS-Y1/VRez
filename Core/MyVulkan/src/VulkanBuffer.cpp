@@ -26,6 +26,7 @@ void VulkanBuffer::Destroy()
 {
     if (m_device != VK_NULL_HANDLE)
     {
+        // vkDeviceWaitIdle(m_device);
         vkFreeMemory(m_device, m_memory, nullptr);
         vkDestroyBuffer(m_device, m_buffer, nullptr);
     }
@@ -66,7 +67,7 @@ void VulkanBuffer::BindMemory(VkPhysicalDevice physicalDevice)
         .pNext = nullptr,
         .allocationSize = memoryRequirements.size,
         .memoryTypeIndex = vk_util::FindMemoryType(physicalDevice, memoryRequirements.memoryTypeBits,
-                                                   VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT),
+                                                   VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT),
     };
 
     DEBUG_VK_ASSERT(vkAllocateMemory(m_device, &infoMem, nullptr, &m_memory));

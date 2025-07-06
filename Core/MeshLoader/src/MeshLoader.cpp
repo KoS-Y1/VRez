@@ -11,8 +11,14 @@ VulkanMesh *MeshLoader::LoadMesh(const std::string &file, VulkanState &state)
     // If does not find the mesh, then load the file
     if (pair == m_meshes.end())
     {
-        SDL_Log("Loading mesh from file %s", file);
+        SDL_Log("Loading mesh from file %s", file.c_str());
         const std::vector<VertexPNT> vertices = Load(file);
+        for (int i = 0; i < vertices.size(); i++)
+        {
+            // SDL_Log("p[%d]: (%f, %f, %f)", i, vertices[i].position.x, vertices[i].position.y, vertices[i].position.z);
+            // SDL_Log("n[%d]: (%f, %f, %f)", i, vertices[i].normal.x, vertices[i].normal.y, vertices[i].normal.z);
+            // SDL_Log("t[%d]: (%f, %f)", i, vertices[i].texCoords.x, vertices[i].texCoords.y);
+        }
         pair = m_meshes.emplace(file, VulkanMesh(state, vertices.size(), sizeof(VertexPNT), vertices.data())).first;
     }
 
@@ -22,11 +28,9 @@ VulkanMesh *MeshLoader::LoadMesh(const std::string &file, VulkanState &state)
 std::vector<VertexPNT> MeshLoader::Load(const std::string file)
 {
     tinyobj::ObjReader reader;
-    tinyobj::ObjReaderConfig config;
 
-    config.mtl_search_path = "../Assets/Models";
 
-    if (!reader.ParseFromFile(file, config))
+    if (!reader.ParseFromFile(file))
     {
         if (!reader.Error().empty())
         {
@@ -51,7 +55,7 @@ std::vector<VertexPNT> MeshLoader::Load(const std::string file)
     for (const tinyobj::shape_t &shape: reader.GetShapes())
     {
         const tinyobj::mesh_t &mesh = shape.mesh;
-        SDL_Log("Loading model shape %s", shape.name);
+        SDL_Log("Loading model shape %s", shape.name.c_str());
 
         size_t i = 0;
 

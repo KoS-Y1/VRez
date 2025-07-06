@@ -3,8 +3,8 @@
 #include "Debug.h"
 
 VulkanGraphicsPipeline::VulkanGraphicsPipeline(VkDevice device, const std::vector<std::string> &paths,
-                                               const GraphicsPipelineConfig config,
-                                               const std::vector<DescriptorSetLayoutConfig> &configs,
+                                               const GraphicsPipelineConfig &config,
+                                               const std::vector<DescriptorSetLayoutConfig> &descriptorConfigs,
                                                const std::vector<VkPushConstantRange> &constantRange,
                                                const std::vector<VkFormat> &colorFormats,
                                                const VkFormat depthFormat, VkFormat stencilFormat)
@@ -14,7 +14,7 @@ VulkanGraphicsPipeline::VulkanGraphicsPipeline(VkDevice device, const std::vecto
     m_colorFormats = colorFormats;
     m_depthFormat = depthFormat;
     m_stencilFormat = stencilFormat;
-    CreateDescriptorSetLayout(configs);
+    CreateDescriptorSetLayout(descriptorConfigs);
     CreateLayout(constantRange);
     CreatePipeline(paths);
 }
@@ -46,18 +46,7 @@ void VulkanGraphicsPipeline::CreatePipeline(const std::vector<std::string> &path
         .stencilAttachmentFormat = m_stencilFormat
     };
 
-    // TODO: vertex input state info should be read from input
-    // Right now using only empty info to see if the graphics pipelines work as expected
-    VkPipelineVertexInputStateCreateInfo infoVertex
-    {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0,
-        .vertexBindingDescriptionCount = 0,
-        .pVertexBindingDescriptions = nullptr,
-        .vertexAttributeDescriptionCount = 0,
-        .pVertexAttributeDescriptions = nullptr
-    };
+
 
     VkPipelineInputAssemblyStateCreateInfo infoInputAssembly
     {
@@ -176,7 +165,7 @@ void VulkanGraphicsPipeline::CreatePipeline(const std::vector<std::string> &path
         .flags = 0,
         .stageCount = static_cast<uint32_t>(shaderStages.size()),
         .pStages = shaderStages.data(),
-        .pVertexInputState = &infoVertex,
+        .pVertexInputState = m_config.infoVertex,
         .pInputAssemblyState = &infoInputAssembly,
         .pTessellationState = nullptr,
         .pViewportState = &infoViewport,

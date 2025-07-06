@@ -6,11 +6,6 @@
 
 #define MAX_DESCRIPTOR_SET_COUNT 16
 
-
-struct PipelineOption
-{
-};
-
 struct DescriptorSetLayoutConfig
 {
     VkDescriptorSetLayoutCreateFlags flag;
@@ -23,7 +18,7 @@ class VulkanPipeline
 public:
 
     VulkanPipeline() = default;
-    ~VulkanPipeline() { Destroy(); };
+    virtual ~VulkanPipeline() { Destroy(); };
 
     VulkanPipeline(const VulkanPipeline &) = delete;
 
@@ -31,7 +26,7 @@ public:
 
     VulkanPipeline &operator=(const VulkanPipeline &) = delete;
 
-    VulkanPipeline &operator=(VulkanPipeline &&other)
+    VulkanPipeline &operator=(VulkanPipeline &&other) noexcept
     {
         if (this != &other)
         {
@@ -60,8 +55,6 @@ protected:
     VkDevice m_device = VK_NULL_HANDLE;
 
     std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
-
-    virtual void CreatePipeline(const std::vector<std::string> &paths) = 0;
 
     void CreateLayout(const std::vector<VkPushConstantRange> &constantRange);
 
