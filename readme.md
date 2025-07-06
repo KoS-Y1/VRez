@@ -3,7 +3,7 @@
 *Used as a TODO list for now*
 
 ## File System
-+ Verify if it's a valid file path
+~~+ Verify if it's a valid file path~~
 
 ## Meshes
 + ~~Mesh Loader~~
