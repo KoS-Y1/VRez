@@ -5,7 +5,6 @@
 #include <Debug.h>
 
 #include <include/VulkanState.h>
-#include <include/UI.h>
 
 #include "imgui_impl_sdl3.h"
 #include "imgui_impl_vulkan.h"
@@ -36,13 +35,6 @@ void Window::Run()
 
     VulkanState vulkanState(m_window, m_width, m_height);
 
-    UI myUI(m_window,
-            vulkanState.GetInstance(),
-            vulkanState.GetPhysicalDevice(),
-            vulkanState.GetDevice(),
-            vulkanState.GetQueue(),
-            vulkanState.GetImGuiDescriptorPool());
-
     while (running)
     {
         SDL_Event event;
@@ -63,8 +55,8 @@ void Window::Run()
         ImGui_ImplSDL3_NewFrame();
         ImGui::NewFrame();
 
-        //some imgui UI to test
-        ImGui::ShowDemoWindow();
+
+        vulkanState.ShowUI();
 
         //make imgui calculate internal draw structures
         ImGui::Render();

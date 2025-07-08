@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 #include "include/VulkanState.h"
 #include "include/VulkanBuffer.h"
 
@@ -8,7 +10,8 @@ class VulkanMesh
 public:
     VulkanMesh() = default;
 
-    VulkanMesh(VulkanState &state, size_t vertexCount, size_t vertexSize, const void *data);
+    VulkanMesh(VulkanState &state, std::string name, size_t vertexCount, size_t vertexSize,
+               const void *data);
 
     ~VulkanMesh() { Destroy(); }
 
@@ -32,10 +35,12 @@ public:
 
     void Destroy();
 
-    [[nodiscard]] VkBuffer const &GetVertexBuffer() const { return m_vertexBuffer.GetBuffer(); }
-    [[nodiscard]] size_t const GetVertexCount() const { return m_vertexCount; }
+    [[nodiscard]] const VkBuffer &GetVertexBuffer() const { return m_vertexBuffer.GetBuffer(); }
+    [[nodiscard]] const size_t GetVertexCount() const { return m_vertexCount; }
+    [[nodiscard]] const std::string GetName() const { return m_name; }
 
 private:
     VulkanBuffer m_vertexBuffer;
     size_t m_vertexCount;
+    std::string m_name;
 };

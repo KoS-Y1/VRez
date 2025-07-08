@@ -6,11 +6,12 @@
 ~~+ Verify if it's a valid file path~~
 
 ## Meshes
-+ ~~Mesh Loader~~
-+ Transformation
-  + Translation
-  + Rotation
-  + Scaling
++ ~~Mesh Loader~
++ Add Mesh Instance class, which has a model matrix handling
+  + Transformation
+    + Translation
+    + Rotation
+    + Scaling
 
 ## Lighting
 + Light

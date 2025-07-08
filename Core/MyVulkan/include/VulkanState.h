@@ -4,10 +4,15 @@
 #include <deque>
 #include <functional>
 #include <memory>
+#include <map>
+
+#include <glm/glm.hpp>
 
 #include <Debug.h>
+#include <string>
 
 #include "VulkanImage.h"
+
 
 #define MIN_SWAPCHAIN_IMG_COUNT 2
 #define MAX_SWAPCHAIN_IMG_COUNT 16
@@ -15,6 +20,11 @@
 
 #define POINT_ONE_SECOND 100000000u
 
+class MeshLoader;
+class VulkanMesh;
+class VulkanPipeline;
+class MeshInstance;
+class UI;
 
 struct VulkanSwapchain
 {
@@ -28,12 +38,12 @@ struct DeletionQueue
 {
     std::deque<std::function<void()> > deletors;
 
-    void pushFunction(std::function<void()> &&func)
+    void PushFunction(std::function<void()> &&func)
     {
         deletors.push_back(func);
     }
 
-    void flush()
+    void Flush()
     {
         for (auto it = deletors.rbegin(); it != deletors.rend(); ++it)
         {
@@ -45,9 +55,23 @@ struct DeletionQueue
     }
 };
 
-class MeshLoader;
-class VulkanMesh;
-class VulkanPipeline;
+struct UIQueue
+{
+    std::deque<std::function<void()> > ui;
+
+    void PushFunction(std::function<void()> &&func)
+    {
+        ui.push_back(func);
+    }
+
+    void show()
+    {
+        for (auto it = ui.begin(); it != ui.end(); ++it)
+        {
+            (*it)();
+        }
+    }
+};
 
 class VulkanState
 {
@@ -65,15 +89,14 @@ public:
 
     VulkanState &operator=(VulkanState &&) = delete;
 
-    [[nodiscard]] VkInstance const &GetInstance() const { return m_instance; };
     [[nodiscard]] VkPhysicalDevice const &GetPhysicalDevice() const { return m_physicalDevice; };
     [[nodiscard]] VkDevice const &GetDevice() const { return m_device; };
-    [[nodiscard]] VkQueue const &GetQueue() const { return m_queue; };
-    [[nodiscard]] VkDescriptorPool const &GetImGuiDescriptorPool() { return m_imguiDescriptorPool; };
+
+    void WaitIdle();
 
     void Present();
 
-    void WaitIdle();
+    void ShowUI();
 
     template<class Func>
     void ImmediateSubmit(Func &&func)
@@ -86,7 +109,7 @@ public:
         EndAndSubmitCommandBuffer(m_immediateCmdBuf, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, m_immediateFence,
                                   VK_NULL_HANDLE, VK_NULL_HANDLE);
         WaitAndResetFence(m_immediateFence);
-  }
+    }
 
 private:
     VkInstance m_instance = VK_NULL_HANDLE;
@@ -112,15 +135,19 @@ private:
     std::vector<std::unique_ptr<VulkanPipeline> > m_pipelines;
 
     std::unique_ptr<MeshLoader> m_meshLoader;
-    std::vector<VulkanMesh*> m_meshes;
+    std::vector<MeshInstance> m_meshInstances;
+
+
+    std::vector<VkDescriptorSet> descriptorSets;
+
+    DeletionQueue deletionQueue;
+    UIQueue uiQueue;
 
     SDL_Window *m_window = nullptr;
     uint32_t m_width;
     uint32_t m_height;
 
-    DeletionQueue deletionQueue;
-
-    std::vector<VkDescriptorSet> descriptorSets;
+    std::unique_ptr<UI> m_ui;
 
     void CreateInstance();
 
@@ -148,9 +175,9 @@ private:
 
     void WaitAndResetFence(VkFence fence, uint64_t timeout = POINT_ONE_SECOND);
 
-    static void BeginCommandBuffer(VkCommandBuffer cmdBuf, VkCommandBufferUsageFlags  flag);
+    static void BeginCommandBuffer(VkCommandBuffer cmdBuf, VkCommandBufferUsageFlags flag);
 
-    void EndAndSubmitCommandBuffer(VkCommandBuffer cmdBuf, VkPipelineStageFlags  waitStageMask, VkFence fence,
+    void EndAndSubmitCommandBuffer(VkCommandBuffer cmdBuf, VkPipelineStageFlags waitStageMask, VkFence fence,
                                    VkSemaphore waitSemaphore, VkSemaphore signalSemaphore);
 
     void QueuePresent(VkSemaphore waitSemaphore, uint32_t imageIndex);
@@ -162,6 +189,10 @@ private:
     void UpdateDescriptorSets();
 
     void DrawImgui(VkImageView view);
+
+
+    // Meshes
+    void LoadMeshes();
 
     void BindAndDrawMesh(const VulkanMesh *mesh);
 };

@@ -5,6 +5,13 @@
 #include "imgui_impl_vulkan.h"
 
 #include <include/VulkanImage.h>
+#include <include/VulkanState.h>
+#include <include/MeshInstance.h>
+
+#include <glm/gtc/type_ptr.hpp>
+
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/matrix_decompose.hpp>
 
 
 UI::UI(SDL_Window *window, VkInstance instance, VkPhysicalDevice physicalDevice, VkDevice device, VkQueue queue, VkDescriptorPool descriptorPool)
@@ -48,3 +55,19 @@ UI::UI(SDL_Window *window, VkInstance instance, VkPhysicalDevice physicalDevice,
     ImGui_ImplVulkan_Init(&infoInit);
     ImGui_ImplVulkan_CreateFontsTexture();
 }
+
+void UI::TransformationMenu(MeshInstance &instance)
+{
+    glm::vec3 scale;
+    glm::quat rotation;
+    glm::vec3 translation;
+    glm::vec3 skew;
+    glm::vec4 perspective;
+    glm::decompose(instance.GetModel(), scale, rotation, translation, skew, perspective);
+
+    ImGui::Begin((instance.GetName() + "Transformation").c_str());
+    ImGui::DragFloat3("Translation", glm::value_ptr(translation));
+    ImGui::DragFloat3("Rotation", glm::value_ptr(scale));
+    ImGui::End();
+}
+

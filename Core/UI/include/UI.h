@@ -1,8 +1,11 @@
 #pragma once
 
-#include <vulkan\vulkan.h>
+#include <string>
 
+#include <vulkan/vulkan.h>
 #include <SDL3/SDL_video.h>
+
+class MeshInstance;
 
 class UI
 {
@@ -14,4 +17,5 @@ public:
 
     ~UI() = default;
 
+    void TransformationMenu(MeshInstance &MeshInstance);
 };

@@ -9,14 +9,19 @@
 
 #include <include/VulkanComputePipeline.h>
 #include <include/VulkanGraphicsPipeline.h>
+#include <include/MeshLoader.h>
+#include <include/MeshInstance.h>
 
-#include "include/MeshLoader.h"
+#include <include/UI.h>
 
 VulkanState::VulkanState(SDL_Window *window, uint32_t width, uint32_t height)
 {
     m_window = window;
     m_width = width;
     m_height = height;
+
+    m_meshLoader = std::make_unique<MeshLoader>();
+    m_ui = std::make_unique<UI>(m_window, m_instance, m_physicalDevice, m_device, m_queue, m_imguiDescriptorPool);
 
     CreateInstance();
     CreatePhysicalDevice();
@@ -39,11 +44,9 @@ VulkanState::VulkanState(SDL_Window *window, uint32_t width, uint32_t height)
         CreateDescriptorSet(setLayout);
     }
 
-
     UpdateDescriptorSets();
 
-    m_meshLoader = std::make_unique<MeshLoader>();
-    m_meshes.push_back(m_meshLoader->LoadMesh("../Assets/Models/Cube.obj", *this));
+    LoadMeshes();
 }
 
 VulkanState::~VulkanState()
@@ -64,13 +67,13 @@ VulkanState::~VulkanState()
         vkDestroyImageView(m_device, m_swapchain.views[i], nullptr);
     }
 
-    for (size_t i = 0; i < m_meshes.size(); i++)
+    for (size_t i = 0; i < m_meshInstances.size(); i++)
     {
-        m_meshes[i]->Destroy();
+        m_meshInstances[i].Destroy();
     }
 
 
-    deletionQueue.flush();
+    deletionQueue.Flush();
 }
 
 void VulkanState::CreateInstance()
@@ -110,7 +113,7 @@ void VulkanState::CreateInstance()
     };
     DEBUG_VK_ASSERT(vkCreateInstance(&infoInstance, nullptr, &m_instance));
 
-    deletionQueue.pushFunction([&]()
+    deletionQueue.PushFunction([&]()
     {
         vkDestroyInstance(m_instance, nullptr);
     });
@@ -195,7 +198,7 @@ void VulkanState::CreateDevice()
     // Get queue
     vkGetDeviceQueue(m_device, 0, 0, &m_queue);
 
-    deletionQueue.pushFunction([&]()
+    deletionQueue.PushFunction([&]()
     {
         vkDestroyDevice(m_device, nullptr);
     });
@@ -212,7 +215,7 @@ void VulkanState::CreateCommandPool()
     };
     DEBUG_VK_ASSERT(vkCreateCommandPool(m_device, &infoCommandPool, nullptr, &m_commandPool));
 
-    deletionQueue.pushFunction([&]()
+    deletionQueue.PushFunction([&]()
     {
         vkDestroyCommandPool(m_device, m_commandPool, nullptr);
     });
@@ -222,7 +225,7 @@ void VulkanState::CreateSurface(SDL_Window *window)
 {
     DEBUG_ASSERT(SDL_Vulkan_CreateSurface(window, m_instance, nullptr, &m_surface));
 
-    deletionQueue.pushFunction([&]()
+    deletionQueue.PushFunction([&]()
     {
         vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
     });
@@ -290,7 +293,7 @@ void VulkanState::CreateSwapchain(uint32_t width, uint32_t height)
 
     m_drawImage = std::move(img);
 
-    deletionQueue.pushFunction([&]()
+    deletionQueue.PushFunction([&]()
     {
         vkDestroySwapchainKHR(m_device, m_swapchain.swapchain, nullptr);
     });
@@ -307,7 +310,7 @@ VkSemaphore VulkanState::CreateSemaphore()
     DEBUG_VK_ASSERT(vkCreateSemaphore(m_device, &createInfo, nullptr, &semaphore));
 
     // Pass the copy of the object since there's no such class memeber
-    deletionQueue.pushFunction([this, semaphore]()
+    deletionQueue.PushFunction([this, semaphore]()
     {
         vkDestroySemaphore(m_device, semaphore, nullptr);
     });
@@ -325,7 +328,7 @@ VkFence VulkanState::CreateFence(const VkFenceCreateFlags flag)
     };
     DEBUG_VK_ASSERT(vkCreateFence(m_device, &createInfo, nullptr, &fence));
 
-    deletionQueue.pushFunction([this, fence]()
+    deletionQueue.PushFunction([this, fence]()
     {
         vkDestroyFence(m_device, fence, nullptr);
     });
@@ -347,11 +350,11 @@ void VulkanState::CreateCommandBuffer()
     DEBUG_VK_ASSERT(vkAllocateCommandBuffers(m_device, &infoCmdBuffer, &m_cmdBuf));
     DEBUG_VK_ASSERT(vkAllocateCommandBuffers(m_device, &infoCmdBuffer, &m_immediateCmdBuf));
 
-    deletionQueue.pushFunction([&]()
+    deletionQueue.PushFunction([&]()
     {
         vkFreeCommandBuffers(m_device, m_commandPool, 1, &m_cmdBuf);
     });
-    deletionQueue.pushFunction([&]()
+    deletionQueue.PushFunction([&]()
     {
         vkFreeCommandBuffers(m_device, m_commandPool, 1, &m_immediateCmdBuf);
     });
@@ -379,7 +382,7 @@ void VulkanState::CreateDescriptorPool()
 
     DEBUG_VK_ASSERT(vkCreateDescriptorPool(m_device, &infoPool, nullptr, &m_descriptorPool));
 
-    deletionQueue.pushFunction([&]()
+    deletionQueue.PushFunction([&]()
     {
         vkDestroyDescriptorPool(m_device, m_descriptorPool, nullptr);
     });
@@ -405,7 +408,7 @@ void VulkanState::CreateDescriptorPool()
     infoPool.pPoolSizes = poolSizes;
 
     DEBUG_VK_ASSERT(vkCreateDescriptorPool(m_device, &infoPool, nullptr, &m_imguiDescriptorPool));
-    deletionQueue.pushFunction([&]()
+    deletionQueue.PushFunction([&]()
     {
         vkDestroyDescriptorPool(m_device, m_imguiDescriptorPool, nullptr);
     });
@@ -579,6 +582,14 @@ void VulkanState::CreatePipelines()
     }
 }
 
+void VulkanState::ShowUI()
+{
+    uiQueue.show();
+    //some imgui UI to test
+    ImGui::ShowDemoWindow();
+}
+
+
 void VulkanState::WaitAndResetFence(VkFence fence, uint64_t timeout)
 {
     DEBUG_VK_ASSERT(vkWaitForFences(m_device, 1, &fence, true, timeout));
@@ -734,10 +745,22 @@ void VulkanState::DrawGeometry()
     vkCmdSetScissor(m_cmdBuf, 0, 1, &renderAreas);
 
     // vkCmdDraw(m_cmdBuf, 3, 1, 0, 0);
-    BindAndDrawMesh(m_meshes[0]);
+    // BindAndDrawMesh(m_meshes[0]);
 
     vkCmdEndRendering(m_cmdBuf);
 }
+
+void VulkanState::LoadMeshes()
+{
+    // m_meshes.push_back(m_meshLoader->LoadMesh("../Assets/Models/Cube.obj", *this));
+    // m_meshes
+    m_meshInstances.emplace_back(MeshInstance(m_meshLoader->LoadMesh("../Assets/Models/Cube.obj", *this)));
+    uiQueue.PushFunction([&]()
+    {
+        m_ui->TransformationMenu(m_meshInstances[0]);
+    });
+}
+
 
 void VulkanState::BindAndDrawMesh(const VulkanMesh *mesh)
 {

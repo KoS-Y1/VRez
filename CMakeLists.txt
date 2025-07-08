@@ -5,6 +5,8 @@ set(CMAKE_CXX_STANDARD 20)
 
 find_package(Vulkan REQUIRED )
 
+add_definitions(-D GLM_ENABLE_EXPERIMENTAL)
+
 add_subdirectory(Core)
 add_subdirectory(Util)
 add_subdirectory(External)
