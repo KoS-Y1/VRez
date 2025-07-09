@@ -149,6 +149,7 @@ private:
 
     std::unique_ptr<UI> m_ui;
 
+
     void CreateInstance();
 
     void CreatePhysicalDevice();
@@ -194,5 +195,5 @@ private:
     // Meshes
     void LoadMeshes();
 
-    void BindAndDrawMesh(const VulkanMesh *mesh);
+    void BindAndDrawMesh(const MeshInstance &instance);
 };

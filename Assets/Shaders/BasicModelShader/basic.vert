@@ -8,11 +8,18 @@ layout (location = 0) out vec3 vWorldPositon;
 layout (location = 1) out vec3 vWorldNormal;
 layout (location = 2) out vec2 vTexcoord;
 
+layout (push_constant) uniform PushConstantData
+{
+    mat4 inModel;
+};
+
 void main()
 {
-    gl_Position = vec4(inPosition, 1.0f);
 
-    vWorldPositon = inPosition;
-    vWorldNormal = inNormal;
+    vWorldPositon = (inModel * vec4(inPosition, 1.0f)).xyz;
+    vWorldNormal = (inModel * vec4(inNormal, 1.0f)).xyz;
     vTexcoord = inTexcoord;
+
+    gl_Position = vec4(vWorldPositon, 1.0f);
+
 }

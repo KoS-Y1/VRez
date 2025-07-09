@@ -29,6 +29,7 @@ void VulkanMesh::Swap(VulkanMesh &other)
 {
     std::swap(m_vertexBuffer, other.m_vertexBuffer);
     std::swap(m_vertexCount, other.m_vertexCount);
+    std::swap(m_name, other.m_name);
 }
 
 void VulkanMesh::Destroy()

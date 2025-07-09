@@ -10,17 +10,17 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/gtx/matrix_decompose.hpp>
+#include "glm/gtx/euler_angles.hpp"
 
 
-UI::UI(SDL_Window *window, VkInstance instance, VkPhysicalDevice physicalDevice, VkDevice device, VkQueue queue, VkDescriptorPool descriptorPool)
+UI::UI(SDL_Window *window, VkInstance instance, VkPhysicalDevice physicalDevice, VkDevice device, VkQueue queue,
+       VkDescriptorPool descriptorPool)
 {
     ImGui::CreateContext();
     ImGui_ImplSDL3_InitForVulkan(window);
-    ImGuiIO& io = ImGui::GetIO();
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+    ImGuiIO &io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad; // Enable Gamepad Controls
 
     VkFormat colorFormat = IMG_FORMAT;
 
@@ -37,7 +37,7 @@ UI::UI(SDL_Window *window, VkInstance instance, VkPhysicalDevice physicalDevice,
 
     ImGui_ImplVulkan_InitInfo infoInit
     {
-        .ApiVersion =  VK_API_VERSION_1_4,
+        .ApiVersion = VK_API_VERSION_1_4,
         .Instance = instance,
         .PhysicalDevice = physicalDevice,
         .Device = device,
@@ -58,16 +58,40 @@ UI::UI(SDL_Window *window, VkInstance instance, VkPhysicalDevice physicalDevice,
 
 void UI::TransformationMenu(MeshInstance &instance)
 {
-    glm::vec3 scale;
-    glm::quat rotation;
-    glm::vec3 translation;
-    glm::vec3 skew;
-    glm::vec4 perspective;
-    glm::decompose(instance.GetModel(), scale, rotation, translation, skew, perspective);
+    float min = -10.0f;
+    float max = 10.0f;
+    float step = 0.01f;
+    float minAngle = -360.0f;
+    float maxAngle = 360.0f;
+    float angleStep = 1.0f;
+    bool isReset = false;
 
-    ImGui::Begin((instance.GetName() + "Transformation").c_str());
-    ImGui::DragFloat3("Translation", glm::value_ptr(translation));
-    ImGui::DragFloat3("Rotation", glm::value_ptr(scale));
+    glm::vec3 location = instance.GetLocation();
+    glm::vec3 scale = instance.GetScale();
+    glm::vec3 rotation = glm::eulerAngles(instance.GetRotation());
+
+    ImGui::Begin((instance.GetName() + " Transformation").c_str());
+    ImGui::DragFloat3("Location(x, y, z)", glm::value_ptr(location), step, min, max);
+    ImGui::DragFloat3("Rotate(pitch, yaw, roll)", glm::value_ptr(rotation), angleStep, minAngle, maxAngle);
+    ImGui::DragFloat3("Scale(x, y, z)", glm::value_ptr(scale), step, min, max);
+    if (ImGui::Button("Reset"))
+    {
+        isReset = true;
+    }
     ImGui::End();
-}
 
+    instance.SetLocation(location);
+
+    float yaw = glm::radians(rotation.y);
+    float pitch = glm::radians(rotation.x);
+    float roll = glm::radians(rotation.z);
+    instance.SetRotation(glm::yawPitchRoll(yaw, pitch, roll));
+
+    instance.SetScale(scale);
+
+
+    if (isReset)
+    {
+        instance.Reset();
+    }
+}

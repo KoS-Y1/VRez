@@ -2,31 +2,53 @@
 
 #include <include/VulkanMesh.h>
 
-#include "glm/gtx/transform.hpp"
+
 
 void MeshInstance::Destroy()
 {
-    delete(m_mesh);
+    m_mesh->Destroy();
 }
 
 void MeshInstance::Swap(MeshInstance &other) noexcept
 {
-    m_model = other.m_model;
+    m_transformation = other.m_transformation;
     std::swap(m_mesh, other.m_mesh);
 }
 
-
-void MeshInstance::Translate(const glm::vec3 &translation)
+void MeshInstance::SetLocation(glm::vec3 location)
 {
-    m_model = glm::translate(m_model, translation);
+    m_location = location;
+    UpdateTransformation();
 }
 
-void MeshInstance::Scale(const glm::vec3 &scale)
+void MeshInstance::SetScale(glm::vec3 scale)
 {
-    m_model = glm::scale(m_model, scale);
+    m_scale = scale;
+    UpdateTransformation();
 }
+
+void MeshInstance::SetRotation(glm::quat rotation)
+{
+    m_rotation = rotation;
+    // m_pitchYawRoll
+    UpdateTransformation();
+}
+
+void MeshInstance::SetRotation(glm::vec3 pitchYawRoll)
+{
+    m_pitchYawRoll = pitchYawRoll;
+    // m_rotation =
+        UpdateTransformation();
+}
+
 
 void MeshInstance::Reset()
 {
-    m_model = glm::mat4(1.0f);
+    m_transformation = glm::mat4(1.0f);
+}
+
+void MeshInstance::UpdateTransformation()
+{
+    m_transformation = glm::translate(glm::mat4(1.0f), m_location) * glm::mat4_cast(m_rotation) * glm::scale(
+                           glm::mat4(1.0f), m_scale);
 }

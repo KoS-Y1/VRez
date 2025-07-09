@@ -14,14 +14,13 @@
 
 #include <include/UI.h>
 
+#include "glm/gtx/transform.hpp"
+
 VulkanState::VulkanState(SDL_Window *window, uint32_t width, uint32_t height)
 {
     m_window = window;
     m_width = width;
     m_height = height;
-
-    m_meshLoader = std::make_unique<MeshLoader>();
-    m_ui = std::make_unique<UI>(m_window, m_instance, m_physicalDevice, m_device, m_queue, m_imguiDescriptorPool);
 
     CreateInstance();
     CreatePhysicalDevice();
@@ -45,6 +44,9 @@ VulkanState::VulkanState(SDL_Window *window, uint32_t width, uint32_t height)
     }
 
     UpdateDescriptorSets();
+
+    m_meshLoader = std::make_unique<MeshLoader>();
+    m_ui = std::make_unique<UI>(m_window, m_instance, m_physicalDevice, m_device, m_queue, m_imguiDescriptorPool);
 
     LoadMeshes();
 }
@@ -506,10 +508,6 @@ void VulkanState::CreatePipelines()
     std::vector<std::vector<std::string> > shaderPaths
     {
         {"../Assets/Shaders/gradient.comp"},
-        // {
-        //     "../Assets/Shaders/colored_triangle.vert",
-        //     "../Assets/Shaders/colored_triangle.frag"
-        // }
         {
             "../Assets/Shaders/BasicModelShader/basic.vert",
             "../Assets/Shaders/BasicModelShader/basic.frag"
@@ -549,6 +547,16 @@ void VulkanState::CreatePipelines()
             .offset = 0,
             .size = sizeof(constants)
         }
+
+    };
+
+    std::vector<VkPushConstantRange> graphicsPushConstants
+    {
+        {
+            .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+            .offset = 0,
+            .size = sizeof((glm::mat4()))
+        }
     };
 
     GraphicsPipelineConfig graphicsConfig;
@@ -567,7 +575,7 @@ void VulkanState::CreatePipelines()
             case VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT:
             case VK_SHADER_STAGE_GEOMETRY_BIT:
                 m_pipelines.emplace_back(std::make_unique<VulkanGraphicsPipeline>(m_device, paths, graphicsConfig,
-                    std::vector<DescriptorSetLayoutConfig>{}, std::vector<VkPushConstantRange>{},
+                    std::vector<DescriptorSetLayoutConfig>{}, graphicsPushConstants,
                     std::vector<VkFormat>{IMG_FORMAT}));
                 break;
 
@@ -585,8 +593,6 @@ void VulkanState::CreatePipelines()
 void VulkanState::ShowUI()
 {
     uiQueue.show();
-    //some imgui UI to test
-    ImGui::ShowDemoWindow();
 }
 
 
@@ -744,17 +750,14 @@ void VulkanState::DrawGeometry()
     vkCmdSetViewport(m_cmdBuf, 0, 1, &viewport);
     vkCmdSetScissor(m_cmdBuf, 0, 1, &renderAreas);
 
-    // vkCmdDraw(m_cmdBuf, 3, 1, 0, 0);
-    // BindAndDrawMesh(m_meshes[0]);
+    BindAndDrawMesh(m_meshInstances[0]);
 
     vkCmdEndRendering(m_cmdBuf);
 }
 
 void VulkanState::LoadMeshes()
 {
-    // m_meshes.push_back(m_meshLoader->LoadMesh("../Assets/Models/Cube.obj", *this));
-    // m_meshes
-    m_meshInstances.emplace_back(MeshInstance(m_meshLoader->LoadMesh("../Assets/Models/Cube.obj", *this)));
+    m_meshInstances.emplace_back(m_meshLoader->LoadMesh("../Assets/Models/Cube.obj", *this));
     uiQueue.PushFunction([&]()
     {
         m_ui->TransformationMenu(m_meshInstances[0]);
@@ -762,9 +765,14 @@ void VulkanState::LoadMeshes()
 }
 
 
-void VulkanState::BindAndDrawMesh(const VulkanMesh *mesh)
+void VulkanState::BindAndDrawMesh(const MeshInstance &instance)
 {
     const VkDeviceSize offset = 0;
-    vkCmdBindVertexBuffers(m_cmdBuf, 0, 1, &mesh->GetVertexBuffer(), &offset);
-    vkCmdDraw(m_cmdBuf, mesh->GetVertexCount(), 1, 0, 0);
+
+    glm::mat4 model = instance.GetTransformation();
+
+    vkCmdBindVertexBuffers(m_cmdBuf, 0, 1, &instance.GetMesh()->GetVertexBuffer(), &offset);
+    vkCmdPushConstants(m_cmdBuf, m_pipelines[1]->GetLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0,
+                       sizeof(model), &model);
+    vkCmdDraw(m_cmdBuf, instance.GetMesh()->GetVertexCount(), 1, 0, 0);
 }

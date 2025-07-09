@@ -15,7 +15,8 @@ VulkanMesh *MeshLoader::LoadMesh(const std::string &file, VulkanState &state)
     {
         SDL_Log("Loading mesh from file %s", file.c_str());
         const std::vector<VertexPNT> vertices = Load(file);
-        pair = m_meshes.emplace(file, VulkanMesh(state, file_system::GetFileName(file),vertices.size(), sizeof(VertexPNT), vertices.data())).first;
+        pair = m_meshes.emplace(file, VulkanMesh(state, file_system::GetFileName(file), vertices.size(),
+                                                 sizeof(VertexPNT), vertices.data())).first;
     }
 
     return &pair->second;
@@ -90,7 +91,7 @@ std::vector<VertexPNT> MeshLoader::Load(const std::string file)
                 );
             }
 
-            i+= f;
+            i += f;
         }
     }
 

@@ -26,7 +26,6 @@ void VulkanBuffer::Destroy()
 {
     if (m_device != VK_NULL_HANDLE)
     {
-        // vkDeviceWaitIdle(m_device);
         vkFreeMemory(m_device, m_memory, nullptr);
         vkDestroyBuffer(m_device, m_buffer, nullptr);
     }
