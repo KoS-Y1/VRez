@@ -23,6 +23,7 @@ public:
         glm::vec3 skew;
         glm::vec4 perspective;
         glm::decompose(m_transformation, m_scale, m_rotation, m_location, skew, perspective);
+        m_pitchYawRoll = glm::eulerAngles(m_rotation);
     }
 
     MeshInstance(const MeshInstance &) = delete;
@@ -61,7 +62,7 @@ public:
     [[nodiscard]] const glm::vec3 GetLocation() const { return m_location; }
     [[nodiscard]] const glm::vec3 GetScale() const { return m_scale; }
     [[nodiscard]] const glm::quat GetRotation() const { return m_rotation; }
-    [[nodiscard]] const glm::vec3 GetPitchYawRoll() const { return m_rotation * glm::vec3(0, 0, 1); }
+    [[nodiscard]] const glm::vec3 GetPitchYawRoll() const { return m_pitchYawRoll; }
 
 private:
     VulkanMesh *m_mesh;

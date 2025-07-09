@@ -61,18 +61,30 @@ void UI::TransformationMenu(MeshInstance &instance)
     float min = -10.0f;
     float max = 10.0f;
     float step = 0.01f;
-    float minAngle = -360.0f;
-    float maxAngle = 360.0f;
+
     float angleStep = 1.0f;
+    float minRoll = -180.0f;
+    float maxRoll = 180.0f;
+    float minPitch = -90.0f;
+    float maxPitch = 90.0f;
+    float minYaw = -180.0f;
+    float maxYaw = 180.0f;
+
     bool isReset = false;
 
     glm::vec3 location = instance.GetLocation();
     glm::vec3 scale = instance.GetScale();
-    glm::vec3 rotation = glm::eulerAngles(instance.GetRotation());
+    glm::vec3 pitchYawRoll = instance.GetPitchYawRoll();
+    float yaw = glm::degrees(pitchYawRoll.y);
+    float pitch = glm::degrees(pitchYawRoll.x);
+    float roll = glm::degrees(pitchYawRoll.z);
 
     ImGui::Begin((instance.GetName() + " Transformation").c_str());
     ImGui::DragFloat3("Location(x, y, z)", glm::value_ptr(location), step, min, max);
-    ImGui::DragFloat3("Rotate(pitch, yaw, roll)", glm::value_ptr(rotation), angleStep, minAngle, maxAngle);
+    ImGui::Text("Rotation");
+    ImGui::DragFloat("Yaw", &yaw, angleStep, minYaw, maxYaw);
+    ImGui::DragFloat("Pitch", &pitch, angleStep, minPitch, maxPitch);
+    ImGui::DragFloat("Roll", &roll, angleStep, minRoll, maxRoll);
     ImGui::DragFloat3("Scale(x, y, z)", glm::value_ptr(scale), step, min, max);
     if (ImGui::Button("Reset"))
     {
@@ -82,16 +94,13 @@ void UI::TransformationMenu(MeshInstance &instance)
 
     instance.SetLocation(location);
 
-    float yaw = glm::radians(rotation.y);
-    float pitch = glm::radians(rotation.x);
-    float roll = glm::radians(rotation.z);
-    instance.SetRotation(glm::yawPitchRoll(yaw, pitch, roll));
+    instance.SetRotation(glm::vec3(glm::radians(pitch), glm::radians(yaw), glm::radians(roll)));
 
     instance.SetScale(scale);
-
 
     if (isReset)
     {
         instance.Reset();
     }
+
 }
