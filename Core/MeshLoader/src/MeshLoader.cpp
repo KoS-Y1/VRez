@@ -6,6 +6,16 @@
 
 #include "include/FileSystem.h"
 
+
+void MeshLoader::Destroy()
+{
+    for (auto& [file, mesh] : m_meshes)
+    {
+        mesh.Destroy();
+    }
+}
+
+
 VulkanMesh *MeshLoader::LoadMesh(const std::string &file, VulkanState &state)
 {
     auto pair = m_meshes.find(file);

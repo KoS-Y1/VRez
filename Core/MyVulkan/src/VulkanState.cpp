@@ -69,10 +69,7 @@ VulkanState::~VulkanState()
         vkDestroyImageView(m_device, m_swapchain.views[i], nullptr);
     }
 
-    for (size_t i = 0; i < m_meshInstances.size(); i++)
-    {
-        m_meshInstances[i].Destroy();
-    }
+    m_meshLoader->Destroy();
 
 
     deletionQueue.Flush();

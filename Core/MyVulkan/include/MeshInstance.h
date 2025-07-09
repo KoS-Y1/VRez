@@ -2,7 +2,10 @@
 
 #include <string>
 
+#ifndef GLM_ENABLE_EXPERIMENTAL
 #define GLM_ENABLE_EXPERIMENTAL
+#endif
+
 #include <glm/gtx/matrix_decompose.hpp>
 #include <glm/glm.hpp>
 #include <glm/detail/type_quat.hpp>
@@ -18,7 +21,7 @@ public:
 
     ~MeshInstance() { Destroy(); }
 
-    explicit MeshInstance(VulkanMesh *mesh) : m_mesh(mesh), m_transformation(glm::mat4(1.0f))
+    explicit MeshInstance(const VulkanMesh *mesh) : m_mesh(mesh), m_transformation(glm::mat4(1.0f))
     {
         glm::vec3 skew;
         glm::vec4 perspective;
@@ -65,7 +68,7 @@ public:
     [[nodiscard]] const glm::vec3 GetPitchYawRoll() const { return m_pitchYawRoll; }
 
 private:
-    VulkanMesh *m_mesh;
+    const VulkanMesh *m_mesh;
     glm::mat4 m_transformation;
 
     glm::vec3 m_location;

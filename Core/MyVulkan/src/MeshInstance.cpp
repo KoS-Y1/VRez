@@ -7,7 +7,7 @@
 
 void MeshInstance::Destroy()
 {
-    m_mesh->Destroy();
+    m_mesh = nullptr;
 }
 
 void MeshInstance::Swap(MeshInstance &other) noexcept
@@ -38,18 +38,18 @@ void MeshInstance::SetRotation(glm::quat rotation)
 void MeshInstance::SetRotation(glm::vec3 pitchYawRoll)
 {
     m_pitchYawRoll = pitchYawRoll;
-    m_rotation = glm::quat_cast(glm::yawPitchRoll(m_pitchYawRoll.y, m_pitchYawRoll.x, m_pitchYawRoll.z));
-    UpdateTransformation();
+    m_rotation = glm::quat_cast(glm::yawPitchRoll(m_pitchYawRoll.y,m_pitchYawRoll.x, m_pitchYawRoll.z));
+        UpdateTransformation();
 }
 
 
 void MeshInstance::Reset()
 {
     m_transformation = glm::mat4(1.0f);
-    glm::vec3 skew;
-    glm::vec4 perspective;
-    glm::decompose(m_transformation, m_scale, m_rotation, m_location, skew, perspective);
-    m_pitchYawRoll = glm::eulerAngles(m_rotation);
+      glm::vec3 skew;
+        glm::vec4 perspective;
+        glm::decompose(m_transformation, m_scale, m_rotation, m_location, skew, perspective);
+        m_pitchYawRoll = glm::eulerAngles(m_rotation);
 }
 
 void MeshInstance::UpdateTransformation()

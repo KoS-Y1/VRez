@@ -10,8 +10,6 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
-#include "glm/gtx/euler_angles.hpp"
-
 
 UI::UI(SDL_Window *window, VkInstance instance, VkPhysicalDevice physicalDevice, VkDevice device, VkQueue queue,
        VkDescriptorPool descriptorPool)

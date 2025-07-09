@@ -11,13 +11,15 @@ class MeshLoader
 public:
     MeshLoader() = default;
 
-    ~MeshLoader() = default;
+    ~MeshLoader() { Destroy(); };
 
     MeshLoader(const MeshLoader&) = delete;
     MeshLoader(MeshLoader&&) = delete;
 
     MeshLoader& operator=(const MeshLoader&) = delete;
     MeshLoader& operator=(MeshLoader&&) = delete;
+
+    void Destroy();
 
     VulkanMesh *LoadMesh(const std::string &file, VulkanState &state);
 
