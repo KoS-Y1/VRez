@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <memory>
 
 #ifndef GLM_ENABLE_EXPERIMENTAL
 #define GLM_ENABLE_EXPERIMENTAL
@@ -12,7 +13,7 @@
 
 #include "VulkanMesh.h"
 
-class VulkanMesh;
+class VulkanGraphicsPipeline;
 
 class MeshInstance
 {
@@ -21,7 +22,9 @@ public:
 
     ~MeshInstance() { Destroy(); }
 
-    explicit MeshInstance(const VulkanMesh *mesh) : m_mesh(mesh), m_transformation(glm::mat4(1.0f))
+    MeshInstance(const VulkanMesh *mesh, std::shared_ptr<VulkanGraphicsPipeline> pipeline) : m_mesh(mesh),
+        m_pipeline(pipeline),
+        m_transformation(glm::mat4(1.0f))
     {
         glm::vec3 skew;
         glm::vec4 perspective;
@@ -59,6 +62,8 @@ public:
 
     void Reset();
 
+    void BindAndDraw(VkCommandBuffer cmdBuf) const;
+
     [[nodiscard]] const std::string GetName() const { return m_mesh->GetName(); }
     [[nodiscard]] const glm::mat4 GetTransformation() const { return m_transformation; }
     [[nodiscard]] const VulkanMesh *GetMesh() const { return m_mesh; }
@@ -75,6 +80,8 @@ private:
     glm::vec3 m_scale;
     glm::quat m_rotation;
     glm::vec3 m_pitchYawRoll;
+
+    std::shared_ptr<VulkanGraphicsPipeline> m_pipeline;
 
     void UpdateTransformation();
 };

@@ -3,6 +3,7 @@
 #include <include/VulkanMesh.h>
 
 #include "glm/gtx/euler_angles.hpp"
+#include "include/VulkanGraphicsPipeline.h"
 
 
 void MeshInstance::Destroy()
@@ -56,4 +57,15 @@ void MeshInstance::UpdateTransformation()
 {
     m_transformation = glm::translate(glm::mat4(1.0f), m_location) * glm::mat4_cast(m_rotation) * glm::scale(
                            glm::mat4(1.0f), m_scale);
+}
+
+void MeshInstance::BindAndDraw(VkCommandBuffer cmdBuf) const
+{
+    const VkDeviceSize offset = 0;
+
+
+    vkCmdBindVertexBuffers(cmdBuf, 0, 1, &m_mesh->GetVertexBuffer(), &offset);
+    vkCmdPushConstants(cmdBuf, m_pipeline->GetLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0,
+                      sizeof(m_transformation), &m_transformation);
+    vkCmdDraw(cmdBuf, m_mesh->GetVertexCount(), 1, 0, 0);
 }

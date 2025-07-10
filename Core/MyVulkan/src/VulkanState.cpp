@@ -571,14 +571,14 @@ void VulkanState::CreatePipelines()
             case VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT:
             case VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT:
             case VK_SHADER_STAGE_GEOMETRY_BIT:
-                m_pipelines.emplace_back(std::make_unique<VulkanGraphicsPipeline>(m_device, paths, graphicsConfig,
+                m_pipelines.emplace_back(std::make_shared<VulkanGraphicsPipeline>(m_device, paths, graphicsConfig,
                     std::vector<DescriptorSetLayoutConfig>{}, graphicsPushConstants,
                     std::vector<VkFormat>{IMG_FORMAT}));
                 break;
 
             case VK_SHADER_STAGE_COMPUTE_BIT:
                 m_pipelines.emplace_back(
-                    std::make_unique<VulkanComputePipeline>(m_device, paths, configs, pushConstants));
+                    std::make_shared<VulkanComputePipeline>(m_device, paths, configs, pushConstants));
                 break;
 
             default:
@@ -747,14 +747,16 @@ void VulkanState::DrawGeometry()
     vkCmdSetViewport(m_cmdBuf, 0, 1, &viewport);
     vkCmdSetScissor(m_cmdBuf, 0, 1, &renderAreas);
 
-    BindAndDrawMesh(m_meshInstances[0]);
+    m_meshInstances[0].BindAndDraw(m_cmdBuf);
 
     vkCmdEndRendering(m_cmdBuf);
 }
 
 void VulkanState::LoadMeshes()
 {
-    m_meshInstances.emplace_back(m_meshLoader->LoadMesh("../Assets/Models/Cube.obj", *this));
+    auto defaultGraphicsPipeline = std::dynamic_pointer_cast<VulkanGraphicsPipeline>(m_pipelines[1]);
+    DEBUG_ASSERT(defaultGraphicsPipeline != nullptr);
+    m_meshInstances.emplace_back(m_meshLoader->LoadMesh("../Assets/Models/Cube.obj", *this), defaultGraphicsPipeline);
     uiQueue.PushFunction([&]()
     {
         m_ui->TransformationMenu(m_meshInstances[0]);
@@ -764,12 +766,5 @@ void VulkanState::LoadMeshes()
 
 void VulkanState::BindAndDrawMesh(const MeshInstance &instance)
 {
-    const VkDeviceSize offset = 0;
 
-    glm::mat4 model = instance.GetTransformation();
-
-    vkCmdBindVertexBuffers(m_cmdBuf, 0, 1, &instance.GetMesh()->GetVertexBuffer(), &offset);
-    vkCmdPushConstants(m_cmdBuf, m_pipelines[1]->GetLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0,
-                       sizeof(model), &model);
-    vkCmdDraw(m_cmdBuf, instance.GetMesh()->GetVertexCount(), 1, 0, 0);
 }

@@ -5,13 +5,13 @@
 ## File System
 ~~+ Verify if it's a valid file path~~
 
-## Meshes
-+ ~~Mesh Loader~
-+ Add Mesh Instance class, which has a model matrix handling
-  + Transformation
-    + Translation
-    + Rotation
-    + Scaling
+~~## Meshes~~
++ ~~Mesh Loader~~
++ ~~Add Mesh Instance class, which has a model matrix handling~~
+  + ~~Transformation~~
+    + ~~Translation~~
+    + ~~Rotation~~
+    + ~~Scaling~~
 
 ## Lighting
 + Light
@@ -33,3 +33,21 @@
 + Different kind of textures with corresponding shaders
   + Basic texture mapping
   + Normal mapping...
+
+## Shader Compiler
++ Auto generate pipeline config
+  + PipelineConfig
+    ```c++
+    struct PipelineConfig
+    {
+        enum Type:: Graphics/Compute/...
+        GraphicsConfig *graphicsConfig
+        DescriptorConfig*
+        PushConstantConfig*
+    }
+    ```
+  + Reading from shader file, ~~then compile the shader~~, and return a pipeline config
+  + In VulkanState map<filename, shared_ptr pipeline>(still need a function to decide either pointer to compute/graphics pipeline)
+  + Mesh instance owns a reference to a shared pipeline (shared_ptr to pipeline), and just need to update push constant/descriptor per draw to reuse the pipeline
+  + VulkanPipeline will have a pipeline config parameter Constructor no need to take that many parameters, just use the pipeline config returned by the Shader Compiler to create pipeline with corresponding push constant/descriptor
+  + In VulkanState, each frame, update descriptor sets/push constant

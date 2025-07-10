@@ -132,7 +132,7 @@ private:
     VkDescriptorPool m_imguiDescriptorPool = VK_NULL_HANDLE;
 
     VulkanImage m_drawImage;
-    std::vector<std::unique_ptr<VulkanPipeline> > m_pipelines;
+    std::vector<std::shared_ptr<VulkanPipeline> > m_pipelines;
 
     std::unique_ptr<MeshLoader> m_meshLoader;
     std::vector<MeshInstance> m_meshInstances;
