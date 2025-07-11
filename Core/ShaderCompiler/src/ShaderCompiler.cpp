@@ -2,79 +2,42 @@
 
 #include <glslang/Public/ShaderLang.h>
 
-#include "glslang/Public/ShaderLang.h"
+#include "glslang/Include/Types.h"
 #include "SDL3/SDL_log.h"
 #include "SPIRV/GlslangToSpv.h"
 
-// Helper functions for shader compiler
-namespace
+ShaderCompiler::ShaderCompiler(const std::string &source)
 {
-    inline EShLanguage GetShaderType(VkShaderStageFlagBits stage)
+    GetShaderStage(source);
+    CreateShaderProgram(source);
+
+    // TODO
+}
+
+void ShaderCompiler::GetShaderStage(const std::string &source)
+{
+    if (source.ends_with(".vert"))
     {
-        switch (stage)
-        {
-            case VK_SHADER_STAGE_VERTEX_BIT:
-                return EShLangVertex;
-
-            case VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT:
-                return EShLangTessControl;
-
-            case VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT:
-                return EShLangTessEvaluation;
-
-            case VK_SHADER_STAGE_GEOMETRY_BIT:
-                return EShLangGeometry;
-
-            case VK_SHADER_STAGE_FRAGMENT_BIT:
-                return EShLangFragment;
-
-            case VK_SHADER_STAGE_COMPUTE_BIT:
-                return EShLangCompute;
-
-            case VK_SHADER_STAGE_RAYGEN_BIT_KHR:
-                return EShLangRayGen;
-
-            case VK_SHADER_STAGE_ANY_HIT_BIT_KHR:
-                return EShLangAnyHit;
-
-            case VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR:
-                return EShLangClosestHit;
-
-            case VK_SHADER_STAGE_MISS_BIT_KHR:
-                return EShLangMiss;
-
-            case VK_SHADER_STAGE_INTERSECTION_BIT_KHR:
-                return EShLangIntersect;
-
-            case VK_SHADER_STAGE_CALLABLE_BIT_KHR:
-                return EShLangCallable;
-
-            case VK_SHADER_STAGE_MESH_BIT_EXT:
-                return EShLangMesh;
-
-            case VK_SHADER_STAGE_TASK_BIT_EXT:
-                return EShLangTask;
-
-            default:
-                return EShLangVertex;
-        }
+        m_shaderStage = VK_SHADER_STAGE_VERTEX_BIT;
     }
-
+    else if (source.ends_with(".frag"))
+    {
+        m_shaderStage =  VK_SHADER_STAGE_FRAGMENT_BIT;
+    }
+    else if (source.ends_with(".comp"))
+    {
+        m_shaderStage =  VK_SHADER_STAGE_COMPUTE_BIT;
+    }
+    else
+    {
+        SDL_Log("%s is not a valid shader!", source.c_str());
+        exit(EXIT_FAILURE);
+    }
 }
 
-void shader_compiler::Initialize()
+void ShaderCompiler::CreateShaderProgram(const std::string &source)
 {
-    glslang::InitializeProcess();
-}
-
-void shader_compiler::Finalize()
-{
-    glslang::FinalizeProcess();
-}
-
-std::vector<uint32_t> shader_compiler::CompileToSpirv(const std::string &source, VkShaderStageFlagBits shaderStage)
-{
-    TBuiltInResource DefaultTBuiltInResource
+TBuiltInResource DefaultTBuiltInResource
     {
         .maxLights = 32,
         .maxClipPlanes = 6,
@@ -173,7 +136,7 @@ std::vector<uint32_t> shader_compiler::CompileToSpirv(const std::string &source,
         }
     };
 
-    EShLanguage shaderType = GetShaderType(shaderStage);
+    EShLanguage shaderType = GetShaderType();
     glslang::TShader shader(shaderType);
 
     const char *shaderCode = source.c_str();
@@ -189,17 +152,116 @@ std::vector<uint32_t> shader_compiler::CompileToSpirv(const std::string &source,
         exit(EXIT_FAILURE);
     }
 
-    glslang::TProgram program;
-    program.addShader(&shader);
+    m_program.addShader(&shader);
 
-    if (!program.link(EShMsgDefault))
+    if (!m_program.link(EShMsgDefault))
     {
         SDL_Log("Linking Failed: %s", shader.getInfoLog());
         exit(EXIT_FAILURE);
     }
+}
 
+EShLanguage ShaderCompiler::GetShaderType()
+{
+    switch (m_shaderStage)
+    {
+        case VK_SHADER_STAGE_VERTEX_BIT:
+            return EShLangVertex;
+
+        case VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT:
+            return EShLangTessControl;
+
+        case VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT:
+            return EShLangTessEvaluation;
+
+        case VK_SHADER_STAGE_GEOMETRY_BIT:
+            return EShLangGeometry;
+
+        case VK_SHADER_STAGE_FRAGMENT_BIT:
+            return EShLangFragment;
+
+        case VK_SHADER_STAGE_COMPUTE_BIT:
+            return EShLangCompute;
+
+        case VK_SHADER_STAGE_RAYGEN_BIT_KHR:
+            return EShLangRayGen;
+
+        case VK_SHADER_STAGE_ANY_HIT_BIT_KHR:
+            return EShLangAnyHit;
+
+        case VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR:
+            return EShLangClosestHit;
+
+        case VK_SHADER_STAGE_MISS_BIT_KHR:
+            return EShLangMiss;
+
+        case VK_SHADER_STAGE_INTERSECTION_BIT_KHR:
+            return EShLangIntersect;
+
+        case VK_SHADER_STAGE_CALLABLE_BIT_KHR:
+            return EShLangCallable;
+
+        case VK_SHADER_STAGE_MESH_BIT_EXT:
+            return EShLangMesh;
+
+        case VK_SHADER_STAGE_TASK_BIT_EXT:
+            return EShLangTask;
+
+        default:
+            return EShLangVertex;
+    }
+}
+
+std::vector<uint32_t> ShaderCompiler::CompileToSpirv()
+{
     std::vector<uint32_t> spirv;
-    glslang::GlslangToSpv(*program.getIntermediate(shaderType), spirv);
+    glslang::GlslangToSpv(*m_program.getIntermediate(GetShaderType()), spirv);
 
     return spirv;
+}
+
+// TODO: Currently the function only gets info of uniforms, need to get info of storages
+// But is that really needed? So far the project is only planned to use small size data in the shader
+std::vector<VkDescriptorSetLayoutCreateInfo *> ShaderCompiler::GetDescriptorSetLayoutInfos()
+{
+    std::vector<VkDescriptorSetLayoutCreateInfo *> descriptorSetLayoutInfos;
+
+    for (size_t i = 0; i < m_program.getNumUniformVariables(); ++i)
+    {
+        const glslang::TObjectReflection& uniform = m_program.getUniform(i);
+
+        if (!uniform.getType()->getQualifier().isPushConstant())
+        {
+            VkDescriptorSetLayoutCreateInfo infoLayout
+            {
+                .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+                .pNext = nullptr,
+                .flags = 0,
+                .bindingCount = // TODO: binding count is based on the bindings 
+            };
+        }
+    }
+}
+
+std::vector<VkPushConstantRange> ShaderCompiler::GetPushConstantRanges()
+{
+    std::vector<VkPushConstantRange> pushConstantRanges;
+
+    for (size_t i = 0; i < m_program.getNumUniformVariables(); ++i)
+    {
+        const glslang::TObjectReflection& uniform = m_program.getUniform(i);
+
+        if (uniform.getType()->getQualifier().isPushConstant())
+        {
+            VkPushConstantRange pushConstantRange
+            {
+                .stageFlags = static_cast<VkShaderStageFlags>(m_shaderStage),
+                .offset = static_cast<uint32_t>(uniform.offset),
+                .size = static_cast<uint32_t> (uniform.size)
+
+            };
+            pushConstantRanges.push_back(pushConstantRange);
+        }
+    }
+    return pushConstantRanges;
 }

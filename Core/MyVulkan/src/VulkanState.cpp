@@ -756,7 +756,7 @@ void VulkanState::LoadMeshes()
 {
     auto defaultGraphicsPipeline = std::dynamic_pointer_cast<VulkanGraphicsPipeline>(m_pipelines[1]);
     DEBUG_ASSERT(defaultGraphicsPipeline != nullptr);
-    m_meshInstances.emplace_back(m_meshLoader->LoadMesh("../Assets/Models/Cube.obj", *this), defaultGraphicsPipeline);
+    m_meshInstances.emplace_back(m_meshLoader->LoadMesh("../Assets/Models/Cube.obj", *this),defaultGraphicsPipeline);
     uiQueue.PushFunction([&]()
     {
         m_ui->TransformationMenu(m_meshInstances[0]);

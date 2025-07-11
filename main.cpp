@@ -41,7 +41,7 @@ int main(void)
     atexit(SDL_Vulkan_UnloadLibrary);
 
     // Initi glslang shader compiler
-    shader_compiler::Initialize();
+    glslang::InitializeProcess();
 
     // Init SDL window
     Window window;
@@ -58,7 +58,7 @@ int main(void)
     //
     // std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-    shader_compiler::Finalize();
+    glslang::FinalizeProcess();
 
     return 0;
 }

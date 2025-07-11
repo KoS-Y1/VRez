@@ -1,8 +1,6 @@
 #include <include/VulkanUtil.h>
 #include <SDL3/SDL.h>
 
-#include "../../../External/SDL/src/render/gpu/shaders/linepoint.vert.dxil.h"
-
 void vk_util::CmdImageLayoutTransition(VkCommandBuffer cmdBuf, VkImage image, VkImageLayout oldLayout,
                                        VkImageLayout newLayout, VkImageAspectFlags aspect, VkAccessFlags srcAccess,
                                        VkAccessFlags dstAccess)
@@ -98,26 +96,6 @@ VkImageSubresourceLayers vk_util::GetImageSubresourceLayers(VkImageAspectFlags a
     return subresourceLayers;
 }
 
-VkShaderStageFlagBits vk_util::GetStage(const std::string path)
-{
-    if (path.ends_with(".vert"))
-    {
-        return VK_SHADER_STAGE_VERTEX_BIT;
-    }
-    else if (path.ends_with(".frag"))
-    {
-        return VK_SHADER_STAGE_FRAGMENT_BIT;
-    }
-    else if (path.ends_with(".comp"))
-    {
-        return VK_SHADER_STAGE_COMPUTE_BIT;
-    }
-    else
-    {
-        SDL_Log("%s is not a valid shader!", path.c_str());
-        exit(EXIT_FAILURE);
-    }
-}
 
 VkRenderingAttachmentInfo vk_util::GetRenderingAttachmentInfo(VkImageView view, VkImageLayout layout,
                                                               VkClearValue *clear)
@@ -144,7 +122,7 @@ VkRenderingAttachmentInfo vk_util::GetRenderingAttachmentInfo(VkImageView view, 
     return infoAttachment;
 }
 
-VkRenderingInfo vk_util::GetRenderingInfo(VkRect2D area, VkRenderingAttachmentInfo *colorAttachement)
+VkRenderingInfo vk_util::GetRenderingInfo(VkRect2D area, VkRenderingAttachmentInfo *colorAttachment)
 {
     VkRenderingInfo infoRendering
     {
@@ -155,7 +133,7 @@ VkRenderingInfo vk_util::GetRenderingInfo(VkRect2D area, VkRenderingAttachmentIn
         .layerCount = 1,
         .viewMask = 0,
         .colorAttachmentCount = 1,
-        .pColorAttachments = colorAttachement,
+        .pColorAttachments = colorAttachment,
         .pDepthAttachment = nullptr,
         .pStencilAttachment = nullptr,
     };

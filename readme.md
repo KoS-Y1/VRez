@@ -35,19 +35,13 @@
   + Normal mapping...
 
 ## Shader Compiler
-+ Auto generate pipeline config
-  + PipelineConfig
-    ```c++
-    struct PipelineConfig
-    {
-        enum Type:: Graphics/Compute/...
-        GraphicsConfig *graphicsConfig
-        DescriptorConfig*
-        PushConstantConfig*
-    }
-    ```
-  + Reading from shader file, ~~then compile the shader~~, and return a pipeline config
-  + In VulkanState map<filename, shared_ptr pipeline>(still need a function to decide either pointer to compute/graphics pipeline)
-  + Mesh instance owns a reference to a shared pipeline (shared_ptr to pipeline), and just need to update push constant/descriptor per draw to reuse the pipeline
-  + VulkanPipeline will have a pipeline config parameter Constructor no need to take that many parameters, just use the pipeline config returned by the Shader Compiler to create pipeline with corresponding push constant/descriptor
-  + In VulkanState, each frame, update descriptor sets/push constant
++ Parse to get the descrirptor set layout and push constant info with a given glsl file
++ Reading from shader file, ~~then compile the shader~~, and return a pipeline config
++ In VulkanState map<filename, shared_ptr pipeline>(still need a function to decide either pointer to compute/graphics pipeline)
++ ~~Mesh instance owns a reference to a shared pipeline (shared_ptr to pipeline), and just need to update push constant/descriptor per draw to reuse the pipeline~~
++ In VulkanState, each frame, update descriptor sets/push constant
++ Feature to compile until shader header(#include <name.glsl> in shader file)
++ VulkanPipeline will directly create descriptor set layout and pipeline with the parsed descriptor set layout and push constant info 
+
+## RAII
+  + Avoid to use raw pointer, use unique_ptr, shared_ptr or weak_ptr if possible
