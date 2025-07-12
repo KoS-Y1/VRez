@@ -2,37 +2,27 @@
 
 #include "Debug.h"
 
-VulkanGraphicsPipeline::VulkanGraphicsPipeline(VkDevice device, const std::vector<std::string> &paths,
-                                               const GraphicsPipelineConfig &config,
-                                               const std::vector<DescriptorSetLayoutConfig> &descriptorConfigs,
-                                               const std::vector<VkPushConstantRange> &constantRange,
-                                               const std::vector<VkFormat> &colorFormats,
-                                               const VkFormat depthFormat, VkFormat stencilFormat)
+#include <include/ShaderCompiler.h>
+
+VulkanGraphicsPipeline::VulkanGraphicsPipeline(VkDevice device, const std::vector<std::string> &paths, const GraphicsPipelineConfig &config)
 {
     m_device = device;
     m_config = config;
-    m_colorFormats = colorFormats;
-    m_depthFormat = depthFormat;
-    m_stencilFormat = stencilFormat;
-    CreateDescriptorSetLayout(descriptorConfigs);
-    CreateLayout(constantRange);
-    CreatePipeline(paths);
+
+    ShaderCompiler shaderCompiler(paths);
+    CreateDescriptorSetLayout(shaderCompiler.GetDescriptorSetLayoutInfos());
+    m_pushConstantRanges = shaderCompiler.GetPushConstantRanges();
+    CreateLayout();
 }
 
-void VulkanGraphicsPipeline::CreatePipeline(const std::vector<std::string> &paths)
+
+void VulkanGraphicsPipeline::CreatePipeline(const ShaderCompiler &shaderCompiler)
 {
     // Create all shader modules first
-    for (auto &path: paths)
-    {
-        CreateShaderModule(path);
-    }
+    CreateShaderModules(shaderCompiler);
 
     // Create all shader stages with the created shader modules
-    std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
-    for (size_t i = 0; i < paths.size(); i++)
-    {
-        shaderStages.push_back(CreateShaderStage(paths[i], i));
-    }
+    std::vector<VkPipelineShaderStageCreateInfo> shaderStages = CreateShaderStages();
 
     // Using dynamic rendering
     VkPipelineRenderingCreateInfo infoRendering
@@ -40,12 +30,11 @@ void VulkanGraphicsPipeline::CreatePipeline(const std::vector<std::string> &path
         .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO,
         .pNext = nullptr,
         .viewMask = 0,
-        .colorAttachmentCount = static_cast<uint32_t>(m_colorFormats.size()),
-        .pColorAttachmentFormats = m_colorFormats.data(),
-        .depthAttachmentFormat = m_depthFormat,
-        .stencilAttachmentFormat = m_stencilFormat
+        .colorAttachmentCount = static_cast<uint32_t>(m_config.colorFormats.size()),
+        .pColorAttachmentFormats = m_config.colorFormats.data(),
+        .depthAttachmentFormat = m_config.depthFormat,
+        .stencilAttachmentFormat = m_config.stencilFormat,
     };
-
 
 
     VkPipelineInputAssemblyStateCreateInfo infoInputAssembly

@@ -14,7 +14,6 @@
 
 #include <include/UI.h>
 
-#include "glm/gtx/transform.hpp"
 
 VulkanState::VulkanState(SDL_Window *window, uint32_t width, uint32_t height)
 {
@@ -38,12 +37,8 @@ VulkanState::VulkanState(SDL_Window *window, uint32_t width, uint32_t height)
     CreateDescriptorPool();
     CreatePipelines();
 
-    for (auto &setLayout: m_pipelines[0]->GetDescriptorSetLayouts())
-    {
-        CreateDescriptorSet(setLayout);
-    }
-
-    UpdateDescriptorSets();
+    m_computeDescriptorSet = CreateDescriptorSet(m_pipelines[0]->GetDescriptorSetLayouts()[0]);
+    // m_uniformViewDescriptorSet = CreateDescriptorSet(m_pipelines[1]->GetDescriptorSetLayouts()[0]);
 
     m_meshLoader = std::make_unique<MeshLoader>();
     m_ui = std::make_unique<UI>(m_window, m_instance, m_physicalDevice, m_device, m_queue, m_imguiDescriptorPool);
@@ -55,7 +50,8 @@ VulkanState::~VulkanState()
 {
     WaitIdle();
 
-    vkFreeDescriptorSets(m_device, m_descriptorPool, descriptorSets.size(), descriptorSets.data());
+    vkFreeDescriptorSets(m_device, m_descriptorPool, 1, &m_computeDescriptorSet);
+    vkFreeDescriptorSets(m_device, m_descriptorPool, 1, &m_uniformViewDescriptorSet);
 
     for (size_t i = 0; i < m_pipelines.size(); ++i)
     {
@@ -413,7 +409,7 @@ void VulkanState::CreateDescriptorPool()
     });
 }
 
-void VulkanState::CreateDescriptorSet(const VkDescriptorSetLayout layout)
+VkDescriptorSet VulkanState::CreateDescriptorSet(const VkDescriptorSetLayout layout)
 {
     VkDescriptorSet set = VK_NULL_HANDLE;
 
@@ -428,7 +424,7 @@ void VulkanState::CreateDescriptorSet(const VkDescriptorSetLayout layout)
 
     DEBUG_VK_ASSERT(vkAllocateDescriptorSets(m_device, &infoSet, &set));
 
-    descriptorSets.push_back(std::move(set));
+    return set;
 }
 
 
@@ -502,85 +498,33 @@ void VulkanState::Present()
 
 void VulkanState::CreatePipelines()
 {
-    std::vector<std::vector<std::string> > shaderPaths
+    std::vector<std::pair<std::vector<std::string>, PipelineType> > shaderSources
     {
-        {"../Assets/Shaders/gradient.comp"},
+        // {{"../Assets/Shaders/gradient.comp"}, PipelineType::Compute},
         {
-            "../Assets/Shaders/BasicModelShader/basic.vert",
-            "../Assets/Shaders/BasicModelShader/basic.frag"
-        }
-    };
-
-    // TODO: This is just for testing, update this in the future, need better writing
-    std::vector<VkDescriptorSetLayoutBinding> bindings;
-    VkDescriptorSetLayoutBinding binding
-    {
-        .binding = 0,
-        .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
-        .descriptorCount = 1,
-        .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
-        .pImmutableSamplers = nullptr
-    };
-    bindings.push_back(binding);
-
-    DescriptorSetLayoutConfig config
-    {
-        .flag = 0,
-        .bindings = bindings,
-    };
-
-    std::vector<DescriptorSetLayoutConfig> configs;
-    configs.push_back(config);
-
-    std::vector<glm::vec4> constants
-    {
-        glm::vec4(0.0f, 1.0f, 0.0f, 1.0f),
-        glm::vec4(0.0f, 0.0f, 1.0f, 1.0f),
-    };
-    std::vector<VkPushConstantRange> pushConstants
-    {
-        {
-            .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
-            .offset = 0,
-            .size = sizeof(constants)
-        }
-
-    };
-
-    std::vector<VkPushConstantRange> graphicsPushConstants
-    {
-        {
-            .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
-            .offset = 0,
-            .size = sizeof((glm::mat4()))
+            {
+                "../Assets/Shaders/BasicModelShader/basic.vert",
+                "../Assets/Shaders/BasicModelShader/basic.frag"
+            },
+            PipelineType::Graphics
         }
     };
 
     GraphicsPipelineConfig graphicsConfig;
     graphicsConfig.infoVertex = VertexPNT::GetVertexInputStateCreateInfo();
+    graphicsConfig.colorFormats = std::vector<VkFormat>{IMG_FORMAT};
 
-    for (const auto &paths: shaderPaths)
+    for (const auto &source: shaderSources)
     {
-        // Get the shader stage from the first passed shader code
-        VkShaderStageFlagBits stage = vk_util::GetStage(paths[0]);
-
-        switch (stage)
+        switch (source.second)
         {
-            case VK_SHADER_STAGE_VERTEX_BIT:
-            case VK_SHADER_STAGE_FRAGMENT_BIT:
-            case VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT:
-            case VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT:
-            case VK_SHADER_STAGE_GEOMETRY_BIT:
-                m_pipelines.emplace_back(std::make_shared<VulkanGraphicsPipeline>(m_device, paths, graphicsConfig,
-                    std::vector<DescriptorSetLayoutConfig>{}, graphicsPushConstants,
-                    std::vector<VkFormat>{IMG_FORMAT}));
+            case PipelineType::Compute:
+                m_pipelines.emplace_back(std::make_shared<VulkanComputePipeline>(m_device, source.first));
                 break;
-
-            case VK_SHADER_STAGE_COMPUTE_BIT:
+            case PipelineType::Graphics:
                 m_pipelines.emplace_back(
-                    std::make_shared<VulkanComputePipeline>(m_device, paths, configs, pushConstants));
+                    std::make_shared<VulkanGraphicsPipeline>(m_device, source.first, graphicsConfig));
                 break;
-
             default:
                 break;
         }
@@ -659,7 +603,7 @@ void VulkanState::DrawBackground()
     // Compute pipeline to dispatch
     vkCmdBindPipeline(m_cmdBuf, VK_PIPELINE_BIND_POINT_COMPUTE, m_pipelines[0]->GetPipeline());
     vkCmdBindDescriptorSets(m_cmdBuf, VK_PIPELINE_BIND_POINT_COMPUTE, m_pipelines[0]->GetLayout(), 0, 1,
-                            &descriptorSets[0],
+                            &m_computeDescriptorSet,
                             0,
                             nullptr);
 
@@ -674,7 +618,7 @@ void VulkanState::DrawBackground()
 }
 
 // TODO: This should not belong here
-void VulkanState::UpdateDescriptorSets()
+void VulkanState::OneTimeUpdateDescriptorSets()
 {
     VkDescriptorImageInfo infoImage
     {
@@ -687,7 +631,7 @@ void VulkanState::UpdateDescriptorSets()
     {
         .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
         .pNext = nullptr,
-        .dstSet = descriptorSets[0],
+        .dstSet = m_computeDescriptorSet,
         .dstBinding = 0,
         .dstArrayElement = 0,
         .descriptorCount = 1,
@@ -756,7 +700,7 @@ void VulkanState::LoadMeshes()
 {
     auto defaultGraphicsPipeline = std::dynamic_pointer_cast<VulkanGraphicsPipeline>(m_pipelines[1]);
     DEBUG_ASSERT(defaultGraphicsPipeline != nullptr);
-    m_meshInstances.emplace_back(m_meshLoader->LoadMesh("../Assets/Models/Cube.obj", *this),defaultGraphicsPipeline);
+    m_meshInstances.emplace_back(m_meshLoader->LoadMesh("../Assets/Models/Cube.obj", *this), defaultGraphicsPipeline);
     uiQueue.PushFunction([&]()
     {
         m_ui->TransformationMenu(m_meshInstances[0]);
@@ -766,5 +710,4 @@ void VulkanState::LoadMeshes()
 
 void VulkanState::BindAndDrawMesh(const MeshInstance &instance)
 {
-
 }

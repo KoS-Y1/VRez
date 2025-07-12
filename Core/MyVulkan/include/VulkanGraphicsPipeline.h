@@ -1,8 +1,9 @@
 #pragma once
+#include "VulkanPipeline.h"
 
 #include <vulkan/vulkan.h>
 
-#include "VulkanPipeline.h"
+#include <string>
 
 struct GraphicsPipelineConfig
 {
@@ -15,6 +16,10 @@ struct GraphicsPipelineConfig
     VkBool32 depthWriteEnable = VK_FALSE;
     VkCompareOp compareOp = VK_COMPARE_OP_ALWAYS;
     const VkPipelineVertexInputStateCreateInfo *infoVertex;
+
+    std::vector<VkFormat> colorFormats {};
+    VkFormat depthFormat;
+    VkFormat stencilFormat;
 };
 
 class VulkanGraphicsPipeline : public VulkanPipeline
@@ -22,19 +27,10 @@ class VulkanGraphicsPipeline : public VulkanPipeline
 public:
     VulkanGraphicsPipeline() = delete;
 
-    VulkanGraphicsPipeline(VkDevice device, const std::vector<std::string> &paths, const GraphicsPipelineConfig &config,
-                           const std::vector<DescriptorSetLayoutConfig> &descriptorConfigs = {},
-                           const std::vector<VkPushConstantRange> &constantRange = {},
-                           const std::vector<VkFormat> &colorFormats = {},
-                           const VkFormat depthFormat = VK_FORMAT_UNDEFINED,
-                           const VkFormat stencilFormat = VK_FORMAT_UNDEFINED);
+    VulkanGraphicsPipeline(VkDevice device, const std::vector<std::string> &paths, const GraphicsPipelineConfig &config);
 
 private:
     GraphicsPipelineConfig m_config;
-    std::vector<VkFormat> m_colorFormats;
-    VkFormat m_depthFormat;
-    VkFormat m_stencilFormat;
 
-    void CreatePipeline(const std::vector<std::string> &paths);
-
+    void CreatePipeline(const ShaderCompiler &shaderCompiler);
 };

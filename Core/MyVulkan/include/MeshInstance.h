@@ -22,15 +22,14 @@ public:
 
     ~MeshInstance() { Destroy(); }
 
-    MeshInstance(const VulkanMesh *mesh, std::shared_ptr<VulkanGraphicsPipeline> pipeline) : m_mesh(mesh),
-        m_pipeline(pipeline),
-        m_transformation(glm::mat4(1.0f))
-    {
-        glm::vec3 skew;
-        glm::vec4 perspective;
-        glm::decompose(m_transformation, m_scale, m_rotation, m_location, skew, perspective);
-        m_pitchYawRoll = glm::eulerAngles(m_rotation);
-    }
+    MeshInstance(const VulkanMesh *mesh, std::shared_ptr<VulkanGraphicsPipeline> pipeline);
+
+    MeshInstance(const VulkanMesh *mesh, std::shared_ptr<VulkanGraphicsPipeline> pipeline, glm::vec3 location,
+                 glm::vec3 pitchYawRoll, glm::vec3 scale);
+
+    MeshInstance(const VulkanMesh *mesh, std::shared_ptr<VulkanGraphicsPipeline> pipeline, glm::vec3 location,
+                 glm::quat rotation, glm::vec3 scale);
+
 
     MeshInstance(const MeshInstance &) = delete;
 
@@ -63,6 +62,8 @@ public:
     void Reset();
 
     void BindAndDraw(VkCommandBuffer cmdBuf) const;
+
+    void UpdateDescriptorSets(const std::vector<VkWriteDescriptorSet> &writeSets);
 
     [[nodiscard]] const std::string GetName() const { return m_mesh->GetName(); }
     [[nodiscard]] const glm::mat4 GetTransformation() const { return m_transformation; }

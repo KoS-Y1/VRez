@@ -8,23 +8,23 @@ layout (location = 0) out vec3 vWorldPositon;
 layout (location = 1) out vec3 vWorldNormal;
 layout (location = 2) out vec2 vTexcoord;
 
-layout (push_constant) uniform PushConstantData
+
+layout (set = 0, binding = 0) uniform UniformViewData
 {
-    mat4 inModel;
+    mat4 uView;
+    mat4 uProjecton;
 };
 
-//layout (set = 0, binding = 0) uniform UniformViewData
-//{
-//    mat4 uView;
-//    mat4 uProjecton;
-//};
-
+layout (push_constant) uniform PC_PushConstantData
+{
+    mat4 PC_inModel;
+};
 
 void main()
 {
 
-    vWorldPositon = (inModel * vec4(inPosition, 1.0f)).xyz;
-    vWorldNormal = (inModel * vec4(inNormal, 1.0f)).xyz;
+    vWorldPositon = (PC_inModel * vec4(inPosition, 1.0f)).xyz;
+    vWorldNormal = (PC_inModel * vec4(inNormal, 1.0f)).xyz;
     vTexcoord = inTexcoord;
 
 //    gl_Position = uView * vec4(vWorldPositon, 1.0f);

@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 
 #include <vulkan/vulkan.h>
 
@@ -12,9 +13,9 @@ class ShaderCompiler
 public:
     ShaderCompiler() = delete;
 
-    explicit ShaderCompiler(const std::string &source);
+    explicit ShaderCompiler(const std::vector<std::string> &sources);
 
-    ~ShaderCompiler() = default;
+    ~ShaderCompiler();
 
     ShaderCompiler(const ShaderCompiler &) = delete;
 
@@ -24,19 +25,30 @@ public:
 
     ShaderCompiler &operator=(ShaderCompiler &&) = delete;
 
-    std::vector<uint32_t> CompileToSpirv();
+    [[nodiscard]] std::map<VkShaderStageFlagBits, std::vector<uint32_t>>  CompileToSpirv() const { return m_spirvs; }
 
-    std::vector<VkDescriptorSetLayoutCreateInfo *> GetDescriptorSetLayoutInfos();
+    [[nodiscard]] std::vector<VkDescriptorSetLayoutCreateInfo> GetDescriptorSetLayoutInfos() const
+    {
+        return m_descriptorSetLayoutInfos;
+    }
 
-    std::vector<VkPushConstantRange> GetPushConstantRanges();
+    [[nodiscard]] std::vector<VkPushConstantRange> GetPushConstantRanges() const { return m_pushConstantRanges; }
 
 private:
-    VkShaderStageFlagBits m_shaderStage;
-    glslang::TProgram m_program;
+    std::map<std::uint32_t, std::vector<VkDescriptorSetLayoutBinding> > m_bindingsPerSet;
+    std::vector<VkDescriptorSetLayoutCreateInfo> m_descriptorSetLayoutInfos;
+    std::vector<VkPushConstantRange> m_pushConstantRanges;
+    std::map<VkShaderStageFlagBits, std::vector<uint32_t>> m_spirvs;
 
-    void GetShaderStage(const std::string &source);
-    void CreateShaderProgram(const std::string &source);
+    VkShaderStageFlagBits GetShaderStage(const std::string &source);
 
-    // Helper functions
-    EShLanguage GetShaderType();
+    EShLanguage GetShaderType(VkShaderStageFlagBits shaderStage);
+
+    VkDescriptorType GetDescriptorType(const glslang::TObjectReflection &uniform);
+
+    void Parse(const std::string &source);
+
+    void GenerateDescriptorSetLayoutInfos();
+
+    uint32_t GetPushConstantSize(const glslang::TObjectReflection &uniform);
 };

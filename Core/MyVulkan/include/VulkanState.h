@@ -4,7 +4,6 @@
 #include <deque>
 #include <functional>
 #include <memory>
-#include <map>
 
 #include <glm/glm.hpp>
 
@@ -16,7 +15,6 @@
 
 #define MIN_SWAPCHAIN_IMG_COUNT 2
 #define MAX_SWAPCHAIN_IMG_COUNT 16
-
 
 #define POINT_ONE_SECOND 100000000u
 
@@ -131,14 +129,15 @@ private:
     VkDescriptorPool m_descriptorPool = VK_NULL_HANDLE;
     VkDescriptorPool m_imguiDescriptorPool = VK_NULL_HANDLE;
 
+    VkDescriptorSet m_computeDescriptorSet = VK_NULL_HANDLE;
+    VkDescriptorSet m_uniformViewDescriptorSet = VK_NULL_HANDLE;
+
     VulkanImage m_drawImage;
+    // TODO: Probably needs to store compute, graphics pipelines in different vectors
     std::vector<std::shared_ptr<VulkanPipeline> > m_pipelines;
 
     std::unique_ptr<MeshLoader> m_meshLoader;
     std::vector<MeshInstance> m_meshInstances;
-
-
-    std::vector<VkDescriptorSet> descriptorSets;
 
     DeletionQueue deletionQueue;
     UIQueue uiQueue;
@@ -148,7 +147,6 @@ private:
     uint32_t m_height;
 
     std::unique_ptr<UI> m_ui;
-
 
     void CreateInstance();
 
@@ -170,7 +168,7 @@ private:
 
     void CreateDescriptorPool();
 
-    void CreateDescriptorSet(VkDescriptorSetLayout layout);
+    VkDescriptorSet CreateDescriptorSet(VkDescriptorSetLayout layout);
 
     void CreatePipelines();
 
@@ -187,7 +185,7 @@ private:
 
     void DrawGeometry();
 
-    void UpdateDescriptorSets();
+    void OneTimeUpdateDescriptorSets();
 
     void DrawImgui(VkImageView view);
 
