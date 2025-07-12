@@ -15,16 +15,16 @@ layout (set = 0, binding = 0) uniform UniformViewData
     mat4 uProjecton;
 };
 
-layout (push_constant) uniform PC_PushConstantData
+layout (push_constant) uniform PushConstantData
 {
-    mat4 PC_inModel;
+    mat4 inModel;
 };
 
 void main()
 {
 
-    vWorldPositon = (PC_inModel * vec4(inPosition, 1.0f)).xyz;
-    vWorldNormal = (PC_inModel * vec4(inNormal, 1.0f)).xyz;
+    vWorldPositon = (inModel * vec4(inPosition, 1.0f)).xyz;
+    vWorldNormal = (inModel * vec4(inNormal, 1.0f)).xyz;
     vTexcoord = inTexcoord;
 
 //    gl_Position = uView * vec4(vWorldPositon, 1.0f);

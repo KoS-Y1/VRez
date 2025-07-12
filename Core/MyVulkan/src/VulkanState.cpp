@@ -38,10 +38,12 @@ VulkanState::VulkanState(SDL_Window *window, uint32_t width, uint32_t height)
     CreatePipelines();
 
     m_computeDescriptorSet = CreateDescriptorSet(m_pipelines[0]->GetDescriptorSetLayouts()[0]);
-    // m_uniformViewDescriptorSet = CreateDescriptorSet(m_pipelines[1]->GetDescriptorSetLayouts()[0]);
+    m_uniformViewDescriptorSet = CreateDescriptorSet(m_pipelines[1]->GetDescriptorSetLayouts()[0]);
+    OneTimeUpdateDescriptorSets();
 
     m_meshLoader = std::make_unique<MeshLoader>();
     m_ui = std::make_unique<UI>(m_window, m_instance, m_physicalDevice, m_device, m_queue, m_imguiDescriptorPool);
+
 
     LoadMeshes();
 }
@@ -500,7 +502,7 @@ void VulkanState::CreatePipelines()
 {
     std::vector<std::pair<std::vector<std::string>, PipelineType> > shaderSources
     {
-        // {{"../Assets/Shaders/gradient.comp"}, PipelineType::Compute},
+        {{"../Assets/Shaders/gradient.comp"}, PipelineType::Compute},
         {
             {
                 "../Assets/Shaders/BasicModelShader/basic.vert",

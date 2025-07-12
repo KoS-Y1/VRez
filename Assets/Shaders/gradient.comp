@@ -5,10 +5,10 @@ layout (local_size_x = 16, local_size_y = 16) in;
 layout(rgba16f,set = 0, binding = 0) uniform image2D image;
 
 //push constants block
-layout(push_constant) uniform PC_constants
+layout( push_constant ) uniform constants
 {
-    vec4 PC_data1;
-    vec4 PC_data2;
+    vec4 data1;
+    vec4 data2;
 } PushConstants;
 
 void main()
@@ -17,8 +17,8 @@ void main()
 
     ivec2 size = imageSize(image);
 
-    vec4 topColor = PushConstants.PC_data1;
-    vec4 bottomColor = PushConstants.PC_data2;
+    vec4 topColor = PushConstants.data1;
+    vec4 bottomColor = PushConstants.data2;
 
     if(texelCoord.x < size.x && texelCoord.y < size.y)
     {

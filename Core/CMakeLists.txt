@@ -17,7 +17,7 @@ target_link_libraries(Window PUBLIC SDL3::SDL3 Util Debug MyVulkan UI imgui)
 
 add_library(ShaderCompiler ShaderCompiler/include/ShaderCompiler.h ShaderCompiler/src/ShaderCompiler.cpp)
 target_include_directories(ShaderCompiler PUBLIC ShaderCompiler)
-target_link_libraries(ShaderCompiler PUBLIC glslang Vulkan::Vulkan SDL3::SDL3 FileSystem)
+target_link_libraries(ShaderCompiler PUBLIC glslang Vulkan::Vulkan SDL3::SDL3 FileSystem SPIRV-Reflect Debug)
 
 add_library(UI UI/include/UI.h UI/src/UI.cpp)
 target_include_directories(UI PUBLIC UI)

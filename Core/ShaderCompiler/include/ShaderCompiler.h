@@ -5,6 +5,7 @@
 #include <map>
 
 #include <vulkan/vulkan.h>
+#include <spirv_reflect.h>
 
 #include "glslang/Public/ShaderLang.h"
 
@@ -25,7 +26,7 @@ public:
 
     ShaderCompiler &operator=(ShaderCompiler &&) = delete;
 
-    [[nodiscard]] std::map<VkShaderStageFlagBits, std::vector<uint32_t>>  CompileToSpirv() const { return m_spirvs; }
+    [[nodiscard]] std::map<VkShaderStageFlagBits, std::vector<uint32_t> > CompileToSpirv() const { return m_spirvs; }
 
     [[nodiscard]] std::vector<VkDescriptorSetLayoutCreateInfo> GetDescriptorSetLayoutInfos() const
     {
@@ -35,20 +36,23 @@ public:
     [[nodiscard]] std::vector<VkPushConstantRange> GetPushConstantRanges() const { return m_pushConstantRanges; }
 
 private:
-    std::map<std::uint32_t, std::vector<VkDescriptorSetLayoutBinding> > m_bindingsPerSet;
+    std::map<uint32_t, std::vector<VkDescriptorSetLayoutBinding> > m_bindingsPerSet;
+
     std::vector<VkDescriptorSetLayoutCreateInfo> m_descriptorSetLayoutInfos;
     std::vector<VkPushConstantRange> m_pushConstantRanges;
-    std::map<VkShaderStageFlagBits, std::vector<uint32_t>> m_spirvs;
 
-    VkShaderStageFlagBits GetShaderStage(const std::string &source);
+    std::map<VkShaderStageFlagBits, std::vector<uint32_t> > m_spirvs;
+    std::vector<SpvReflectShaderModule> m_shaderModules;
+
+    void Compile(const std::string &source);
+
+    void GenerateReflectData();
+
+    void ExtractPushConstants();
+
+    void ExtractDescriptorSets();
 
     EShLanguage GetShaderType(VkShaderStageFlagBits shaderStage);
 
-    VkDescriptorType GetDescriptorType(const glslang::TObjectReflection &uniform);
-
-    void Parse(const std::string &source);
-
-    void GenerateDescriptorSetLayoutInfos();
-
-    uint32_t GetPushConstantSize(const glslang::TObjectReflection &uniform);
+    VkShaderStageFlagBits GetShaderStage(const std::string &source);
 };

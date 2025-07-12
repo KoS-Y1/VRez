@@ -7,27 +7,28 @@
 #include <SPIRV/GlslangToSpv.h>
 
 #include <include/FileSystem.h>
-
-#include "glslang/MachineIndependent/localintermediate.h"
+#include <Debug.h>
 
 ShaderCompiler::ShaderCompiler(const std::vector<std::string> &sources)
 {
     for (const auto &source: sources)
     {
-        Parse(source);
+        Compile(source);
     }
 
-    GenerateDescriptorSetLayoutInfos();
+    GenerateReflectData();
+    ExtractPushConstants();
+    ExtractDescriptorSets();
 }
 
 ShaderCompiler::~ShaderCompiler()
 {
-    m_bindingsPerSet.clear();
     m_pushConstantRanges.clear();
     m_descriptorSetLayoutInfos.clear();
+    m_shaderModules.clear();
 }
 
-void ShaderCompiler::Parse(const std::string &source)
+void ShaderCompiler::Compile(const std::string &source)
 {
     TBuiltInResource DefaultTBuiltInResource
     {
@@ -159,87 +160,140 @@ void ShaderCompiler::Parse(const std::string &source)
     std::vector<uint32_t> spirv;
     glslang::GlslangToSpv(*program.getIntermediate(shaderType), spirv);
     m_spirvs[shaderStage] = spirv;
+}
 
-    program.buildReflection();
-
-    // Get push constant/descripot set layouts
-    for (size_t i = 0; i < program.getNumUniformVariables(); ++i)
+void ShaderCompiler::GenerateReflectData()
+{
+    for (const auto &spirvCode: m_spirvs)
     {
-        const glslang::TObjectReflection &uniform = program.getUniform(i);
-        // A stupid way to determine if it is a push constant
-        // We require push constant in shader must be named with prefix PC_
-        if (uniform.name.find("PC_") != std::string::npos)
+        SpvReflectShaderModule module;
+
+        DEBUG_ASSERT(
+            spvReflectCreateShaderModule(spirvCode.second.size() * sizeof(uint32_t), spirvCode.second.data(), &module)
+            == SPV_REFLECT_RESULT_SUCCESS);
+
+        m_shaderModules.push_back(std::move(module));
+    }
+}
+
+
+void ShaderCompiler::ExtractPushConstants()
+{
+    for (const auto &module: m_shaderModules)
+    {
+        uint32_t count = 0;
+
+        // Get count
+        DEBUG_ASSERT(
+            spvReflectEnumeratePushConstantBlocks(&module,&count, nullptr) == SPV_REFLECT_RESULT_SUCCESS);
+
+        std::vector<SpvReflectBlockVariable *> variables(count);
+        DEBUG_ASSERT(
+            spvReflectEnumeratePushConstantBlocks(&module,&count, variables.data()) ==
+            SPV_REFLECT_RESULT_SUCCESS);
+
+        for (const auto &variable: variables)
         {
-            VkPushConstantRange pushConstantRange
+            VkPushConstantRange newPushConstant
             {
-                .stageFlags = static_cast<VkShaderStageFlags>(shaderStage),
-                .offset = static_cast<uint32_t>(uniform.offset),
-                .size = GetPushConstantSize(uniform)
-
+                .stageFlags = static_cast<VkShaderStageFlags>(module.shader_stage),
+                .offset = variable->offset,
+                .size = variable->size,
             };
-
-            // Merge if it's already in the push constant array
-            bool isExist = false;
+            bool exists = false;
+            // If already exist, merge
             for (auto &pushConstant: m_pushConstantRanges)
             {
-                if (pushConstant.stageFlags == pushConstantRange.stageFlags)
+                if (newPushConstant.size == pushConstant.size && newPushConstant.offset == pushConstant.offset)
                 {
-                    pushConstant.size += pushConstantRange.size;
-                    pushConstant.offset = std::min(pushConstant.offset, pushConstantRange.offset);
-                    isExist = true;
+                    pushConstant.stageFlags |= newPushConstant.stageFlags;
+                    exists = true;
                     break;
                 }
             }
-            if (!isExist)
+            if (!exists)
             {
-                m_pushConstantRanges.push_back(pushConstantRange);
-            }
-        }
-        // If descriptor set
-        else
-        {
-            // TODO: Currently only get type of image, sampler, texture, buffer, need to update for other types
-            // But is that really needed? So far the project is only planned to use small size data in the shader
-            uint32_t set = uniform.getType()->getQualifier().layoutSet;
-
-            VkDescriptorSetLayoutBinding binding
-            {
-                .binding = uniform.getType()->getQualifier().layoutBinding,
-                .descriptorType = GetDescriptorType(uniform),
-                .descriptorCount = 1, // We won't use an array of descriptors
-                .stageFlags = static_cast<VkShaderStageFlags>(shaderStage),
-                .pImmutableSamplers = nullptr, // We won't use immutable sampler
-            };
-
-            auto pair = m_bindingsPerSet.find(set);
-
-            // If it's a new set
-            if (pair == m_bindingsPerSet.end())
-            {
-                m_bindingsPerSet.emplace(set, std::vector<VkDescriptorSetLayoutBinding>{});
-                m_bindingsPerSet[set].push_back(binding);
-            }
-            // If set already exits
-            else
-            {
-                bool isExist = false;
-                for (auto &b: m_bindingsPerSet[set])
-                {
-                    if (binding.binding == b.binding)
-                    {
-                        b.stageFlags |= binding.stageFlags;
-                        isExist = true;
-                        break;
-                    }
-                }
-                if (!isExist)
-                {
-                    m_bindingsPerSet[set].push_back(binding);
-                }
+                m_pushConstantRanges.push_back(std::move(newPushConstant));
             }
         }
     }
 }
+
+void ShaderCompiler::ExtractDescriptorSets()
+{
+    for (const auto &module: m_shaderModules)
+    {
+        uint32_t count = 0;
+
+        //Get count
+        DEBUG_ASSERT(spvReflectEnumerateDescriptorSets(&module, &count, nullptr) == SPV_REFLECT_RESULT_SUCCESS);
+        std::vector<SpvReflectDescriptorSet *> descriptorSets(count);
+        DEBUG_ASSERT(
+            spvReflectEnumerateDescriptorSets(&module, &count, descriptorSets.data()) ==
+            SPV_REFLECT_RESULT_SUCCESS);
+
+        // Get eahc set's data
+        for (const auto &set: descriptorSets)
+        {
+            uint32_t setNum = set->set;
+
+            auto pair = m_bindingsPerSet.find(setNum);
+
+            // If the set is new
+            if (pair == m_bindingsPerSet.end())
+            {
+                m_bindingsPerSet[setNum] = std::vector<VkDescriptorSetLayoutBinding>{};
+            }
+
+            // Get each binding's data
+            for (size_t i = 0; i < set->binding_count; ++i)
+            {
+                VkDescriptorSetLayoutBinding binding;
+                binding.binding = set->bindings[i]->binding;
+                binding.descriptorType = static_cast<VkDescriptorType>(set->bindings[i]->descriptor_type);
+                binding.descriptorCount = 1;
+                binding.pImmutableSamplers = nullptr;
+                for (size_t iDim = 0; iDim < set->bindings[i]->array.dims_count; ++iDim)
+                {
+                    binding.descriptorCount *= set->bindings[i]->array.dims[iDim];
+                }
+                binding.stageFlags = module.shader_stage;
+
+                // Check if the binding already exist
+                // If so, merge and add new stage flag
+                bool exists = false;
+                for (auto &b: m_bindingsPerSet[setNum])
+                {
+                    if (b.binding == binding.binding)
+                    {
+                        b.stageFlags |= binding.stageFlags;
+                        exists = true;
+                        break;
+                    }
+                }
+                if (!exists)
+                {
+                    m_bindingsPerSet[setNum].push_back(std::move(binding));
+                }
+            }
+        }
+    }
+
+    for (const auto &bindings: m_bindingsPerSet)
+    {
+        VkDescriptorSetLayoutCreateInfo infoLayout
+        {
+            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+            .pNext = nullptr,
+            .flags = 0,
+            .bindingCount = static_cast<uint32_t>(bindings.second.size()),
+            .pBindings = bindings.second.data()
+        };
+
+        m_descriptorSetLayoutInfos.push_back(std::move(infoLayout));
+    }
+}
+
 
 VkShaderStageFlagBits ShaderCompiler::GetShaderStage(const std::string &source)
 {
@@ -313,116 +367,4 @@ EShLanguage ShaderCompiler::GetShaderType(VkShaderStageFlagBits shaderStage)
         default:
             return EShLangVertex;
     }
-}
-
-VkDescriptorType ShaderCompiler::GetDescriptorType(const glslang::TObjectReflection &uniform)
-{
-    VkDescriptorType descriptorType;
-    auto type = uniform.getType();
-    switch (type->getBasicType())
-    {
-        case glslang::EbtSampler:
-
-            if (type->isImage())
-            {
-                if (type->getSampler().isPureSampler())
-                {
-                    descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
-                }
-                else if (type->getSampler().isTexture())
-                {
-                    descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-                }
-                else if (type->getSampler().isCombined())
-                {
-                    descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-                }
-                else if (type->getSampler().isImage())
-                {
-                    descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-                }
-            }
-            else
-            {
-                descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
-            }
-            break;
-        case glslang::EbtBlock:
-            if (type->getQualifier().storage == glslang::EvqUniform)
-            {
-                descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-            }
-            else if (type->getQualifier().storage == glslang::EvqBuffer)
-            {
-                descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-            }
-            break;
-        default:
-            SDL_Log("Not a valid descriptor type!");
-            exit(EXIT_FAILURE);
-    }
-
-    return descriptorType;
-}
-
-void ShaderCompiler::GenerateDescriptorSetLayoutInfos()
-{
-    for (const auto &pair: m_bindingsPerSet)
-    {
-        VkDescriptorSetLayoutCreateInfo infoLayout
-        {
-            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-            .pNext = nullptr,
-            .flags = 0,
-            .bindingCount = static_cast<uint32_t>(pair.second.size()),
-            .pBindings = pair.second.data(),
-        };
-        m_descriptorSetLayoutInfos.push_back(infoLayout);
-    }
-}
-
-uint32_t ShaderCompiler::GetPushConstantSize(const glslang::TObjectReflection &uniform)
-{
-    uint32_t totalSize = 0;
-
-    size_t arraySize = uniform.size;
-    auto type = uniform.getType();
-    auto typeSize = [](glslang::TBasicType type)
-    {
-        uint32_t size = 0;
-        switch (type)
-        {
-            case glslang::EbtFloat:
-                size = sizeof(float);
-                break;
-            case glslang::EbtDouble:
-                size = sizeof(double);
-                break;
-            case glslang::EbtInt8:
-                size = sizeof(int8_t);
-                break;
-            case glslang::EbtUint8:
-                size = sizeof(uint8_t);
-                break;
-            case glslang::EbtInt16:
-                size = sizeof(int16_t);
-                break;
-            case glslang::EbtUint16:
-                size = sizeof(uint16_t);
-                break;
-            // TODO: other type, but we probaly won't use those in our project
-        }
-        return size;
-    }(type->getBasicType());
-
-    if (type->getVectorSize() > 0)
-    {
-        totalSize = arraySize * typeSize * type->getVectorSize();
-    }
-    if (type->getMatrixCols() > 0)
-    {
-        totalSize = arraySize * typeSize * type->getMatrixCols() * type->getMatrixRows();
-    }
-
-    return totalSize;
 }

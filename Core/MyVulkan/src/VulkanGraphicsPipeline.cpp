@@ -13,6 +13,7 @@ VulkanGraphicsPipeline::VulkanGraphicsPipeline(VkDevice device, const std::vecto
     CreateDescriptorSetLayout(shaderCompiler.GetDescriptorSetLayoutInfos());
     m_pushConstantRanges = shaderCompiler.GetPushConstantRanges();
     CreateLayout();
+    CreatePipeline(shaderCompiler);
 }
 
 
