@@ -3,18 +3,23 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <memory>
 
 #include <vulkan/vulkan.h>
 #include <spirv_reflect.h>
 
-#include "glslang/Public/ShaderLang.h"
+#include <glslang/Public/ShaderLang.h>
+
+#define SHADER_HEADERS_DIR "../Assets/Shaders/Headers/"
+
+class ShaderIncluder;
 
 class ShaderCompiler
 {
 public:
     ShaderCompiler() = delete;
 
-    explicit ShaderCompiler(const std::vector<std::string> &sources);
+    explicit ShaderCompiler(const std::vector<std::string> &dirs);
 
     ~ShaderCompiler();
 
@@ -44,7 +49,9 @@ private:
     std::map<VkShaderStageFlagBits, std::vector<uint32_t> > m_spirvs;
     std::vector<SpvReflectShaderModule> m_shaderModules;
 
-    void Compile(const std::string &source);
+    static std::shared_ptr<ShaderIncluder> m_includer;
+
+    void Compile(const std::string &dir);
 
     void GenerateReflectData();
 
@@ -54,5 +61,5 @@ private:
 
     EShLanguage GetShaderType(VkShaderStageFlagBits shaderStage);
 
-    VkShaderStageFlagBits GetShaderStage(const std::string &source);
+    VkShaderStageFlagBits GetShaderStage(const std::string &dir);
 };

@@ -39,6 +39,15 @@ VulkanState::VulkanState(SDL_Window *window, uint32_t width, uint32_t height)
 
     m_computeDescriptorSet = CreateDescriptorSet(m_pipelines[0]->GetDescriptorSetLayouts()[0]);
     m_uniformViewDescriptorSet = CreateDescriptorSet(m_pipelines[1]->GetDescriptorSetLayouts()[0]);
+    VulkanBuffer buffer(m_physicalDevice, m_device, sizeof(glm::mat4) * 2, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
+    m_viewBuffer = std::move(buffer);
+    std::vector<glm::mat4> bufferData
+    {
+        glm::mat4(1.0f),
+        glm::mat4(1.0f),
+    };
+    m_viewBuffer.Upload(bufferData.size() * sizeof(glm::mat4), bufferData.data());
+
     OneTimeUpdateDescriptorSets();
 
     m_meshLoader = std::make_unique<MeshLoader>();
@@ -69,6 +78,7 @@ VulkanState::~VulkanState()
 
     m_meshLoader->Destroy();
 
+    m_viewBuffer.Destroy();
 
     deletionQueue.Flush();
 }
@@ -619,7 +629,6 @@ void VulkanState::DrawBackground()
     vkCmdDispatch(m_cmdBuf, std::ceil(m_width / 16.0), std::ceil(m_height / 16.0), 1);
 }
 
-// TODO: This should not belong here
 void VulkanState::OneTimeUpdateDescriptorSets()
 {
     VkDescriptorImageInfo infoImage
@@ -629,7 +638,7 @@ void VulkanState::OneTimeUpdateDescriptorSets()
         .imageLayout = VK_IMAGE_LAYOUT_GENERAL,
     };
 
-    VkWriteDescriptorSet writeSet
+    VkWriteDescriptorSet writeSetCompute
     {
         .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
         .pNext = nullptr,
@@ -643,7 +652,30 @@ void VulkanState::OneTimeUpdateDescriptorSets()
         .pTexelBufferView = nullptr,
     };
 
-    vkUpdateDescriptorSets(m_device, 1, &writeSet, 0, nullptr);
+
+    VkDescriptorBufferInfo infoBuffer
+    {
+        .buffer = m_viewBuffer.GetBuffer(),
+        .offset = 0,
+        .range = VK_WHOLE_SIZE
+    };
+
+    VkWriteDescriptorSet writeSetView
+    {
+        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .pNext = nullptr,
+        .dstSet = m_uniformViewDescriptorSet,
+        .dstBinding = 0,
+        .dstArrayElement = 0,
+        .descriptorCount = 1,
+        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        .pImageInfo = nullptr,
+        .pBufferInfo = &infoBuffer,
+        .pTexelBufferView = nullptr,
+    };
+
+    vkUpdateDescriptorSets(m_device, 1, &writeSetCompute, 0, nullptr);
+    vkUpdateDescriptorSets(m_device, 1, &writeSetView, 0, nullptr);
 }
 
 void VulkanState::DrawImgui(VkImageView view)
@@ -692,6 +724,9 @@ void VulkanState::DrawGeometry()
 
     vkCmdSetViewport(m_cmdBuf, 0, 1, &viewport);
     vkCmdSetScissor(m_cmdBuf, 0, 1, &renderAreas);
+
+    vkCmdBindDescriptorSets(m_cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[1]->GetLayout(), 0, 1,
+                            &m_uniformViewDescriptorSet, 0, nullptr);
 
     m_meshInstances[0].BindAndDraw(m_cmdBuf);
 

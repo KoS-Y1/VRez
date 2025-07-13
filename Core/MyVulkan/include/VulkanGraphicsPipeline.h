@@ -18,8 +18,8 @@ struct GraphicsPipelineConfig
     const VkPipelineVertexInputStateCreateInfo *infoVertex;
 
     std::vector<VkFormat> colorFormats {};
-    VkFormat depthFormat;
-    VkFormat stencilFormat;
+    VkFormat depthFormat = VK_FORMAT_UNDEFINED;
+    VkFormat stencilFormat = VK_FORMAT_UNDEFINED;
 };
 
 class VulkanGraphicsPipeline : public VulkanPipeline

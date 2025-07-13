@@ -9,11 +9,45 @@
 #include <include/FileSystem.h>
 #include <Debug.h>
 
-ShaderCompiler::ShaderCompiler(const std::vector<std::string> &sources)
+std::shared_ptr<ShaderIncluder> ShaderCompiler::m_includer = nullptr;
+
+struct ShaderIncluder : glslang::TShader::Includer
 {
-    for (const auto &source: sources)
+public:
+    ShaderIncluder() : m_dir(SHADER_HEADERS_DIR) {}
+
+    IncludeResult *includeLocal(const char *, const char *, size_t) override { return nullptr; }
+
+    IncludeResult *includeSystem(const char *header, const char *, size_t) { return Include(header); }
+
+    void releaseInclude(IncludeResult *include) override { delete include; }
+
+private:
+    std::string m_dir;
+    std::map<std::string, std::string> m_headers;
+
+    IncludeResult *Include(const std::string &header)
     {
-        Compile(source);
+        auto pair = m_headers.find(header);
+        if (pair == m_headers.end())
+        {
+            SDL_Log("Loading shader header %s", header.c_str());
+            pair = m_headers.emplace(header, file_system::Read(m_dir + header)).first;
+        }
+
+        return new IncludeResult(header, pair->second.c_str(), pair->second.length(), nullptr);
+    }
+};
+
+ShaderCompiler::ShaderCompiler(const std::vector<std::string> &dirs)
+{
+    if (!m_includer)
+    {
+        m_includer = std::make_shared<ShaderIncluder>();
+    }
+    for (const auto &dir: dirs)
+    {
+        Compile(dir);
     }
 
     GenerateReflectData();
@@ -28,7 +62,7 @@ ShaderCompiler::~ShaderCompiler()
     m_shaderModules.clear();
 }
 
-void ShaderCompiler::Compile(const std::string &source)
+void ShaderCompiler::Compile(const std::string &dir)
 {
     TBuiltInResource DefaultTBuiltInResource
     {
@@ -129,19 +163,20 @@ void ShaderCompiler::Compile(const std::string &source)
         }
     };
 
-    std::string file = file_system::Read(source);
-    VkShaderStageFlagBits shaderStage = GetShaderStage(source);
+    std::string file = file_system::Read(dir);
+    VkShaderStageFlagBits shaderStage = GetShaderStage(dir);
     EShLanguage shaderType = GetShaderType(shaderStage);
     glslang::TShader shader(shaderType);
 
     const char *shaderCode = file.c_str();
 
     shader.setStrings(&shaderCode, 1);
+    shader.setPreamble("#extension GL_GOOGLE_include_directive : require\n");
     shader.setEnvInput(glslang::EShSourceGlsl, shaderType, glslang::EShClientVulkan, 100);
     shader.setEnvClient(glslang::EShClientVulkan, glslang::EShTargetVulkan_1_4);
     shader.setEnvTarget(glslang::EshTargetSpv, glslang::EShTargetSpv_1_3);
     shader.setEntryPoint("main");
-    if (!shader.parse(&DefaultTBuiltInResource, 100, false, EShMsgDefault))
+    if (!shader.parse(&DefaultTBuiltInResource, 100, false, EShMsgDefault, *m_includer))
     {
         SDL_Log("GLSL Parsing Failed: %s", shader.getInfoLog());
         exit(EXIT_FAILURE);
@@ -295,24 +330,24 @@ void ShaderCompiler::ExtractDescriptorSets()
 }
 
 
-VkShaderStageFlagBits ShaderCompiler::GetShaderStage(const std::string &source)
+VkShaderStageFlagBits ShaderCompiler::GetShaderStage(const std::string &dir)
 {
     VkShaderStageFlagBits shaderStage;
-    if (source.ends_with(".vert"))
+    if (dir.ends_with(".vert"))
     {
         shaderStage = VK_SHADER_STAGE_VERTEX_BIT;
     }
-    else if (source.ends_with(".frag"))
+    else if (dir.ends_with(".frag"))
     {
         shaderStage = VK_SHADER_STAGE_FRAGMENT_BIT;
     }
-    else if (source.ends_with(".comp"))
+    else if (dir.ends_with(".comp"))
     {
         shaderStage = VK_SHADER_STAGE_COMPUTE_BIT;
     }
     else
     {
-        SDL_Log("%s is not a valid shader!", source.c_str());
+        SDL_Log("%s is not a valid shader!", dir.c_str());
         exit(EXIT_FAILURE);
     }
     return shaderStage;

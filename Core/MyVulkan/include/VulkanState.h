@@ -11,6 +11,7 @@
 #include <string>
 
 #include "VulkanImage.h"
+#include "VulkanBuffer.h"
 
 
 #define MIN_SWAPCHAIN_IMG_COUNT 2
@@ -18,9 +19,9 @@
 
 #define POINT_ONE_SECOND 100000000u
 
+class VulkanPipeline;
 class MeshLoader;
 class VulkanMesh;
-class VulkanPipeline;
 class MeshInstance;
 class UI;
 
@@ -129,6 +130,7 @@ private:
     VkDescriptorPool m_descriptorPool = VK_NULL_HANDLE;
     VkDescriptorPool m_imguiDescriptorPool = VK_NULL_HANDLE;
 
+    VulkanBuffer m_viewBuffer;
     VkDescriptorSet m_computeDescriptorSet = VK_NULL_HANDLE;
     VkDescriptorSet m_uniformViewDescriptorSet = VK_NULL_HANDLE;
 
