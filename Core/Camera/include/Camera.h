@@ -1,49 +1,60 @@
 #pragma once
 
 #include <glm/glm.hpp>
+#include <glm/ext/matrix_transform.hpp>
+#include <glm/detail/type_quat.hpp>
 
-#include "glm/ext/matrix_transform.hpp"
+#include "../../../Util/Singleton.h"
 
-class Camera
+#define YAW     90.0f
+#define PITCH   0.0f
+#define ROLL    0.0f
+
+enum class CameraMoveDirection : uint8_t
+{
+    STAY,
+    FORWARD,
+    BACKWARD,
+    LEFT,
+    RIGHT,
+    UP,
+    DOWN,
+};
+
+// Camera class as a singleton, since we only have 1 camera
+class Camera : public Singleton<Camera>
 {
 public:
+
+    void ProcessMovement(CameraMoveDirection direction, float deltaTime);
+
+    [[nodiscard]] const glm::mat4 GetViewMatrix() const { return glm::lookAt(m_positon, m_positon + m_front, m_up); }
+
+protected:
     Camera()
     {
         m_positon = glm::vec3(0.0f, 0.0f, 0.0f);
+        m_worldUp = glm::vec3(0.0f, 1.0f, 0.0f);
         m_front = glm::vec3(0.0f, 0.0f, 1.0f);
-        m_up = glm::vec3(0.0f, -1.0f, 0.0f);
-        CalculateViewMatrix();
+        m_pitchYawRoll = glm::vec3(glm::radians(PITCH), glm::radians(YAW), glm::radians(ROLL));
+        UpdateCameraVectors();
 
-        m_speed = 2.5f;
-    }
-
-    Camera(glm::vec3 position, glm::vec3 front, glm::vec3 up, float speed)
-    {
-        m_positon = position;
-        m_front = front;
-        m_up = up;
-        CalculateViewMatrix();
-
-        m_speed = speed;
+        m_speed = 0.0025f;
     }
 
     ~Camera() = default;
 
-    Camera(const Camera&) = delete;
-    Camera(Camera&&) = delete;
-    Camera& operator=(const Camera&) = delete;
-    Camera& operator=(Camera&&) = delete;
-
-    [[nodiscard]] const glm::mat4& GetViewMatrix() const { return m_view; }
-
-
 private:
+
+
     glm::vec3 m_positon;
+    glm::vec3 m_worldUp;
     glm::vec3 m_front;
     glm::vec3 m_up;
-    glm::mat4 m_view;
+    glm::vec3 m_right;
+    glm::vec3 m_pitchYawRoll; // In radians
 
     float m_speed;
 
-    void CalculateViewMatrix();
+    void UpdateCameraVectors();
 };

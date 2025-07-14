@@ -80,7 +80,7 @@ private:
     glm::vec3 m_location;
     glm::vec3 m_scale;
     glm::quat m_rotation;
-    glm::vec3 m_pitchYawRoll;
+    glm::vec3 m_pitchYawRoll;       // In radians
 
     std::shared_ptr<VulkanGraphicsPipeline> m_pipeline;
 

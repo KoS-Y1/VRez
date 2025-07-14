@@ -13,7 +13,7 @@ target_link_libraries(MyVulkan PUBLIC Vulkan::Vulkan Debug Util SDL3::SDL3 Shade
 
 add_library(Window Window/include/Window.h Window/src/Window.cpp)
 target_include_directories(Window PUBLIC Window)
-target_link_libraries(Window PUBLIC SDL3::SDL3 Util Debug MyVulkan UI imgui)
+target_link_libraries(Window PUBLIC SDL3::SDL3 Util Debug MyVulkan UI imgui Camera)
 
 add_library(ShaderCompiler ShaderCompiler/include/ShaderCompiler.h ShaderCompiler/src/ShaderCompiler.cpp)
 target_include_directories(ShaderCompiler PUBLIC ShaderCompiler)
@@ -29,4 +29,4 @@ target_link_libraries(MeshLoader PUBLIC MyVulkan SDL3::SDL3 tinyobjloader glm)
 
 add_library(Camera Camera/include/Camera.h Camera/src/Camera.cpp)
 target_include_directories(Camera PUBLIC Camera)
-target_link_libraries(Camera PUBLIC glm)
+target_link_libraries(Camera PUBLIC glm Util)

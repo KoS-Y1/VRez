@@ -43,11 +43,7 @@ int main(void)
     // Initi glslang shader compiler
     glslang::InitializeProcess();
 
-    // Init SDL window
-    Window window;
-
-    // Init Vulkan state
-    window.Run();
+    Window::GetInstance().Run();
 
     // std::cout << "Returns " << result << std::endl;
     //

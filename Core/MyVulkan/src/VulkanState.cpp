@@ -548,6 +548,12 @@ void VulkanState::ShowUI()
     uiQueue.show();
 }
 
+void VulkanState::UpdatView(const glm::mat4 &view, const glm::mat4 &projection)
+{
+    std::vector<glm::mat4> data { view, projection };
+    m_viewBuffer.Upload(data.size() * sizeof(glm::mat4), data.data());
+}
+
 
 void VulkanState::WaitAndResetFence(VkFence fence, uint64_t timeout)
 {
@@ -744,7 +750,3 @@ void VulkanState::LoadMeshes()
     });
 }
 
-
-void VulkanState::BindAndDrawMesh(const MeshInstance &instance)
-{
-}
