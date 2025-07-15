@@ -23,5 +23,5 @@ void main()
     vWorldNormal = (inModel * vec4(inNormal, 1.0f)).xyz;
     vTexcoord = inTexcoord;
 
-    gl_Position = uView * vec4(vWorldPositon, 1.0f);
+    gl_Position = uProjection * uView * vec4(vWorldPositon, 1.0f);
 }

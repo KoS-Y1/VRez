@@ -545,6 +545,7 @@ void VulkanState::CreatePipelines()
 
 void VulkanState::ShowUI()
 {
+    m_ui->CameraMenu();
     uiQueue.show();
 }
 

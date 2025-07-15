@@ -4,7 +4,7 @@
 layout(set = 0, binding = 0) uniform CamaraData
 {
     mat4 uView;
-    mat4 uProjecton;
+    mat4 uProjection;
 };
 
 #endif

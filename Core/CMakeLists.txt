@@ -21,7 +21,7 @@ target_link_libraries(ShaderCompiler PUBLIC glslang Vulkan::Vulkan SDL3::SDL3 Fi
 
 add_library(UI UI/include/UI.h UI/src/UI.cpp)
 target_include_directories(UI PUBLIC UI)
-target_link_libraries(UI PUBLIC imgui Window MyVulkan glm)
+target_link_libraries(UI PUBLIC imgui Window MyVulkan glm Camera)
 
 add_library(MeshLoader MeshLoader/include/MeshLoader.h MeshLoader/src/MeshLoader.cpp)
 target_include_directories(MeshLoader PUBLIC MeshLoader)
@@ -29,4 +29,4 @@ target_link_libraries(MeshLoader PUBLIC MyVulkan SDL3::SDL3 tinyobjloader glm)
 
 add_library(Camera Camera/include/Camera.h Camera/src/Camera.cpp)
 target_include_directories(Camera PUBLIC Camera)
-target_link_libraries(Camera PUBLIC glm Util)
+target_link_libraries(Camera PUBLIC glm Util SDL3::SDL3)

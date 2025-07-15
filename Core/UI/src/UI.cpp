@@ -8,6 +8,8 @@
 #include <include/VulkanState.h>
 #include <include/MeshInstance.h>
 
+#include <include/Camera.h>
+
 #include <glm/gtc/type_ptr.hpp>
 
 
@@ -56,17 +58,13 @@ UI::UI(SDL_Window *window, VkInstance instance, VkPhysicalDevice physicalDevice,
 
 void UI::TransformationMenu(MeshInstance &instance)
 {
-    float min = -10.0f;
-    float max = 10.0f;
-    float step = 0.01f;
+    float step = 0.1f;
 
     float angleStep = 1.0f;
     float minRoll = -180.0f;
     float maxRoll = 180.0f;
     float minPitch = -90.0f;
     float maxPitch = 90.0f;
-    float minYaw = -180.0f;
-    float maxYaw = 180.0f;
 
     bool isReset = false;
 
@@ -78,12 +76,12 @@ void UI::TransformationMenu(MeshInstance &instance)
     float roll = glm::degrees(pitchYawRoll.z);
 
     ImGui::Begin((instance.GetName() + " Transformation").c_str());
-    ImGui::DragFloat3("Location(x, y, z)", glm::value_ptr(location), step, min, max);
+    ImGui::DragFloat3("Location(x, y, z)", glm::value_ptr(location), step);
     ImGui::Text("Rotation");
-    ImGui::DragFloat("Yaw", &yaw, angleStep, minYaw, maxYaw);
+    ImGui::DragFloat("Yaw", &yaw, angleStep);
     ImGui::DragFloat("Pitch", &pitch, angleStep, minPitch, maxPitch);
     ImGui::DragFloat("Roll", &roll, angleStep, minRoll, maxRoll);
-    ImGui::DragFloat3("Scale(x, y, z)", glm::value_ptr(scale), step, min, max);
+    ImGui::DragFloat3("Scale(x, y, z)", glm::value_ptr(scale), step);
     if (ImGui::Button("Reset"))
     {
         isReset = true;
@@ -101,4 +99,45 @@ void UI::TransformationMenu(MeshInstance &instance)
         instance.Reset();
     }
 
+}
+
+void UI::CameraMenu()
+{
+    float step = 0.1f;
+
+    float minFov = 1.0f;
+    float maxFov = 45.0f;
+
+    float angleStep = 1.0f;
+    float minPitch = -90.0f;
+    float maxPitch = 90.0f;
+
+    bool isReset = false;
+
+    glm::vec3 location = Camera::GetInstance().GetLocation();
+    float fov = Camera::GetInstance().GetFOV();
+    glm::vec3 pitchYawRoll = Camera::GetInstance().GetPitchYawRoll();
+    float yaw = glm::degrees(pitchYawRoll.y);
+    float pitch = glm::degrees(pitchYawRoll.x);
+
+    ImGui::Begin("Camera");
+    ImGui::DragFloat3("Location(x, y, z)", glm::value_ptr(location), step);
+    ImGui::DragFloat("FOV", &fov, step, minFov, maxFov);
+    ImGui::Text("Rotation");
+    ImGui::DragFloat("Yaw", &yaw, angleStep);
+    ImGui::DragFloat("Pitch", &pitch, angleStep, minPitch, maxPitch);
+    if (ImGui::Button("Reset"))
+    {
+        isReset = true;
+    }
+    ImGui::End();
+
+    Camera::GetInstance().SetLocation(location);
+    Camera::GetInstance().SetFov(fov);
+    Camera::GetInstance().SetRotation(glm::vec3(glm::radians(pitch), glm::radians(yaw), pitchYawRoll.z));
+
+    if (isReset)
+    {
+        Camera::GetInstance().Reset();
+    }
 }

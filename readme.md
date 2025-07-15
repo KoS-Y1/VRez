@@ -12,6 +12,7 @@
     + ~~Translation~~
     + ~~Rotation~~
     + ~~Scaling~~
+      + uniform scaling
 
 ## Lighting
 + Light

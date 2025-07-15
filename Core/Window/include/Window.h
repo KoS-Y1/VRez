@@ -32,13 +32,14 @@ private:
     bool m_running = false;
 
     bool m_cameraMode = false;
-    bool m_firstCameraMouse = false;
-    float m_lastMouseX = 0.0f;
-    float m_lastMouseY = 0.0f;
+    bool m_firstMouse = true;
+    float m_mouseX = 0.0f;
+    float m_mouseY = 0.0f;
 
     void CreateWindow();
 
     void ProcessCamera(const SDL_Event& event, float deltaTime);
     void ProcessCameraKeyboard(const SDL_Event &event, float deltaTime);
     void ProcessCameraMouse();
+    void ProcessCameraScroll(const SDL_Event &event);
 };

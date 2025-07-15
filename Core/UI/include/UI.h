@@ -18,4 +18,5 @@ public:
     ~UI() = default;
 
     void TransformationMenu(MeshInstance &MeshInstance);
+    void CameraMenu();
 };
