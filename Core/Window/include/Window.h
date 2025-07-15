@@ -3,7 +3,7 @@
 
 #include <Singleton.h>
 
-#include "SDL3/SDL_events.h"
+#include <SDL3/SDL_events.h>
 
 #define WINDOW_WIDTH 1600
 #define WINDOW_HEIGHT 900
@@ -29,9 +29,16 @@ private:
 
     uint32_t m_lastTime;
 
-    bool running = false;
+    bool m_running = false;
+
+    bool m_cameraMode = false;
+    bool m_firstCameraMouse = false;
+    float m_lastMouseX = 0.0f;
+    float m_lastMouseY = 0.0f;
 
     void CreateWindow();
 
-    CameraMoveDirection ProcessCameraMovement(const SDL_Event &event);
+    void ProcessCamera(const SDL_Event& event, float deltaTime);
+    void ProcessCameraKeyboard(const SDL_Event &event, float deltaTime);
+    void ProcessCameraMouse();
 };

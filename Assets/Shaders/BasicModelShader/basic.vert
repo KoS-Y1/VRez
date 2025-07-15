@@ -24,5 +24,4 @@ void main()
     vTexcoord = inTexcoord;
 
     gl_Position = uView * vec4(vWorldPositon, 1.0f);
-
 }

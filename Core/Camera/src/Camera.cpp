@@ -40,9 +40,36 @@ void Camera::ProcessMovement(CameraMoveDirection direction, float deltaTime)
         case CameraMoveDirection::DOWN:
             m_positon -= m_up * deltaTime;
             break;
-        case CameraMoveDirection::STAY:
         default:
             break;
     }
     UpdateCameraVectors();
 }
+
+void Camera::ProcessRotation(float xOffset, float yOffset)
+{
+    xOffset *= m_sensity;
+    yOffset *= m_sensity;
+
+    float yaw = m_pitchYawRoll.y;
+    float pitch = m_pitchYawRoll.x;
+
+    yaw += xOffset;
+    pitch += yOffset;
+
+    // Clamp
+    if (pitch > 89.0f)
+    {
+        pitch = 89.0f;
+    }
+    if (pitch < -89.0f)
+    {
+        pitch = -89.0f;
+    }
+
+    m_pitchYawRoll.x = pitch;
+    m_pitchYawRoll.y = yaw;
+
+    UpdateCameraVectors();
+}
+

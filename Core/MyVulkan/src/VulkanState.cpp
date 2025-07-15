@@ -550,7 +550,7 @@ void VulkanState::ShowUI()
 
 void VulkanState::UpdatView(const glm::mat4 &view, const glm::mat4 &projection)
 {
-    std::vector<glm::mat4> data { view, projection };
+    std::vector<glm::mat4> data{view, projection};
     m_viewBuffer.Upload(data.size() * sizeof(glm::mat4), data.data());
 }
 
@@ -721,9 +721,11 @@ void VulkanState::DrawGeometry()
     VkViewport viewport
     {
         .x = 0.f,
-        .y = 0.f,
-        .width = (float) m_width,
-        .height = (float) m_height,
+        // Flip the view port
+        .y = static_cast<float>(m_height),
+        .width = static_cast<float>(m_width),
+        // Flip the view port
+        .height = -static_cast<float>(m_height),
         .minDepth = 0.f,
         .maxDepth = 1.f
     };
@@ -749,4 +751,3 @@ void VulkanState::LoadMeshes()
         m_ui->TransformationMenu(m_meshInstances[0]);
     });
 }
-
