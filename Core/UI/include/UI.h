@@ -1,6 +1,6 @@
 #pragma once
 
-#include <string>
+#include <map>
 
 #include <vulkan/vulkan.h>
 #include <SDL3/SDL_video.h>
@@ -19,4 +19,7 @@ public:
 
     void TransformationMenu(MeshInstance &MeshInstance);
     void CameraMenu();
+
+private:
+    std::map<MeshInstance*, bool> m_uniformScales;
 };

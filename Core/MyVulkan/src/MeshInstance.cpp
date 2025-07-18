@@ -90,6 +90,7 @@ void MeshInstance::UpdateTransformation()
 {
     m_transformation = glm::translate(glm::mat4(1.0f), m_location) * glm::mat4_cast(m_rotation) * glm::scale(
                            glm::mat4(1.0f), m_scale);
+    m_transformation = glm::scale(m_transformation, glm::vec3(0.1f, 0.1f, 0.1f));
 }
 
 void MeshInstance::BindAndDraw(VkCommandBuffer cmdBuf) const
