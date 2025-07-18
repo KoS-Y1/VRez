@@ -17,9 +17,7 @@ public:
 
     ~UI() = default;
 
-    void TransformationMenu(MeshInstance &MeshInstance);
+    void TransformationMenu(MeshInstance &instance, bool &uniformScale);
     void CameraMenu();
 
-private:
-    std::map<MeshInstance*, bool> m_uniformScales;
 };

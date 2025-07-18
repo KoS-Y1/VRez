@@ -80,7 +80,7 @@ VulkanState::~VulkanState()
 
     m_viewBuffer.Destroy();
 
-    deletionQueue.Flush();
+    m_deletionQueue.Flush();
 }
 
 void VulkanState::CreateInstance()
@@ -120,7 +120,7 @@ void VulkanState::CreateInstance()
     };
     DEBUG_VK_ASSERT(vkCreateInstance(&infoInstance, nullptr, &m_instance));
 
-    deletionQueue.PushFunction([&]()
+    m_deletionQueue.PushFunction([&]()
     {
         vkDestroyInstance(m_instance, nullptr);
     });
@@ -205,7 +205,7 @@ void VulkanState::CreateDevice()
     // Get queue
     vkGetDeviceQueue(m_device, 0, 0, &m_queue);
 
-    deletionQueue.PushFunction([&]()
+    m_deletionQueue.PushFunction([&]()
     {
         vkDestroyDevice(m_device, nullptr);
     });
@@ -222,7 +222,7 @@ void VulkanState::CreateCommandPool()
     };
     DEBUG_VK_ASSERT(vkCreateCommandPool(m_device, &infoCommandPool, nullptr, &m_commandPool));
 
-    deletionQueue.PushFunction([&]()
+    m_deletionQueue.PushFunction([&]()
     {
         vkDestroyCommandPool(m_device, m_commandPool, nullptr);
     });
@@ -232,7 +232,7 @@ void VulkanState::CreateSurface(SDL_Window *window)
 {
     DEBUG_ASSERT(SDL_Vulkan_CreateSurface(window, m_instance, nullptr, &m_surface));
 
-    deletionQueue.PushFunction([&]()
+    m_deletionQueue.PushFunction([&]()
     {
         vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
     });
@@ -300,7 +300,7 @@ void VulkanState::CreateSwapchain(uint32_t width, uint32_t height)
 
     m_drawImage = std::move(img);
 
-    deletionQueue.PushFunction([&]()
+    m_deletionQueue.PushFunction([&]()
     {
         vkDestroySwapchainKHR(m_device, m_swapchain.swapchain, nullptr);
     });
@@ -317,7 +317,7 @@ VkSemaphore VulkanState::CreateSemaphore()
     DEBUG_VK_ASSERT(vkCreateSemaphore(m_device, &createInfo, nullptr, &semaphore));
 
     // Pass the copy of the object since there's no such class memeber
-    deletionQueue.PushFunction([this, semaphore]()
+    m_deletionQueue.PushFunction([this, semaphore]()
     {
         vkDestroySemaphore(m_device, semaphore, nullptr);
     });
@@ -335,7 +335,7 @@ VkFence VulkanState::CreateFence(const VkFenceCreateFlags flag)
     };
     DEBUG_VK_ASSERT(vkCreateFence(m_device, &createInfo, nullptr, &fence));
 
-    deletionQueue.PushFunction([this, fence]()
+    m_deletionQueue.PushFunction([this, fence]()
     {
         vkDestroyFence(m_device, fence, nullptr);
     });
@@ -357,11 +357,11 @@ void VulkanState::CreateCommandBuffer()
     DEBUG_VK_ASSERT(vkAllocateCommandBuffers(m_device, &infoCmdBuffer, &m_cmdBuf));
     DEBUG_VK_ASSERT(vkAllocateCommandBuffers(m_device, &infoCmdBuffer, &m_immediateCmdBuf));
 
-    deletionQueue.PushFunction([&]()
+    m_deletionQueue.PushFunction([&]()
     {
         vkFreeCommandBuffers(m_device, m_commandPool, 1, &m_cmdBuf);
     });
-    deletionQueue.PushFunction([&]()
+    m_deletionQueue.PushFunction([&]()
     {
         vkFreeCommandBuffers(m_device, m_commandPool, 1, &m_immediateCmdBuf);
     });
@@ -389,7 +389,7 @@ void VulkanState::CreateDescriptorPool()
 
     DEBUG_VK_ASSERT(vkCreateDescriptorPool(m_device, &infoPool, nullptr, &m_descriptorPool));
 
-    deletionQueue.PushFunction([&]()
+    m_deletionQueue.PushFunction([&]()
     {
         vkDestroyDescriptorPool(m_device, m_descriptorPool, nullptr);
     });
@@ -415,7 +415,7 @@ void VulkanState::CreateDescriptorPool()
     infoPool.pPoolSizes = poolSizes;
 
     DEBUG_VK_ASSERT(vkCreateDescriptorPool(m_device, &infoPool, nullptr, &m_imguiDescriptorPool));
-    deletionQueue.PushFunction([&]()
+    m_deletionQueue.PushFunction([&]()
     {
         vkDestroyDescriptorPool(m_device, m_imguiDescriptorPool, nullptr);
     });
@@ -546,7 +546,7 @@ void VulkanState::CreatePipelines()
 void VulkanState::ShowUI()
 {
     m_ui->CameraMenu();
-    uiQueue.show();
+    m_uiQueue.Show();
 }
 
 void VulkanState::UpdatView(const glm::mat4 &view, const glm::mat4 &projection)
@@ -747,8 +747,11 @@ void VulkanState::LoadMeshes()
     auto defaultGraphicsPipeline = std::dynamic_pointer_cast<VulkanGraphicsPipeline>(m_pipelines[1]);
     DEBUG_ASSERT(defaultGraphicsPipeline != nullptr);
     m_meshInstances.emplace_back(m_meshLoader->LoadMesh("../Assets/Models/Cube.obj", *this), defaultGraphicsPipeline);
-    uiQueue.PushFunction([&]()
+    m_uiQueue.instanceUniformScales.push_back(false);
+    m_uiQueue.PushFunction([&]()
     {
-        m_ui->TransformationMenu(m_meshInstances[0]);
+        bool uniformScale = m_uiQueue.instanceUniformScales[0];
+        m_ui->TransformationMenu(m_meshInstances[0], uniformScale);
+        m_uiQueue.instanceUniformScales[0] = uniformScale;
     });
 }

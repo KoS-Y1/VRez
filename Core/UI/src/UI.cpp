@@ -12,7 +12,6 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
-
 UI::UI(SDL_Window *window, VkInstance instance, VkPhysicalDevice physicalDevice, VkDevice device, VkQueue queue,
        VkDescriptorPool descriptorPool)
 {
@@ -56,7 +55,7 @@ UI::UI(SDL_Window *window, VkInstance instance, VkPhysicalDevice physicalDevice,
     ImGui_ImplVulkan_CreateFontsTexture();
 }
 
-void UI::TransformationMenu(MeshInstance &instance)
+void UI::TransformationMenu(MeshInstance &instance, bool &uniformScale)
 {
     float step = 0.1f;
 
@@ -75,11 +74,6 @@ void UI::TransformationMenu(MeshInstance &instance)
     float pitch = glm::degrees(pitchYawRoll.x);
     float roll = glm::degrees(pitchYawRoll.z);
 
-    auto pair = m_uniformScales.find(&instance);
-    if (pair == m_uniformScales.end())
-    {
-        m_uniformScales[&instance] = false;
-    }
 
     ImGui::Begin((instance.GetName() + " Transformation").c_str());
     ImGui::DragFloat3("Location(x, y, z)", glm::value_ptr(location), step);
@@ -88,7 +82,7 @@ void UI::TransformationMenu(MeshInstance &instance)
     ImGui::DragFloat("Pitch", &pitch, angleStep, minPitch, maxPitch);
     ImGui::DragFloat("Roll", &roll, angleStep, minRoll, maxRoll);
     ImGui::DragFloat3("Scale(x, y, z)", glm::value_ptr(scale), step);
-    ImGui::Checkbox("Uniform Scale", &m_uniformScales[&instance]);
+    ImGui::Checkbox("Uniform Scale", &uniformScale);
     if (ImGui::Button("Reset"))
     {
         isReset = true;
@@ -99,7 +93,7 @@ void UI::TransformationMenu(MeshInstance &instance)
 
     instance.SetRotation(glm::vec3(glm::radians(pitch), glm::radians(yaw), glm::radians(roll)));
 
-    if (m_uniformScales[&instance])
+    if (uniformScale)
     {
         if (scale.x != instance.GetScale().x)
         {

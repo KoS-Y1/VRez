@@ -63,13 +63,15 @@ struct UIQueue
         ui.push_back(func);
     }
 
-    void show()
+    void Show()
     {
         for (auto it = ui.begin(); it != ui.end(); ++it)
         {
             (*it)();
         }
     }
+
+    std::vector<bool> instanceUniformScales;
 };
 
 class VulkanState
@@ -143,8 +145,8 @@ private:
     std::unique_ptr<MeshLoader> m_meshLoader;
     std::vector<MeshInstance> m_meshInstances;
 
-    DeletionQueue deletionQueue;
-    UIQueue uiQueue;
+    DeletionQueue m_deletionQueue;
+    UIQueue m_uiQueue;
 
     SDL_Window *m_window = nullptr;
     uint32_t m_width;
