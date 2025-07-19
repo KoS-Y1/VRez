@@ -758,6 +758,11 @@ void VulkanState::LoadMeshes()
         "../Assets/Models/Cube.obj",
         "../Assets/Models/suzanne.obj"
     };
+    std::vector<glm::vec3> locations
+    {
+        glm::vec3(0.0f, 0.0f, 0.0f),
+        glm::vec3(0.3f, 0.3f, 0.3f),
+    };
 
     for (size_t i = 0; i < meshPaths.size(); i++)
     {
@@ -765,7 +770,7 @@ void VulkanState::LoadMeshes()
 
         DEBUG_ASSERT(m_graphicsPipelines[0] != nullptr);
 
-        m_meshInstances.emplace_back(m_meshLoader->LoadMesh(meshPaths[index], *this), m_graphicsPipelines[0]);
+        m_meshInstances.emplace_back(m_meshLoader->LoadMesh(meshPaths[index], *this), m_graphicsPipelines[0], locations[index]);
 
         m_uiQueue.instanceUniformScales.push_back(false);
         m_uiQueue.PushFunction([&, index]()

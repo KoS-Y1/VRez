@@ -41,6 +41,6 @@ public:
 
 private:
     VulkanBuffer m_vertexBuffer;
-    size_t m_vertexCount;
+    size_t m_vertexCount = 0;
     std::string m_name;
 };

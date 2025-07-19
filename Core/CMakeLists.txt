@@ -29,4 +29,8 @@ target_link_libraries(MeshLoader PUBLIC MyVulkan SDL3::SDL3 tinyobjloader glm)
 
 add_library(Camera Camera/include/Camera.h Camera/src/Camera.cpp)
 target_include_directories(Camera PUBLIC Camera)
-target_link_libraries(Camera PUBLIC glm Util SDL3::SDL3)
+target_link_libraries(Camera PUBLIC glm Util)
+
+add_library(Light Light/include/Light.h Light/include/LightManager.h Light/src/LightManager.cpp)
+target_include_directories(Light PUBLIC Light)
+target_link_libraries(Light PUBLIC glm Util MyVulkan)

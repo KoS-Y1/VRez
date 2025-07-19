@@ -24,6 +24,8 @@ public:
 
     MeshInstance(const VulkanMesh *mesh, std::shared_ptr<VulkanGraphicsPipeline> pipeline);
 
+    MeshInstance(const VulkanMesh *mesh, std::shared_ptr<VulkanGraphicsPipeline> pipeline, glm::vec3 location);
+
     MeshInstance(const VulkanMesh *mesh, std::shared_ptr<VulkanGraphicsPipeline> pipeline, glm::vec3 location,
                  glm::vec3 pitchYawRoll, glm::vec3 scale);
 
@@ -63,8 +65,6 @@ public:
 
     void BindAndDraw(VkCommandBuffer cmdBuf) const;
 
-    void UpdateDescriptorSets(const std::vector<VkWriteDescriptorSet> &writeSets);
-
     [[nodiscard]] const std::string GetName() const { return m_mesh->GetName(); }
     [[nodiscard]] const glm::mat4 GetTransformation() const { return m_transformation; }
     [[nodiscard]] const VulkanMesh *GetMesh() const { return m_mesh; }
@@ -74,13 +74,15 @@ public:
     [[nodiscard]] const glm::vec3 GetPitchYawRoll() const { return m_pitchYawRoll; }
 
 private:
-    const VulkanMesh *m_mesh;
-    glm::mat4 m_transformation;
+    const VulkanMesh *m_mesh = nullptr;
+    glm::mat4 m_transformation = glm::mat4(1.0f);
 
-    glm::vec3 m_location;
-    glm::vec3 m_scale;
-    glm::quat m_rotation;
-    glm::vec3 m_pitchYawRoll;       // In radians
+    glm::vec3 m_location = glm::vec3(0.0f);
+    glm::vec3 m_scale = glm::vec3(1.0f);
+    glm::quat m_rotation = glm::quat();
+    glm::vec3 m_pitchYawRoll = glm::vec3(1.0f);       // In radians
+
+    glm::vec3 m_originalLocation = glm::vec3(0.0f);
 
     std::shared_ptr<VulkanGraphicsPipeline> m_pipeline;
 

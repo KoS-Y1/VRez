@@ -1,7 +1,6 @@
 #include "include/Camera.h"
 
 #include <algorithm>
-#include <SDL3/SDL_log.h>
 
 void Camera::SetFov(float fov)
 {

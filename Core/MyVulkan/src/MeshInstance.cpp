@@ -9,11 +9,16 @@ MeshInstance::MeshInstance(const VulkanMesh *mesh, std::shared_ptr<VulkanGraphic
 {
     m_mesh = mesh;
     m_pipeline = pipeline;
-    m_transformation = glm::mat4(1.0f);
-    glm::vec3 skew;
-    glm::vec4 perspective;
-    glm::decompose(m_transformation, m_scale, m_rotation, m_location, skew, perspective);
-    m_pitchYawRoll = glm::eulerAngles(m_rotation);
+    m_originalLocation = glm::vec3(0.f);
+    Reset();
+}
+
+MeshInstance::MeshInstance(const VulkanMesh *mesh, std::shared_ptr<VulkanGraphicsPipeline> pipeline, glm::vec3 location)
+{
+    m_mesh = mesh;
+    m_pipeline = pipeline;
+    m_originalLocation = location;
+    Reset();
 }
 
 MeshInstance::MeshInstance(const VulkanMesh *mesh, std::shared_ptr<VulkanGraphicsPipeline> pipeline, glm::vec3 location,
@@ -21,7 +26,8 @@ MeshInstance::MeshInstance(const VulkanMesh *mesh, std::shared_ptr<VulkanGraphic
 {
     m_mesh = mesh;
     m_pipeline = pipeline;
-    m_location = location;
+    m_originalLocation = location;
+    m_location = m_originalLocation;
     m_rotation = rotation;
     m_scale = scale;
     m_pitchYawRoll = glm::eulerAngles(m_rotation);
@@ -33,7 +39,8 @@ MeshInstance::MeshInstance(const VulkanMesh *mesh, std::shared_ptr<VulkanGraphic
 {
     m_mesh = mesh;
     m_pipeline = pipeline;
-    m_location = location;
+    m_originalLocation = location;
+    m_location = m_originalLocation;
     m_pitchYawRoll = pitchYawRoll;
     m_rotation = glm::quat_cast(glm::yawPitchRoll(m_pitchYawRoll.y, m_pitchYawRoll.x, m_pitchYawRoll.z));
     UpdateTransformation();
@@ -51,6 +58,7 @@ void MeshInstance::Swap(MeshInstance &other) noexcept
     m_scale = other.m_scale;
     m_rotation = other.m_rotation;
     m_pitchYawRoll = other.m_pitchYawRoll;
+    m_originalLocation = other.m_originalLocation;
     std::swap(m_mesh, other.m_mesh);
     std::swap(m_pipeline, other.m_pipeline);
 }
@@ -89,6 +97,9 @@ void MeshInstance::Reset()
     glm::vec4 perspective;
     glm::decompose(m_transformation, m_scale, m_rotation, m_location, skew, perspective);
     m_pitchYawRoll = glm::eulerAngles(m_rotation);
+    m_location = m_originalLocation;
+
+    UpdateTransformation();
 }
 
 void MeshInstance::UpdateTransformation()
@@ -107,3 +118,4 @@ void MeshInstance::BindAndDraw(VkCommandBuffer cmdBuf) const
                        sizeof(m_transformation), &m_transformation);
     vkCmdDraw(cmdBuf, m_mesh->GetVertexCount(), 1, 0, 0);
 }
+
