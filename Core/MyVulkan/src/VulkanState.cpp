@@ -30,15 +30,16 @@ VulkanState::VulkanState(SDL_Window *window, uint32_t width, uint32_t height)
     CreateSwapchain(width, height);
 
     m_renderFence = CreateFence(VK_FENCE_CREATE_SIGNALED_BIT);
-    m_immediateFence = CreateFence(VK_FENCE_CREATE_SIGNALED_BIT);
+    m_immediateFence = CreateFence(0);
     m_renderSemaphore = CreateSemaphore();
     m_presentSemaphore = CreateSemaphore();
 
     CreateDescriptorPool();
     CreatePipelines();
 
-    m_computeDescriptorSet = CreateDescriptorSet(m_pipelines[0]->GetDescriptorSetLayouts()[0]);
-    m_uniformViewDescriptorSet = CreateDescriptorSet(m_pipelines[1]->GetDescriptorSetLayouts()[0]);
+    m_computeDescriptorSet = CreateDescriptorSet(m_computePipelines[0]->GetDescriptorSetLayouts()[0]);
+    m_uniformViewDescriptorSet = CreateDescriptorSet(m_graphicsPipelines[0]->GetDescriptorSetLayouts()[0]);
+
     VulkanBuffer buffer(m_physicalDevice, m_device, sizeof(glm::mat4) * 2, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
     m_viewBuffer = std::move(buffer);
     std::vector<glm::mat4> bufferData
@@ -64,9 +65,14 @@ VulkanState::~VulkanState()
     vkFreeDescriptorSets(m_device, m_descriptorPool, 1, &m_computeDescriptorSet);
     vkFreeDescriptorSets(m_device, m_descriptorPool, 1, &m_uniformViewDescriptorSet);
 
-    for (size_t i = 0; i < m_pipelines.size(); ++i)
+    for (size_t i = 0; i < m_computePipelines.size(); ++i)
     {
-        m_pipelines[i]->Destroy();
+        m_computePipelines[i]->Destroy();
+    }
+
+    for (size_t i = 0; i < m_graphicsPipelines.size(); ++i)
+    {
+        m_graphicsPipelines[i]->Destroy();
     }
 
     m_drawImage.Destroy();
@@ -531,10 +537,10 @@ void VulkanState::CreatePipelines()
         switch (source.second)
         {
             case PipelineType::Compute:
-                m_pipelines.emplace_back(std::make_shared<VulkanComputePipeline>(m_device, source.first));
+                m_computePipelines.emplace_back(std::make_shared<VulkanComputePipeline>(m_device, source.first));
                 break;
             case PipelineType::Graphics:
-                m_pipelines.emplace_back(
+                m_graphicsPipelines.emplace_back(
                     std::make_shared<VulkanGraphicsPipeline>(m_device, source.first, graphicsConfig));
                 break;
             default:
@@ -620,8 +626,8 @@ void VulkanState::QueuePresent(VkSemaphore waitSemaphore, uint32_t imageIndex)
 void VulkanState::DrawBackground()
 {
     // Compute pipeline to dispatch
-    vkCmdBindPipeline(m_cmdBuf, VK_PIPELINE_BIND_POINT_COMPUTE, m_pipelines[0]->GetPipeline());
-    vkCmdBindDescriptorSets(m_cmdBuf, VK_PIPELINE_BIND_POINT_COMPUTE, m_pipelines[0]->GetLayout(), 0, 1,
+    vkCmdBindPipeline(m_cmdBuf, VK_PIPELINE_BIND_POINT_COMPUTE, m_computePipelines[0]->GetPipeline());
+    vkCmdBindDescriptorSets(m_cmdBuf, VK_PIPELINE_BIND_POINT_COMPUTE, m_computePipelines[0]->GetLayout(), 0, 1,
                             &m_computeDescriptorSet,
                             0,
                             nullptr);
@@ -631,7 +637,7 @@ void VulkanState::DrawBackground()
         glm::vec4(0.0f, 1.0f, 0.0f, 1.0f),
         glm::vec4(0.0f, 0.0f, 1.0f, 1.0f),
     };
-    vkCmdPushConstants(m_cmdBuf, m_pipelines[0]->GetLayout(), VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(constants),
+    vkCmdPushConstants(m_cmdBuf, m_computePipelines[0]->GetLayout(), VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(constants),
                        constants.data());
     vkCmdDispatch(m_cmdBuf, std::ceil(m_width / 16.0), std::ceil(m_height / 16.0), 1);
 }
@@ -716,7 +722,7 @@ void VulkanState::DrawGeometry()
 
     vkCmdBeginRendering(m_cmdBuf, &infoRender);
 
-    vkCmdBindPipeline(m_cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[1]->GetPipeline());
+    vkCmdBindPipeline(m_cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, m_graphicsPipelines[0]->GetPipeline());
 
     // Set dynamic viewport and scissor
     VkViewport viewport
@@ -734,24 +740,39 @@ void VulkanState::DrawGeometry()
     vkCmdSetViewport(m_cmdBuf, 0, 1, &viewport);
     vkCmdSetScissor(m_cmdBuf, 0, 1, &renderAreas);
 
-    vkCmdBindDescriptorSets(m_cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[1]->GetLayout(), 0, 1,
+    vkCmdBindDescriptorSets(m_cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, m_graphicsPipelines[0]->GetLayout(), 0, 1,
                             &m_uniformViewDescriptorSet, 0, nullptr);
 
-    m_meshInstances[0].BindAndDraw(m_cmdBuf);
+    for (const auto &instance: m_meshInstances)
+    {
+        instance.BindAndDraw(m_cmdBuf);
+    }
 
     vkCmdEndRendering(m_cmdBuf);
 }
 
 void VulkanState::LoadMeshes()
 {
-    auto defaultGraphicsPipeline = std::dynamic_pointer_cast<VulkanGraphicsPipeline>(m_pipelines[1]);
-    DEBUG_ASSERT(defaultGraphicsPipeline != nullptr);
-    m_meshInstances.emplace_back(m_meshLoader->LoadMesh("../Assets/Models/Cube.obj", *this), defaultGraphicsPipeline);
-    m_uiQueue.instanceUniformScales.push_back(false);
-    m_uiQueue.PushFunction([&]()
+    std::vector<std::string> meshPaths
     {
-        bool uniformScale = m_uiQueue.instanceUniformScales[0];
-        m_ui->TransformationMenu(m_meshInstances[0], uniformScale);
-        m_uiQueue.instanceUniformScales[0] = uniformScale;
-    });
+        "../Assets/Models/Cube.obj",
+        "../Assets/Models/suzanne.obj"
+    };
+
+    for (size_t i = 0; i < meshPaths.size(); i++)
+    {
+        size_t index = i;
+
+        DEBUG_ASSERT(m_graphicsPipelines[0] != nullptr);
+
+        m_meshInstances.emplace_back(m_meshLoader->LoadMesh(meshPaths[index], *this), m_graphicsPipelines[0]);
+
+        m_uiQueue.instanceUniformScales.push_back(false);
+        m_uiQueue.PushFunction([&, index]()
+        {
+            bool uniformScale = m_uiQueue.instanceUniformScales[index];
+            m_ui->TransformationMenu(m_meshInstances[index], uniformScale);
+            m_uiQueue.instanceUniformScales[index] = uniformScale;
+        });
+    }
 }

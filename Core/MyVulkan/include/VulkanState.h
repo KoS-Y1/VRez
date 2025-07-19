@@ -19,7 +19,8 @@
 
 #define POINT_ONE_SECOND 100000000u
 
-class VulkanPipeline;
+class VulkanComputePipeline;
+class VulkanGraphicsPipeline;
 class MeshLoader;
 class VulkanMesh;
 class MeshInstance;
@@ -105,7 +106,6 @@ public:
     void ImmediateSubmit(Func &&func)
     {
         DEBUG_VK_ASSERT(vkResetCommandBuffer(m_cmdBuf, 0));
-        WaitAndResetFence(m_immediateFence);
 
         BeginCommandBuffer(m_immediateCmdBuf, 0);
         func(m_immediateCmdBuf);
@@ -139,8 +139,9 @@ private:
     VkDescriptorSet m_uniformViewDescriptorSet = VK_NULL_HANDLE;
 
     VulkanImage m_drawImage;
-    // TODO: Probably needs to store compute, graphics pipelines in different vectors
-    std::vector<std::shared_ptr<VulkanPipeline> > m_pipelines;
+
+    std::vector<std::shared_ptr<VulkanComputePipeline>> m_computePipelines;
+    std::vector<std::shared_ptr<VulkanGraphicsPipeline>> m_graphicsPipelines;
 
     std::unique_ptr<MeshLoader> m_meshLoader;
     std::vector<MeshInstance> m_meshInstances;

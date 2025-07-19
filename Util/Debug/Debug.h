@@ -20,7 +20,7 @@ inline void VkAssert(const char* expression, VkResult result, const char* file, 
 {
     if (result != VK_SUCCESS)
     {
-        SDL_Log("Vulkan assertion failed: %s, %s(%d)", expression, file, line);
+        SDL_Log("Vulkan assertion failed: %s, %s(%d), error code: %d", expression, file, line, result);
         exit(EXIT_FAILURE);
     }
 }

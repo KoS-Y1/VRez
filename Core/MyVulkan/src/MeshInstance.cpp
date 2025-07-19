@@ -47,7 +47,12 @@ void MeshInstance::Destroy()
 void MeshInstance::Swap(MeshInstance &other) noexcept
 {
     m_transformation = other.m_transformation;
+    m_location = other.m_location;
+    m_scale = other.m_scale;
+    m_rotation = other.m_rotation;
+    m_pitchYawRoll = other.m_pitchYawRoll;
     std::swap(m_mesh, other.m_mesh);
+    std::swap(m_pipeline, other.m_pipeline);
 }
 
 void MeshInstance::SetLocation(glm::vec3 location)
