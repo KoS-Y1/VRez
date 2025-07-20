@@ -12,8 +12,9 @@
 #include <include/MeshLoader.h>
 #include <include/MeshInstance.h>
 #include <include/Camera.h>
-
+#include <include/LightManager.h>
 #include <include/UI.h>
+
 
 
 VulkanState::VulkanState(SDL_Window *window, uint32_t width, uint32_t height)
@@ -38,16 +39,17 @@ VulkanState::VulkanState(SDL_Window *window, uint32_t width, uint32_t height)
     CreateDescriptorPool();
     CreatePipelines();
 
+
     m_computeDescriptorSet = CreateDescriptorSet(m_computePipelines[0]->GetDescriptorSetLayouts()[0]);
-    m_uniformViewDescriptorSet = CreateDescriptorSet(m_graphicsPipelines[0]->GetDescriptorSetLayouts()[0]);
+    m_uniformDescriptorSet = CreateDescriptorSet(m_graphicsPipelines[0]->GetDescriptorSetLayouts()[0]);
 
     VulkanBuffer buffer(m_physicalDevice, m_device, sizeof(CameraData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
     m_viewBuffer = std::move(buffer);
 
-    CameraData data = Camera::GetInstance().GetCameraData();
-    m_viewBuffer.Upload(sizeof(CameraData), &data);
-
+    LightManager::GetInstance().Init(m_physicalDevice, m_device);
+    LightManager::GetInstance().AddLight(LightType::Directional);
     OneTimeUpdateDescriptorSets();
+    LightManager::GetInstance().Update();
 
     m_meshLoader = std::make_unique<MeshLoader>();
     m_ui = std::make_unique<UI>(m_window, m_instance, m_physicalDevice, m_device, m_queue, m_imguiDescriptorPool);
@@ -61,7 +63,9 @@ VulkanState::~VulkanState()
     WaitIdle();
 
     vkFreeDescriptorSets(m_device, m_descriptorPool, 1, &m_computeDescriptorSet);
-    vkFreeDescriptorSets(m_device, m_descriptorPool, 1, &m_uniformViewDescriptorSet);
+    vkFreeDescriptorSets(m_device, m_descriptorPool, 1, &m_uniformDescriptorSet);
+
+    LightManager::GetInstance().Destroy();
 
     for (size_t i = 0; i < m_computePipelines.size(); ++i)
     {
@@ -519,8 +523,8 @@ void VulkanState::CreatePipelines()
         {{"../Assets/Shaders/gradient.comp"}, PipelineType::Compute},
         {
             {
-                "../Assets/Shaders/BasicModelShader/basic.vert",
-                "../Assets/Shaders/BasicModelShader/basic.frag"
+                "../Assets/Shaders/BasicShader/basic.vert",
+                "../Assets/Shaders/BasicShader/basic.frag"
             },
             PipelineType::Graphics
         }
@@ -664,24 +668,31 @@ void VulkanState::OneTimeUpdateDescriptorSets()
     };
 
 
-    VkDescriptorBufferInfo infoBuffer
+    std::vector<VkDescriptorBufferInfo> infoBuffers
     {
-        .buffer = m_viewBuffer.GetBuffer(),
-        .offset = 0,
-        .range = VK_WHOLE_SIZE
+        {
+            .buffer = m_viewBuffer.GetBuffer(),
+            .offset = 0,
+            .range = VK_WHOLE_SIZE
+        },
+        {
+            .buffer = LightManager::GetInstance().GetBuffer(),
+            .offset = 0,
+            .range = VK_WHOLE_SIZE
+        }
     };
 
     VkWriteDescriptorSet writeSetView
     {
         .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
         .pNext = nullptr,
-        .dstSet = m_uniformViewDescriptorSet,
+        .dstSet = m_uniformDescriptorSet,
         .dstBinding = 0,
         .dstArrayElement = 0,
-        .descriptorCount = 1,
+        .descriptorCount = static_cast<uint32_t>(infoBuffers.size()),
         .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
         .pImageInfo = nullptr,
-        .pBufferInfo = &infoBuffer,
+        .pBufferInfo = infoBuffers.data(),
         .pTexelBufferView = nullptr,
     };
 
@@ -739,7 +750,7 @@ void VulkanState::DrawGeometry()
     vkCmdSetScissor(m_cmdBuf, 0, 1, &renderAreas);
 
     vkCmdBindDescriptorSets(m_cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, m_graphicsPipelines[0]->GetLayout(), 0, 1,
-                            &m_uniformViewDescriptorSet, 0, nullptr);
+                            &m_uniformDescriptorSet, 0, nullptr);
 
     for (const auto &instance: m_meshInstances)
     {

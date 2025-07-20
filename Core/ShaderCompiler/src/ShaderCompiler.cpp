@@ -256,6 +256,9 @@ void ShaderCompiler::ExtractPushConstants()
 
 void ShaderCompiler::ExtractDescriptorSets()
 {
+    // Note that all the bindings of the same set must have the same stage flags
+    std::map<uint32_t, VkShaderStageFlags> setStages;
+
     for (const auto &module: m_shaderModules)
     {
         uint32_t count = 0;
@@ -278,7 +281,9 @@ void ShaderCompiler::ExtractDescriptorSets()
             if (pair == m_bindingsPerSet.end())
             {
                 m_bindingsPerSet[setNum] = std::vector<VkDescriptorSetLayoutBinding>{};
+                setStages[setNum] = 0;
             }
+            setStages[setNum] |= module.shader_stage;
 
             // Get each binding's data
             for (size_t i = 0; i < set->binding_count; ++i)
@@ -295,13 +300,11 @@ void ShaderCompiler::ExtractDescriptorSets()
                 binding.stageFlags = module.shader_stage;
 
                 // Check if the binding already exist
-                // If so, merge and add new stage flag
                 bool exists = false;
                 for (auto &b: m_bindingsPerSet[setNum])
                 {
                     if (b.binding == binding.binding)
                     {
-                        b.stageFlags |= binding.stageFlags;
                         exists = true;
                         break;
                     }
@@ -314,8 +317,12 @@ void ShaderCompiler::ExtractDescriptorSets()
         }
     }
 
-    for (const auto &bindings: m_bindingsPerSet)
+    for (auto &bindings: m_bindingsPerSet)
     {
+        for (auto &b : bindings.second)
+        {
+            b.stageFlags = setStages[bindings.first];
+        }
         VkDescriptorSetLayoutCreateInfo infoLayout
         {
             .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,

@@ -28,7 +28,7 @@ enum class CameraMoveDirection : uint8_t
     DOWN,
 };
 
-struct CameraData
+struct alignas(16) CameraData
 {
     glm::mat4 view;
     glm::mat4 projection;

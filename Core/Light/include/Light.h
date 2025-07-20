@@ -13,21 +13,31 @@ enum class LightType : uint32_t
 class alignas(16) Light
 {
 public:
-    Light();
+    Light() = default;
 
     ~Light() = default;
 
-    Light(LightType type) : m_type(type) {}
+    Light(LightType type) { m_type = static_cast<uint32_t>(type); }
 
-    Light(const Light &) = delete;
+    // Light(const Light &other) = delete;
+    //
+    // Light(Light &&) = delete;
+    //
+    // Light &operator=(const Light &other)
+    // {
+    //     m_color = other.m_color;
+    //     m_type = other.m_type;
+    //     m_position = other.m_position;
+    //     m_range = other.m_range;
+    //     m_direction = other.m_direction;
+    //     m_innerAngle = other.m_innerAngle;
+    //     m_outerAngle = other.m_outerAngle;
+    //     m_intensity = other.m_intensity;
+    // }
+    //
+    // Light &operator=(Light &&) = delete;
 
-    Light(Light &&) = delete;
-
-    Light &operator=(const Light &) = delete;
-
-    Light &operator=(Light &&) = delete;
-
-    [[nodiscard]] LightType GetType() const { return m_type; }
+    [[nodiscard]] LightType GetType() const { return static_cast<LightType>(m_type); }
     [[nodiscard]] glm::vec3 GetColor() const { return m_color; }
     [[nodiscard]] glm::vec3 GetPosition() const { return m_position; }
     [[nodiscard]] float GetRange() const { return m_range; }

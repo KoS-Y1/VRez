@@ -136,7 +136,7 @@ private:
 
     VulkanBuffer m_viewBuffer;
     VkDescriptorSet m_computeDescriptorSet = VK_NULL_HANDLE;
-    VkDescriptorSet m_uniformViewDescriptorSet = VK_NULL_HANDLE;
+    VkDescriptorSet m_uniformDescriptorSet = VK_NULL_HANDLE;
 
     VulkanImage m_drawImage;
 

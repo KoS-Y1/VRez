@@ -5,21 +5,33 @@
 #include <vulkan/vulkan.h>
 
 #include <Singleton.h>
+#include <include/VulkanBuffer.h>
 
 #include "Light.h"
 
 #define MAX_LIGHTS 16u
 
-class VulkanBuffer;
+struct alignas(16) LightsData
+{
+    std::vector<Light> lights{MAX_LIGHTS};
+    int32_t lightCount;
+    int32_t padding[3];
+};
+
 
 class LightManager : public Singleton<LightManager>
 {
 public:
-    void Bind(VkCommandBuffer cmdBuf);
+    void Init(VkPhysicalDevice physicalDevice, VkDevice device);
+    void Destroy();
+
+    void Update();
 
     // TODO
     void UpdateLight(uint32_t index);
     void AddLight(LightType type);
+
+    [[nodiscard]] const VkBuffer& GetBuffer() const { return m_buffer.GetBuffer(); }
 
 protected:
     LightManager() = default;
