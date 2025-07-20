@@ -100,7 +100,7 @@ public:
 
     void ShowUI();
 
-    void UpdatView(const glm::mat4 &view, const glm::mat4 &projection);
+    void UpdateView();
 
     template<class Func>
     void ImmediateSubmit(Func &&func)

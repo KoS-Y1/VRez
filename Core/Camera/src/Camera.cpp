@@ -102,3 +102,12 @@ void Camera::UpdateCameraVectors()
     m_right = glm::normalize(glm::cross(m_front, m_worldUp));
     m_up = glm::normalize(glm::cross(m_right, m_front));
 }
+CameraData Camera::GetCameraData() const
+{
+    CameraData data;
+    data.view = GetViewMatrix();
+    data.projection = GetProjectonMatrix();
+    data.position = m_location;
+
+    return data;
+}

@@ -136,7 +136,7 @@ void UI::CameraMenu()
     float yaw = glm::degrees(pitchYawRoll.y);
     float pitch = glm::degrees(pitchYawRoll.x);
 
-    ImGui::Begin("Camera");
+    ImGui::Begin("Camera(Press LSHIFT to switch to camera mode");
     ImGui::DragFloat3("Location(x, y, z)", glm::value_ptr(location), step);
     ImGui::DragFloat("FOV", &fov, step, minFov, maxFov);
     ImGui::Text("Rotation");

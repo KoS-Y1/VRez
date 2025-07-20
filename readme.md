@@ -12,31 +12,30 @@
     + ~~Translation~~
     + ~~Rotation~~
     + ~~Scaling~~
-      + uniform scaling
+      + ~~uniform scaling~~
 
 ## Lighting
 + Light
   + Spot light
-  + Enviroment light
-  + Parallel light
+  + Ambiemt light
+  + Directional light
+  + PointLight
 + Light with transformation
   + Translation
-  + Rotation
-  + Scale?
-+ Basic ray tracing(make sure models' normal working)
++ Traditional Graphics, Rasterization Shaders(make sure models' normal working)
   + Basic rendering(e.g. phong..)
   + Shadow
     + Soft shadow
     + Antialiasing
-
++ **Advanced(Vulkan Ray Tracing Extension/RT Pipeline)**
 ## Texture
 + Texture loader
 + Different kind of textures with corresponding shaders
   + Basic texture mapping
   + Normal mapping...
 
-## Shader Compiler
-+ Parse to get the descrirptor set layout and push constant info with a given glsl file
+## ~~Shader Compiler~~
++ ~~Parse to get the descrirptor set layout and push constant info with a given glsl file~~
 ~~~~ c++
 read all file path
 for each file

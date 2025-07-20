@@ -2,15 +2,15 @@
 
 #include <glm/glm.hpp>
 
-enum class LightType : uint8_t
+enum class LightType : uint32_t
 {
-    Point,
+    Point = 0,
     Directional,
     Ambient,
     Spot
 };
 
-class Light
+class alignas(16) Light
 {
 public:
     Light();
@@ -27,7 +27,7 @@ public:
 
     Light &operator=(Light &&) = delete;
 
-    [[nodiscard]] LightType GetType() const { return m_Type; }
+    [[nodiscard]] LightType GetType() const { return m_type; }
     [[nodiscard]] glm::vec3 GetColor() const { return m_color; }
     [[nodiscard]] glm::vec3 GetPosition() const { return m_position; }
     [[nodiscard]] float GetRange() const { return m_range; }
@@ -45,16 +45,16 @@ public:
     void SetIntensity(float intensity) { m_intensity = intensity; }
 
 private:
-    LightType m_Type = LightType::Point;
-
     glm::vec3 m_color = glm::vec3(1.0f);
+    uint32_t m_type = static_cast<uint32_t>(LightType::Point);
 
     glm::vec3 m_position = glm::vec3(0.0f);
     float m_range = 10.0f; // Point/spot falloff
 
     glm::vec3 m_direction = glm::vec3(0.0f, -1.0f, 0.0f); // Directional/spot direction
     float m_innerAngle = 0.0f; // Spot inner angle, in degrees
-    float m_outerAngle = 0.0f; // Spot outter angle, in degrees
 
+    float m_outerAngle = 0.0f; // Spot outter angle, in degrees
     float m_intensity = 1.0f;
+    float m_paddings[2] = {};
 };

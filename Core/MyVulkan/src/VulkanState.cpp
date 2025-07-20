@@ -11,6 +11,7 @@
 #include <include/VulkanGraphicsPipeline.h>
 #include <include/MeshLoader.h>
 #include <include/MeshInstance.h>
+#include <include/Camera.h>
 
 #include <include/UI.h>
 
@@ -40,14 +41,11 @@ VulkanState::VulkanState(SDL_Window *window, uint32_t width, uint32_t height)
     m_computeDescriptorSet = CreateDescriptorSet(m_computePipelines[0]->GetDescriptorSetLayouts()[0]);
     m_uniformViewDescriptorSet = CreateDescriptorSet(m_graphicsPipelines[0]->GetDescriptorSetLayouts()[0]);
 
-    VulkanBuffer buffer(m_physicalDevice, m_device, sizeof(glm::mat4) * 2, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
+    VulkanBuffer buffer(m_physicalDevice, m_device, sizeof(CameraData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
     m_viewBuffer = std::move(buffer);
-    std::vector<glm::mat4> bufferData
-    {
-        glm::mat4(1.0f),
-        glm::mat4(1.0f),
-    };
-    m_viewBuffer.Upload(bufferData.size() * sizeof(glm::mat4), bufferData.data());
+
+    CameraData data = Camera::GetInstance().GetCameraData();
+    m_viewBuffer.Upload(sizeof(CameraData), &data);
 
     OneTimeUpdateDescriptorSets();
 
@@ -555,10 +553,10 @@ void VulkanState::ShowUI()
     m_uiQueue.Show();
 }
 
-void VulkanState::UpdatView(const glm::mat4 &view, const glm::mat4 &projection)
+void VulkanState::UpdateView()
 {
-    std::vector<glm::mat4> data{view, projection};
-    m_viewBuffer.Upload(data.size() * sizeof(glm::mat4), data.data());
+    CameraData data = Camera::GetInstance().GetCameraData();
+    m_viewBuffer.Upload(sizeof(CameraData), &data);
 }
 
 
@@ -770,7 +768,8 @@ void VulkanState::LoadMeshes()
 
         DEBUG_ASSERT(m_graphicsPipelines[0] != nullptr);
 
-        m_meshInstances.emplace_back(m_meshLoader->LoadMesh(meshPaths[index], *this), m_graphicsPipelines[0], locations[index]);
+        m_meshInstances.emplace_back(m_meshLoader->LoadMesh(meshPaths[index], *this), m_graphicsPipelines[0],
+                                     locations[index]);
 
         m_uiQueue.instanceUniformScales.push_back(false);
         m_uiQueue.PushFunction([&, index]()

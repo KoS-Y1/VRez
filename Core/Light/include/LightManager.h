@@ -8,7 +8,7 @@
 
 #include "Light.h"
 
-#define MAX_LIGHTS 16
+#define MAX_LIGHTS 16u
 
 class VulkanBuffer;
 

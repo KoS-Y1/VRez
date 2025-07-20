@@ -28,6 +28,14 @@ enum class CameraMoveDirection : uint8_t
     DOWN,
 };
 
+struct CameraData
+{
+    glm::mat4 view;
+    glm::mat4 projection;
+    glm::vec3 position;
+    float padding;
+};
+
 // Camera class as a singleton, since we only have 1 camera
 class Camera : public Singleton<Camera>
 {
@@ -56,7 +64,7 @@ public:
     [[nodiscard]] float GetFOV() const { return m_fov; }
     [[nodiscard]] glm::vec3 GetPitchYawRoll() const { return m_pitchYawRoll; }
     [[nodiscard]] glm::vec3 GetLocation() const { return m_location; }
-
+    [[nondiscard]] CameraData GetCameraData() const;
 protected:
     Camera() { Reset(); }
 
