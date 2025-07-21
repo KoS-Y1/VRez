@@ -22,7 +22,9 @@ namespace vk_util
     VkImageSubresourceLayers GetImageSubresourceLayers(VkImageAspectFlags aspect);
 
 
-    VkRenderingAttachmentInfo GetRenderingAttachmentInfo(VkImageView view, VkImageLayout layout, VkClearValue *clear);
+    VkRenderingAttachmentInfo GetRenderingAttachmentInfo(VkImageView view, VkImageLayout layout, VkClearValue *clear,
+                                                         VkAttachmentLoadOp loadOp, VkAttachmentStoreOp storeOp);
 
-    VkRenderingInfo GetRenderingInfo(VkRect2D area, VkRenderingAttachmentInfo *colorAttachment);
+    VkRenderingInfo GetRenderingInfo(VkRect2D area, VkRenderingAttachmentInfo *colorAttachment,
+                                     VkRenderingAttachmentInfo *depthStencilAttachment);
 }

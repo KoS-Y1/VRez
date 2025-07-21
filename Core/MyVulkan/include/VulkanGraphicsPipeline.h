@@ -14,7 +14,7 @@ struct GraphicsPipelineConfig
     VkFrontFace frontFace = VK_FRONT_FACE_CLOCKWISE;
     VkBool32 depthTestEnable =  VK_FALSE;
     VkBool32 depthWriteEnable = VK_FALSE;
-    VkCompareOp compareOp = VK_COMPARE_OP_ALWAYS;
+    VkCompareOp depthCompareOp = VK_COMPARE_OP_ALWAYS;
     const VkPipelineVertexInputStateCreateInfo *infoVertex;
 
     std::vector<VkFormat> colorFormats {};

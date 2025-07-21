@@ -16,7 +16,6 @@
 #include <include/UI.h>
 
 
-
 VulkanState::VulkanState(SDL_Window *window, uint32_t width, uint32_t height)
 {
     m_window = window;
@@ -65,6 +64,7 @@ VulkanState::~VulkanState()
     }
 
     m_drawImage.Destroy();
+    m_depthImage.Destroy();
 
     for (size_t i = 0; i < m_swapchain.count; i++)
     {
@@ -241,7 +241,7 @@ void VulkanState::CreateSwapchain(uint32_t width, uint32_t height)
         .flags = 0,
         .surface = m_surface,
         .minImageCount = MIN_SWAPCHAIN_IMG_COUNT,
-        .imageFormat = IMG_FORMAT,
+        .imageFormat = COLOR_IMG_FORMAT,
         .imageColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR,
         .imageExtent = {width, height},
         .imageArrayLayers = 1,
@@ -270,7 +270,7 @@ void VulkanState::CreateSwapchain(uint32_t width, uint32_t height)
             .pNext = nullptr,
             .flags = 0,
             .viewType = VK_IMAGE_VIEW_TYPE_2D,
-            .format = IMG_FORMAT,
+            .format = COLOR_IMG_FORMAT,
             .components = {
                 VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY,
                 VK_COMPONENT_SWIZZLE_IDENTITY
@@ -286,12 +286,19 @@ void VulkanState::CreateSwapchain(uint32_t width, uint32_t height)
     }
 
     // Init drawImage that swapchain images copy from
-    VulkanImage img(m_physicalDevice, m_device, IMG_FORMAT,
-                    VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_STORAGE_BIT |
-                    VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, {m_width, m_height, 1}, VK_IMAGE_ASPECT_COLOR_BIT);
+    VulkanImage drawImg(m_physicalDevice, m_device, COLOR_IMG_FORMAT,
+                        VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_STORAGE_BIT |
+                        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, {m_width, m_height, 1}, VK_IMAGE_ASPECT_COLOR_BIT);
 
 
-    m_drawImage = std::move(img);
+    m_drawImage = std::move(drawImg);
+
+    // Init depth image for depth testing
+    VulkanImage depthImg(m_physicalDevice, m_device, DEPTH_IMG_FORMAT,
+                         VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_STORAGE_BIT
+                         | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, {m_width, m_height, 1},
+                         VK_IMAGE_ASPECT_DEPTH_BIT);
+    m_depthImage = std::move(depthImg);
 
     m_deletionQueue.PushFunction([&]()
     {
@@ -466,6 +473,10 @@ void VulkanState::Present()
                                       VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT,
                                       VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
 
+    // Layout trainsiton for depth testing
+    vk_util::CmdImageLayoutTransition(m_cmdBuf, m_depthImage.GetImage(), VK_IMAGE_LAYOUT_UNDEFINED,
+                                      VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL, VK_IMAGE_ASPECT_DEPTH_BIT, 0,
+                                      VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT);
     // Draw geometry
     DrawGeometry();
 
@@ -517,7 +528,11 @@ void VulkanState::CreatePipelines()
 
     GraphicsPipelineConfig graphicsConfig;
     graphicsConfig.infoVertex = VertexPNT::GetVertexInputStateCreateInfo();
-    graphicsConfig.colorFormats = std::vector<VkFormat>{IMG_FORMAT};
+    graphicsConfig.colorFormats = std::vector<VkFormat>{COLOR_IMG_FORMAT};
+    graphicsConfig.depthTestEnable = VK_TRUE;
+    graphicsConfig.depthWriteEnable = VK_TRUE;
+    graphicsConfig.depthFormat = DEPTH_IMG_FORMAT;
+    graphicsConfig.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
 
     for (const auto &source: shaderSources)
     {
@@ -557,8 +572,6 @@ void VulkanState::CreateRenderObjects()
 
     // UI
     m_ui = std::make_unique<UI>(m_window, m_instance, m_physicalDevice, m_device, m_queue, m_imguiDescriptorPool);
-
-
 }
 
 
@@ -719,8 +732,9 @@ void VulkanState::DrawImgui(VkImageView view)
         .extent = {m_width, m_height}
     };
     VkRenderingAttachmentInfo infoColorAttachment = vk_util::GetRenderingAttachmentInfo(
-        view, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, nullptr);
-    VkRenderingInfo infoRendering = vk_util::GetRenderingInfo(renderAreas, &infoColorAttachment);
+        view, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, nullptr, VK_ATTACHMENT_LOAD_OP_LOAD,
+        VK_ATTACHMENT_STORE_OP_STORE);
+    VkRenderingInfo infoRendering = vk_util::GetRenderingInfo(renderAreas, &infoColorAttachment, nullptr);
 
     vkCmdBeginRendering(m_cmdBuf, &infoRendering);
 
@@ -736,9 +750,24 @@ void VulkanState::DrawGeometry()
         .offset = {0, 0},
         .extent = {m_width, m_height}
     };
-    VkRenderingAttachmentInfo infoAttachment = vk_util::GetRenderingAttachmentInfo(
-        m_drawImage.GetImageView(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, nullptr);
-    VkRenderingInfo infoRender = vk_util::GetRenderingInfo(renderAreas, &infoAttachment);
+
+    VkRenderingAttachmentInfo infoColorAttachment = vk_util::GetRenderingAttachmentInfo(
+        m_drawImage.GetImageView(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, nullptr, VK_ATTACHMENT_LOAD_OP_LOAD,
+        VK_ATTACHMENT_STORE_OP_STORE);
+
+    VkClearValue depthClear =
+    {
+        .depthStencil =
+        {
+            .depth = 1.0f,
+            .stencil = 0
+        }
+    };
+    VkRenderingAttachmentInfo infoDepthAttachment = vk_util::GetRenderingAttachmentInfo(
+        m_depthImage.GetImageView(), VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL, &depthClear, VK_ATTACHMENT_LOAD_OP_CLEAR,
+        VK_ATTACHMENT_STORE_OP_STORE);
+
+    VkRenderingInfo infoRender = vk_util::GetRenderingInfo(renderAreas, &infoColorAttachment, &infoDepthAttachment);
 
     vkCmdBeginRendering(m_cmdBuf, &infoRender);
 
@@ -776,7 +805,7 @@ void VulkanState::LoadMeshes()
     std::vector<std::string> meshPaths
     {
         "../Assets/Models/Cube.obj",
-        "../Assets/Models/suzanne.obj"
+        "../Assets/Models/Suzanne.obj"
     };
     std::vector<glm::vec3> locations
     {

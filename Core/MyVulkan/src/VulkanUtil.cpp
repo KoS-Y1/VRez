@@ -98,7 +98,8 @@ VkImageSubresourceLayers vk_util::GetImageSubresourceLayers(VkImageAspectFlags a
 
 
 VkRenderingAttachmentInfo vk_util::GetRenderingAttachmentInfo(VkImageView view, VkImageLayout layout,
-                                                              VkClearValue *clear)
+                                                              VkClearValue *clear, VkAttachmentLoadOp loadOp,
+                                                              VkAttachmentStoreOp storeOp)
 {
     VkRenderingAttachmentInfo infoAttachment
     {
@@ -109,8 +110,8 @@ VkRenderingAttachmentInfo vk_util::GetRenderingAttachmentInfo(VkImageView view, 
         .resolveMode = VK_RESOLVE_MODE_NONE,
         .resolveImageView = VK_NULL_HANDLE,
         .resolveImageLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-        .loadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
-        .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+        .loadOp = loadOp,
+        .storeOp = storeOp,
     };
 
     if (clear != nullptr)
@@ -122,7 +123,8 @@ VkRenderingAttachmentInfo vk_util::GetRenderingAttachmentInfo(VkImageView view, 
     return infoAttachment;
 }
 
-VkRenderingInfo vk_util::GetRenderingInfo(VkRect2D area, VkRenderingAttachmentInfo *colorAttachment)
+VkRenderingInfo vk_util::GetRenderingInfo(VkRect2D area, VkRenderingAttachmentInfo *colorAttachment,
+                                          VkRenderingAttachmentInfo *depthStencilAttachment)
 {
     VkRenderingInfo infoRendering
     {
@@ -134,7 +136,7 @@ VkRenderingInfo vk_util::GetRenderingInfo(VkRect2D area, VkRenderingAttachmentIn
         .viewMask = 0,
         .colorAttachmentCount = 1,
         .pColorAttachments = colorAttachment,
-        .pDepthAttachment = nullptr,
+        .pDepthAttachment = depthStencilAttachment,
         .pStencilAttachment = nullptr,
     };
     return infoRendering;

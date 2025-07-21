@@ -21,7 +21,7 @@ UI::UI(SDL_Window *window, VkInstance instance, VkPhysicalDevice physicalDevice,
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad; // Enable Gamepad Controls
 
-    VkFormat colorFormat = IMG_FORMAT;
+    VkFormat colorFormat = COLOR_IMG_FORMAT;
 
     VkPipelineRenderingCreateInfoKHR infoRendering
     {
@@ -114,7 +114,6 @@ void UI::TransformationMenu(MeshInstance &instance, bool &uniformScale)
     {
         instance.Reset();
     }
-
 }
 
 void UI::CameraMenu()

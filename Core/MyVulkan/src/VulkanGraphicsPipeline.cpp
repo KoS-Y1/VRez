@@ -98,7 +98,7 @@ void VulkanGraphicsPipeline::CreatePipeline(const ShaderCompiler &shaderCompiler
         .flags = 0,
         .depthTestEnable = m_config.depthTestEnable,
         .depthWriteEnable = m_config.depthWriteEnable,
-        .depthCompareOp = m_config.compareOp,
+        .depthCompareOp = m_config.depthCompareOp,
         .depthBoundsTestEnable = VK_FALSE,
         .stencilTestEnable = VK_FALSE,
         .front = {},
