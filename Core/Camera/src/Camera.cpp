@@ -2,6 +2,30 @@
 
 #include <algorithm>
 
+void Camera::Init(VkPhysicalDevice physicalDevice, VkDevice device)
+{
+    Reset();
+
+    VulkanBuffer buffer(physicalDevice, device, sizeof(CameraData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
+    m_buffer = std::move(buffer);
+
+}
+
+void Camera::Destroy()
+{
+    m_buffer.Destroy();
+}
+
+void Camera::Update()
+{
+    CameraData data = {};
+    data.view = GetViewMatrix();
+    data.projection = GetProjectonMatrix();
+    data.position = m_location;
+
+    m_buffer.Upload(sizeof(CameraData), &data);
+}
+
 void Camera::SetFov(float fov)
 {
     m_fov = fov;
@@ -101,13 +125,4 @@ void Camera::UpdateCameraVectors()
     m_front = glm::normalize(front);
     m_right = glm::normalize(glm::cross(m_front, m_worldUp));
     m_up = glm::normalize(glm::cross(m_right, m_front));
-}
-CameraData Camera::GetCameraData() const
-{
-    CameraData data;
-    data.view = GetViewMatrix();
-    data.projection = GetProjectonMatrix();
-    data.position = m_location;
-
-    return data;
 }

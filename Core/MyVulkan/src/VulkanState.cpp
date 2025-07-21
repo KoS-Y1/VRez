@@ -39,21 +39,7 @@ VulkanState::VulkanState(SDL_Window *window, uint32_t width, uint32_t height)
     CreateDescriptorPool();
     CreatePipelines();
 
-
-    m_computeDescriptorSet = CreateDescriptorSet(m_computePipelines[0]->GetDescriptorSetLayouts()[0]);
-    m_uniformDescriptorSet = CreateDescriptorSet(m_graphicsPipelines[0]->GetDescriptorSetLayouts()[0]);
-
-    VulkanBuffer buffer(m_physicalDevice, m_device, sizeof(CameraData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
-    m_viewBuffer = std::move(buffer);
-
-    LightManager::GetInstance().Init(m_physicalDevice, m_device);
-    LightManager::GetInstance().AddLight(LightType::Directional);
-    OneTimeUpdateDescriptorSets();
-    LightManager::GetInstance().Update();
-
-    m_meshLoader = std::make_unique<MeshLoader>();
-    m_ui = std::make_unique<UI>(m_window, m_instance, m_physicalDevice, m_device, m_queue, m_imguiDescriptorPool);
-
+    CreateRenderObjects();
 
     LoadMeshes();
 }
@@ -66,6 +52,7 @@ VulkanState::~VulkanState()
     vkFreeDescriptorSets(m_device, m_descriptorPool, 1, &m_uniformDescriptorSet);
 
     LightManager::GetInstance().Destroy();
+    Camera::GetInstance().Destroy();
 
     for (size_t i = 0; i < m_computePipelines.size(); ++i)
     {
@@ -85,8 +72,6 @@ VulkanState::~VulkanState()
     }
 
     m_meshLoader->Destroy();
-
-    m_viewBuffer.Destroy();
 
     m_deletionQueue.Flush();
 }
@@ -551,16 +536,42 @@ void VulkanState::CreatePipelines()
     }
 }
 
+void VulkanState::CreateRenderObjects()
+{
+    // Lights
+    LightManager::GetInstance().Init(m_physicalDevice, m_device);
+    LightManager::GetInstance().AddLight(LightType::Directional);
+
+    // Camera
+    Camera::GetInstance().Init(m_physicalDevice, m_device);
+
+    // Descriptor sets
+    m_computeDescriptorSet = CreateDescriptorSet(m_computePipelines[0]->GetDescriptorSetLayouts()[0]);
+    m_uniformDescriptorSet = CreateDescriptorSet(m_graphicsPipelines[0]->GetDescriptorSetLayouts()[0]);
+
+    OneTimeUpdateDescriptorSets();
+
+
+    // Meshes
+    m_meshLoader = std::make_unique<MeshLoader>();
+
+    // UI
+    m_ui = std::make_unique<UI>(m_window, m_instance, m_physicalDevice, m_device, m_queue, m_imguiDescriptorPool);
+
+
+}
+
+
 void VulkanState::ShowUI()
 {
     m_ui->CameraMenu();
     m_uiQueue.Show();
 }
 
-void VulkanState::UpdateView()
+void VulkanState::Update()
 {
-    CameraData data = Camera::GetInstance().GetCameraData();
-    m_viewBuffer.Upload(sizeof(CameraData), &data);
+    LightManager::GetInstance().Update();
+    Camera::GetInstance().Update();
 }
 
 
@@ -671,7 +682,7 @@ void VulkanState::OneTimeUpdateDescriptorSets()
     std::vector<VkDescriptorBufferInfo> infoBuffers
     {
         {
-            .buffer = m_viewBuffer.GetBuffer(),
+            .buffer = Camera::GetInstance().GetBuffer(),
             .offset = 0,
             .range = VK_WHOLE_SIZE
         },

@@ -5,6 +5,7 @@
 #include <glm/detail/type_quat.hpp>
 
 #include <Singleton.h>
+#include <include/VulkanBuffer.h>
 
 #define YAW                 (-90.0f)
 #define PITCH               0.0f
@@ -40,6 +41,12 @@ struct alignas(16) CameraData
 class Camera : public Singleton<Camera>
 {
 public:
+    void Init(VkPhysicalDevice physicalDevice, VkDevice device);
+
+    void Destroy();
+
+    void Update();
+
     void ProcessMovement(CameraMoveDirection direction, float deltaTime);
 
     void ProcessRotation(float xOffset, float yOffset);
@@ -64,9 +71,10 @@ public:
     [[nodiscard]] float GetFOV() const { return m_fov; }
     [[nodiscard]] glm::vec3 GetPitchYawRoll() const { return m_pitchYawRoll; }
     [[nodiscard]] glm::vec3 GetLocation() const { return m_location; }
-    [[nondiscard]] CameraData GetCameraData() const;
+    [[nodiscard]] const VkBuffer &GetBuffer() const { return m_buffer.GetBuffer(); }
+
 protected:
-    Camera() { Reset(); }
+    Camera() = default;
 
     ~Camera() = default;
 
@@ -82,6 +90,8 @@ private:
 
     float m_sensity;
     float m_speed;
+
+    VulkanBuffer m_buffer;
 
     void UpdateCameraVectors();
 };

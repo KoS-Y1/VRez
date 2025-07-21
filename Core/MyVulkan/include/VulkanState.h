@@ -100,7 +100,7 @@ public:
 
     void ShowUI();
 
-    void UpdateView();
+    void Update();
 
     template<class Func>
     void ImmediateSubmit(Func &&func)
@@ -134,11 +134,11 @@ private:
     VkDescriptorPool m_descriptorPool = VK_NULL_HANDLE;
     VkDescriptorPool m_imguiDescriptorPool = VK_NULL_HANDLE;
 
-    VulkanBuffer m_viewBuffer;
     VkDescriptorSet m_computeDescriptorSet = VK_NULL_HANDLE;
     VkDescriptorSet m_uniformDescriptorSet = VK_NULL_HANDLE;
 
     VulkanImage m_drawImage;
+    VulkanImage m_depthImage;
 
     std::vector<std::shared_ptr<VulkanComputePipeline>> m_computePipelines;
     std::vector<std::shared_ptr<VulkanGraphicsPipeline>> m_graphicsPipelines;
@@ -179,6 +179,8 @@ private:
 
     void CreatePipelines();
 
+    void CreateRenderObjects();
+
     void WaitAndResetFence(VkFence fence, uint64_t timeout = POINT_ONE_SECOND);
 
     static void BeginCommandBuffer(VkCommandBuffer cmdBuf, VkCommandBufferUsageFlags flag);
@@ -199,6 +201,4 @@ private:
 
     // Meshes
     void LoadMeshes();
-
-    void BindAndDrawMesh(const MeshInstance &instance);
 };

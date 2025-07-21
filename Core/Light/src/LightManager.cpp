@@ -1,6 +1,5 @@
 #include "include/LightManager.h"
 
-#include "SDL3/SDL_log.h"
 
 void LightManager::Init(VkPhysicalDevice physicalDevice, VkDevice device)
 {
@@ -25,13 +24,11 @@ void LightManager::Update()
         data.lights[i] = m_lights[i];
     }
 
-    SDL_Log("Size of lights data %d", sizeof(LightsData));
- m_buffer.Upload(sizeof(LightsData), &data);
+    m_buffer.Upload(sizeof(LightsData), &data);
 }
 
 void LightManager::UpdateLight(uint32_t index)
 {
-
 }
 
 void LightManager::AddLight(LightType type)
@@ -45,5 +42,3 @@ void LightManager::AddLight(LightType type)
     light.type = static_cast<uint32_t>(type);
     m_lights.push_back(light);
 }
-
-

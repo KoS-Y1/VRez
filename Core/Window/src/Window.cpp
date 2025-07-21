@@ -66,7 +66,7 @@ void Window::Run()
 
         //make imgui calculate internal draw structures
         ImGui::Render();
-        vulkanState.UpdateView();
+        vulkanState.Update();
         vulkanState.Present();
 
         m_lastTime = time;

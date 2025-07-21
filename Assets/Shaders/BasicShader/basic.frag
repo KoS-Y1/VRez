@@ -13,7 +13,7 @@ void main()
 {
     int i = 0;
 
-    vec3 color = vec3(0.3f, 0.3f, 0.1f);
+    vec3 color = vec3(1.0f, 0.0f, 0.0f);
     vec3 lightColor = vec3(0.0f);
 
     for(i = 0; i < uLightCount; ++i)
