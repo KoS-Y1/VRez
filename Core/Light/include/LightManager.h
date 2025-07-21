@@ -13,9 +13,11 @@
 
 struct alignas(16) LightsData
 {
-    std::vector<Light> lights{MAX_LIGHTS};
-    int32_t lightCount;
-    int32_t padding[3];
+    int32_t lightCount = 0;
+    int32_t padding0 = 0;
+    int32_t padding1 = 0;
+    int32_t padding2 = 0;
+    Light lights[MAX_LIGHTS];
 };
 
 
@@ -23,15 +25,17 @@ class LightManager : public Singleton<LightManager>
 {
 public:
     void Init(VkPhysicalDevice physicalDevice, VkDevice device);
+
     void Destroy();
 
     void Update();
 
     // TODO
     void UpdateLight(uint32_t index);
+
     void AddLight(LightType type);
 
-    [[nodiscard]] const VkBuffer& GetBuffer() const { return m_buffer.GetBuffer(); }
+    [[nodiscard]] const VkBuffer &GetBuffer() const { return m_buffer.GetBuffer(); }
 
 protected:
     LightManager() = default;

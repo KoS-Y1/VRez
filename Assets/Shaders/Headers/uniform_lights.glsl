@@ -16,14 +16,17 @@ struct Light
 
     float outerAngle;
     float intensity;
-    float paddings[2];
+    int padding0;
+    int padding1;
 };
 
 layout(std140, set = 0, binding = 1) uniform Lights
 {
-    Light uLights[MAX_LIGHTS];
     int uLightCount;
-    int uPaddings[3];
+    int uPadding0;
+    int uPadding1;
+    int uPadding2;
+    Light uLights[MAX_LIGHTS];
 };
 
 
