@@ -555,7 +555,6 @@ void VulkanState::CreateRenderObjects()
 {
     // Lights
     LightManager::GetInstance().Init(m_physicalDevice, m_device);
-    LightManager::GetInstance().AddLight(LightType::Directional);
 
     // Camera
     Camera::GetInstance().Init(m_physicalDevice, m_device);
@@ -577,7 +576,8 @@ void VulkanState::CreateRenderObjects()
 
 void VulkanState::ShowUI()
 {
-    m_ui->CameraMenu();
+    m_ui->CameraWindow();
+    m_ui->LightsWindow();
     m_uiQueue.Show();
 }
 
@@ -826,7 +826,7 @@ void VulkanState::LoadMeshes()
         m_uiQueue.PushFunction([&, index]()
         {
             bool uniformScale = m_uiQueue.instanceUniformScales[index];
-            m_ui->TransformationMenu(m_meshInstances[index], uniformScale);
+            m_ui->TransformationWindow(m_meshInstances[index], uniformScale);
             m_uiQueue.instanceUniformScales[index] = uniformScale;
         });
     }

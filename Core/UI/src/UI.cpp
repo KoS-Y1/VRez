@@ -5,10 +5,10 @@
 #include "imgui_impl_vulkan.h"
 
 #include <include/VulkanImage.h>
-#include <include/VulkanState.h>
 #include <include/MeshInstance.h>
 
 #include <include/Camera.h>
+#include <include/LightManager.h>
 
 #include <glm/gtc/type_ptr.hpp>
 
@@ -55,7 +55,7 @@ UI::UI(SDL_Window *window, VkInstance instance, VkPhysicalDevice physicalDevice,
     ImGui_ImplVulkan_CreateFontsTexture();
 }
 
-void UI::TransformationMenu(MeshInstance &instance, bool &uniformScale)
+void UI::TransformationWindow(MeshInstance &instance, bool &uniformScale)
 {
     float step = 0.1f;
 
@@ -77,10 +77,16 @@ void UI::TransformationMenu(MeshInstance &instance, bool &uniformScale)
 
     ImGui::Begin((instance.GetName() + " Transformation").c_str());
     ImGui::DragFloat3("Location(x, y, z)", glm::value_ptr(location), step);
+
     ImGui::Text("Rotation");
+    ImGui::PushItemWidth(50);
     ImGui::DragFloat("Yaw", &yaw, angleStep);
+    ImGui::SameLine();
     ImGui::DragFloat("Pitch", &pitch, angleStep, minPitch, maxPitch);
+    ImGui::SameLine();
     ImGui::DragFloat("Roll", &roll, angleStep, minRoll, maxRoll);
+    ImGui::PopItemWidth();
+
     ImGui::DragFloat3("Scale(x, y, z)", glm::value_ptr(scale), step);
     ImGui::Checkbox("Uniform Scale", &uniformScale);
     if (ImGui::Button("Reset"))
@@ -116,7 +122,7 @@ void UI::TransformationMenu(MeshInstance &instance, bool &uniformScale)
     }
 }
 
-void UI::CameraMenu()
+void UI::CameraWindow()
 {
     float step = 0.1f;
 
@@ -138,9 +144,14 @@ void UI::CameraMenu()
     ImGui::Begin("Camera(Press LSHIFT to switch to camera mode");
     ImGui::DragFloat3("Location(x, y, z)", glm::value_ptr(location), step);
     ImGui::DragFloat("FOV", &fov, step, minFov, maxFov);
+
     ImGui::Text("Rotation");
+    ImGui::PushItemWidth(50);
     ImGui::DragFloat("Yaw", &yaw, angleStep);
+    ImGui::SameLine();
     ImGui::DragFloat("Pitch", &pitch, angleStep, minPitch, maxPitch);
+    ImGui::PopItemWidth();
+
     if (ImGui::Button("Reset"))
     {
         isReset = true;
@@ -155,4 +166,110 @@ void UI::CameraMenu()
     {
         Camera::GetInstance().Reset();
     }
+}
+
+void UI::LightsWindow()
+{
+    bool addPoint = false;
+    bool addDirectional = false;
+    bool addAmbient = false;
+    bool addSpot = false;
+
+    ImGui::Begin("Lights(Max 16)");
+    if (ImGui::Button("Add Point"))
+    {
+        addPoint = true;
+    }
+    if (ImGui::Button("Add Directional"))
+    {
+        addDirectional = true;
+    }
+    if (ImGui::Button("Add Ambient"))
+    {
+        addAmbient = true;
+    }
+    if (ImGui::Button("Add Spot"))
+    {
+        addSpot = true;
+    }
+
+    size_t lightCount = LightManager::GetInstance().GetLightCount();
+
+    if (lightCount > 0)
+    {
+        for (size_t i = 0; i < lightCount; i++)
+        {
+            ImGui::PushID(i);
+            std::string headerStr = "Light[" + std::to_string(i) + "]";
+            if (ImGui::CollapsingHeader(headerStr.c_str()))
+            {
+                LightSection(i);
+            }
+            ImGui::PopID();
+        }
+    }
+
+    ImGui::End();
+
+
+    if (addPoint)
+    {
+        LightManager::GetInstance().AddLight(LightType::Point);
+    }
+    if (addDirectional)
+    {
+        LightManager::GetInstance().AddLight(LightType::Directional);
+    }
+    if (addAmbient)
+    {
+        LightManager::GetInstance().AddLight(LightType::Ambient);
+    }
+    if (addSpot)
+    {
+        LightManager::GetInstance().AddLight(LightType::Spot);
+    }
+}
+
+void UI::LightSection(size_t idx)
+{
+    Light& light = const_cast<Light&>(LightManager::GetInstance().GetLight(idx));
+    LightType type = static_cast<LightType>(light.type);
+
+    float step = 0.01f;
+    float minIntensity = 0.0f;
+    float maxIntensity = 1.0f;
+
+    // TODO: use variables
+    switch (type)
+    {
+        case LightType::Point:
+            ImGui::Text("Point Light");
+            ImGui::DragFloat3("Position", glm::value_ptr(light.position));
+            ImGui::DragFloat("Range", &light.range, 0.1f, 0.0f, 100.0f);
+            break;
+
+        case LightType::Directional:
+            ImGui::Text("Directional Light");
+            ImGui::DragFloat3("Direction", glm::value_ptr(light.direction));
+            break;
+
+        case LightType::Ambient:
+            ImGui::Text("Ambient Light");
+            break;
+
+        case LightType::Spot:
+            ImGui::Text("Spot Light");
+            ImGui::DragFloat3("Position", glm::value_ptr(light.position));
+            ImGui::DragFloat3("Direction", glm::value_ptr(light.direction));
+            ImGui::DragFloat("Range", &light.range, 0.1f, 0.0f, 100.0f);
+            ImGui::DragFloat("Inner Angle", &light.innerAngle, 1.0f, 0.0f, 90.0f);
+            ImGui::DragFloat("Outer Angle", &light.outerAngle, 1.0f, 0.0f, 90.0f);
+            break;
+    }
+
+
+    ImGui::ColorEdit3("Color", glm::value_ptr(light.color));
+    ImGui::DragFloat("Intensity", &light.intensity, step, minIntensity, maxIntensity);
+
+    LightManager::GetInstance().UpdateLight(idx, light);
 }

@@ -1,11 +1,14 @@
 #pragma once
 
-#include <map>
 
 #include <vulkan/vulkan.h>
 #include <SDL3/SDL_video.h>
 
+#include <glm/vec3.hpp>
+
+enum class LightType : uint32_t;
 class MeshInstance;
+
 
 class UI
 {
@@ -17,7 +20,10 @@ public:
 
     ~UI() = default;
 
-    void TransformationMenu(MeshInstance &instance, bool &uniformScale);
-    void CameraMenu();
+    void TransformationWindow(MeshInstance &instance, bool &uniformScale);
+    void CameraWindow();
+    void LightsWindow();
 
+private:
+    void LightSection(size_t idx);
 };

@@ -5,6 +5,7 @@
 #include <vulkan/vulkan.h>
 
 #include <Singleton.h>
+#include <Debug.h>
 #include <include/VulkanBuffer.h>
 
 #include "Light.h"
@@ -30,12 +31,18 @@ public:
 
     void Update();
 
-    // TODO
-    void UpdateLight(uint32_t index);
+    void UpdateLight(uint32_t index, Light& light);
 
     void AddLight(LightType type);
 
     [[nodiscard]] const VkBuffer &GetBuffer() const { return m_buffer.GetBuffer(); }
+    [[nodiscard]] size_t GetLightCount() const { return m_lights.size(); }
+
+    [[nodiscard]] const Light &GetLight(size_t idx) const
+    {
+        DEBUG_ASSERT(idx < m_lights.size());
+        return m_lights[idx];
+    }
 
 protected:
     LightManager() = default;

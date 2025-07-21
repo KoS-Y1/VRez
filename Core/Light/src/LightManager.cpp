@@ -27,8 +27,9 @@ void LightManager::Update()
     m_buffer.Upload(sizeof(LightsData), &data);
 }
 
-void LightManager::UpdateLight(uint32_t index)
+void LightManager::UpdateLight(uint32_t index, Light& light)
 {
+    m_lights[index] = std::move(light);
 }
 
 void LightManager::AddLight(LightType type)
