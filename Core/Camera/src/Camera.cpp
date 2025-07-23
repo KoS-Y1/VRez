@@ -106,7 +106,7 @@ void Camera::Reset()
 
     UpdateCameraVectors();
 
-    m_fov = MAX_FOV;
+    m_fov = DEFAULT_FOV;
 
     m_speed = 0.005f;
     m_sensity = 0.1f;

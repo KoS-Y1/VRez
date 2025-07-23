@@ -43,3 +43,8 @@ void LightManager::AddLight(LightType type)
     light.type = static_cast<uint32_t>(type);
     m_lights.push_back(light);
 }
+
+void LightManager::RemoveLight(size_t index)
+{
+    m_lights.erase(m_lights.begin() + index);
+}

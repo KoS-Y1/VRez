@@ -55,7 +55,7 @@ UI::UI(SDL_Window *window, VkInstance instance, VkPhysicalDevice physicalDevice,
     ImGui_ImplVulkan_CreateFontsTexture();
 }
 
-void UI::TransformationWindow(MeshInstance &instance, bool &uniformScale)
+void UI::TransformationWindow(MeshInstance &instance, bool &uniformScale, size_t id)
 {
     float step = 0.1f;
 
@@ -75,7 +75,8 @@ void UI::TransformationWindow(MeshInstance &instance, bool &uniformScale)
     float roll = glm::degrees(pitchYawRoll.z);
 
 
-    ImGui::Begin((instance.GetName() + " Transformation").c_str());
+    ImGui::Begin((instance.GetName() + " Transformation Mesh#" + std::to_string(id)).c_str());
+    ImGui::PushID(id);
     ImGui::DragFloat3("Location(x, y, z)", glm::value_ptr(location), step);
 
     ImGui::Text("Rotation");
@@ -93,6 +94,8 @@ void UI::TransformationWindow(MeshInstance &instance, bool &uniformScale)
     {
         isReset = true;
     }
+
+    ImGui::PopID();
     ImGui::End();
 
     instance.SetLocation(location);
@@ -173,7 +176,8 @@ void UI::LightsWindow()
     bool addPoint = false;
     bool addDirectional = false;
     bool addAmbient = false;
-    bool addSpot = false;
+
+    int removeLightIndex = -1;
 
     ImGui::Begin("Lights(Max 16)");
     if (ImGui::Button("Add Point"))
@@ -188,10 +192,6 @@ void UI::LightsWindow()
     {
         addAmbient = true;
     }
-    if (ImGui::Button("Add Spot"))
-    {
-        addSpot = true;
-    }
 
     size_t lightCount = LightManager::GetInstance().GetLightCount();
 
@@ -203,7 +203,10 @@ void UI::LightsWindow()
             std::string headerStr = "Light[" + std::to_string(i) + "]";
             if (ImGui::CollapsingHeader(headerStr.c_str()))
             {
-                LightSection(i);
+                if (removeLightIndex == -1)
+                {
+                    removeLightIndex = LightSection(i);
+                }
             }
             ImGui::PopID();
         }
@@ -224,52 +227,59 @@ void UI::LightsWindow()
     {
         LightManager::GetInstance().AddLight(LightType::Ambient);
     }
-    if (addSpot)
+
+    if (removeLightIndex > -1)
     {
-        LightManager::GetInstance().AddLight(LightType::Spot);
+        LightManager::GetInstance().RemoveLight(removeLightIndex);
     }
 }
 
-void UI::LightSection(size_t idx)
+int32_t UI::LightSection(size_t idx)
 {
-    Light& light = const_cast<Light&>(LightManager::GetInstance().GetLight(idx));
+    Light &light = const_cast<Light &>(LightManager::GetInstance().GetLight(idx));
     LightType type = static_cast<LightType>(light.type);
 
     float step = 0.01f;
     float minIntensity = 0.0f;
     float maxIntensity = 1.0f;
+    float minRange = 0.0f;
+    float maxRange = 20.f;
+
+    bool remove = false;
 
     // TODO: use variables
     switch (type)
     {
         case LightType::Point:
             ImGui::Text("Point Light");
-            ImGui::DragFloat3("Position", glm::value_ptr(light.position));
-            ImGui::DragFloat("Range", &light.range, 0.1f, 0.0f, 100.0f);
+            ImGui::DragFloat3("Position", glm::value_ptr(light.position), step);
+            ImGui::DragFloat("Range", &light.range, step, minRange, maxRange);
             break;
 
         case LightType::Directional:
             ImGui::Text("Directional Light");
-            ImGui::DragFloat3("Direction", glm::value_ptr(light.direction));
+            ImGui::DragFloat3("Direction", glm::value_ptr(light.direction), step);
             break;
 
         case LightType::Ambient:
             ImGui::Text("Ambient Light");
-            break;
-
-        case LightType::Spot:
-            ImGui::Text("Spot Light");
-            ImGui::DragFloat3("Position", glm::value_ptr(light.position));
-            ImGui::DragFloat3("Direction", glm::value_ptr(light.direction));
-            ImGui::DragFloat("Range", &light.range, 0.1f, 0.0f, 100.0f);
-            ImGui::DragFloat("Inner Angle", &light.innerAngle, 1.0f, 0.0f, 90.0f);
-            ImGui::DragFloat("Outer Angle", &light.outerAngle, 1.0f, 0.0f, 90.0f);
             break;
     }
 
 
     ImGui::ColorEdit3("Color", glm::value_ptr(light.color));
     ImGui::DragFloat("Intensity", &light.intensity, step, minIntensity, maxIntensity);
+    if (ImGui::Button("Remove"))
+    {
+        remove = true;
+    }
 
     LightManager::GetInstance().UpdateLight(idx, light);
+
+    if (remove)
+    {
+        return idx;
+    }
+
+    return -1;
 }

@@ -826,7 +826,7 @@ void VulkanState::LoadMeshes()
         m_uiQueue.PushFunction([&, index]()
         {
             bool uniformScale = m_uiQueue.instanceUniformScales[index];
-            m_ui->TransformationWindow(m_meshInstances[index], uniformScale);
+            m_ui->TransformationWindow(m_meshInstances[index], uniformScale, index);
             m_uiQueue.instanceUniformScales[index] = uniformScale;
         });
     }

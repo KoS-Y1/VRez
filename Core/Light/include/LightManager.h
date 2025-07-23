@@ -35,13 +35,15 @@ public:
 
     void AddLight(LightType type);
 
+    void RemoveLight(size_t index);
+
     [[nodiscard]] const VkBuffer &GetBuffer() const { return m_buffer.GetBuffer(); }
     [[nodiscard]] size_t GetLightCount() const { return m_lights.size(); }
 
-    [[nodiscard]] const Light &GetLight(size_t idx) const
+    [[nodiscard]] const Light &GetLight(size_t index) const
     {
-        DEBUG_ASSERT(idx < m_lights.size());
-        return m_lights[idx];
+        DEBUG_ASSERT(index < m_lights.size());
+        return m_lights[index];
     }
 
 protected:

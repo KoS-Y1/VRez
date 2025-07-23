@@ -15,15 +15,14 @@
       + ~~uniform scaling~~
 
 ## Lighting
-+ Light
-  + Spot light
-  + Ambiemt light
-  + Directional light
-  + PointLight
-+ Light with transformation
-  + Translation
-+ Traditional Graphics, Rasterization Shaders(make sure models' normal working)
-  + Basic rendering(e.g. phong..)
++ ~~Light~~
+  + ~~Ambiemt light~~
+  + ~~Directional light~~
+  + ~~PointLight~~
++ ~~Light with transformation~~
+  + ~~Translation, etc..~~
++ ~~Traditional Graphics, Rasterization Shaders(make sure models' normal working)~~
+  + ~~Basic rendering(e.g. phong..)~~
   + Shadow
     + Soft shadow
     + Antialiasing

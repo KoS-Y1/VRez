@@ -14,6 +14,7 @@
 
 #define MAX_FOV            45.0f
 #define MIN_FOV            1.0f
+#define DEFAULT_FOV        15.0f
 
 #define RATIO               (16.0f / 9.0f)
 #define NEAR                0.1f

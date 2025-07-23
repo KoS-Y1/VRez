@@ -20,10 +20,10 @@ public:
 
     ~UI() = default;
 
-    void TransformationWindow(MeshInstance &instance, bool &uniformScale);
+    void TransformationWindow(MeshInstance &instance, bool &uniformScale, size_t id);
     void CameraWindow();
     void LightsWindow();
 
 private:
-    void LightSection(size_t idx);
+    int32_t LightSection(size_t idx);
 };

@@ -22,6 +22,7 @@ void main()
         // Point
         if(uLights[i].type == 0)
         {
+            lightColor += CalculatePointLight(uLights[i], vWorldNormal, vWorldPosition, viewDir, 1.0f);
         }
         // Directional
         else if(uLights[i].type == 1)
@@ -31,12 +32,7 @@ void main()
         // Ambient
         else if(uLights[i].type == 2)
         {
-
-        }
-        // Spot
-        else if(uLights[i].type == 3)
-        {
-
+            lightColor += CalculateAmbientLight(uLights[i]);
         }
     }
     vec3 result = lightColor * color;
