@@ -7,7 +7,7 @@ add_library(MyVulkan MyVulkan/include/VulkanState.h MyVulkan/src/VulkanState.cpp
         MyVulkan/include/VulkanComputePipeline.h MyVulkan/src/VulkanComputePipeline.cpp MyVulkan/include/VulkanGraphicsPipeline.h
         MyVulkan/src/VulkanGraphicsPipeline.cpp MyVulkan/include/VulkanBuffer.h MyVulkan/src/VulkanBuffer.cpp MyVulkan/include/VulkanMesh.h
         MyVulkan/src/VulkanMesh.cpp MyVulkan/include/VertexFormats.h MyVulkan/src/VertexFormats.cpp MyVulkan/include/MeshInstance.h
-        MyVulkan/src/MeshInstance.cpp)
+        MyVulkan/src/MeshInstance.cpp MyVulkan/include/VulkanTexture.h MyVulkan/src/VulkanTexture.cpp)
 target_include_directories(MyVulkan PUBLIC MyVulkan)
 target_link_libraries(MyVulkan PUBLIC Vulkan::Vulkan Debug Util SDL3::SDL3 ShaderCompiler glm imgui MeshLoader UI Camera Light)
 
@@ -34,3 +34,5 @@ target_link_libraries(Camera PUBLIC glm Util MyVulkan)
 add_library(Light Light/include/Light.h Light/include/LightManager.h Light/src/LightManager.cpp)
 target_include_directories(Light PUBLIC Light)
 target_link_libraries(Light PUBLIC glm Util MyVulkan Debug)
+
+add_library(TextureLoader TextureLoader/include/TextureLoader.h TextureLoader/src/TextureLoader.cpp)

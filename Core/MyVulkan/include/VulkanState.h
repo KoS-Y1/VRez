@@ -105,7 +105,7 @@ public:
     template<class Func>
     void ImmediateSubmit(Func &&func)
     {
-        DEBUG_VK_ASSERT(vkResetCommandBuffer(m_cmdBuf, 0));
+        DEBUG_VK_ASSERT(vkResetCommandBuffer(m_immediateCmdBuf, 0));
 
         BeginCommandBuffer(m_immediateCmdBuf, 0);
         func(m_immediateCmdBuf);

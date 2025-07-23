@@ -3,6 +3,7 @@
 #include <vulkan/vulkan.h>
 
 #define COLOR_IMG_FORMAT VK_FORMAT_R16G16B16A16_SFLOAT
+#define COLOR_FORMAT_SIZE 4u
 #define DEPTH_IMG_FORMAT VK_FORMAT_D32_SFLOAT
 
 

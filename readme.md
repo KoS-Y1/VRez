@@ -23,15 +23,17 @@
   + ~~Translation, etc..~~
 + ~~Traditional Graphics, Rasterization Shaders(make sure models' normal working)~~
   + ~~Basic rendering(e.g. phong..)~~
-  + Shadow
-    + Soft shadow
-    + Antialiasing
+
 + **Advanced(Vulkan Ray Tracing Extension/RT Pipeline)**
 ## Texture
 + Texture loader
 + Different kind of textures with corresponding shaders
   + Basic texture mapping
   + Normal mapping...
+  + Shadow mapping
+    + Soft shadow
+    + Antialiasing
+  + LOD, anisotropy, compare?
 
 ## ~~Shader Compiler~~
 + ~~Parse to get the descrirptor set layout and push constant info with a given glsl file~~
