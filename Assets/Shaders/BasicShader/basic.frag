@@ -9,32 +9,35 @@ layout (location = 2) in vec2 vTexcoord;
 
 layout (location = 0) out vec4 outColor;
 
+layout (set = 1, binding = 0) uniform sampler2D uBaseTexture;
+
 void main()
 {
     int i = 0;
 
-    vec3 color = vec3(1.0f, 0.0f, 0.0f);
+    vec3 color = texture(uBaseTexture, vTexcoord).xyz;
+
     vec3 lightColor = vec3(0.0f);
 
-    for(i = 0; i < uLightCount; ++i)
+    for (i = 0; i < uLightCount; ++i)
     {
         vec3 viewDir = normalize(uViewPosition - vWorldPosition);
         // Point
-        if(uLights[i].type == 0)
+        if (uLights[i].type == 0)
         {
             lightColor += CalculatePointLight(uLights[i], vWorldNormal, vWorldPosition, viewDir, 1.0f);
         }
         // Directional
-        else if(uLights[i].type == 1)
+        else if (uLights[i].type == 1)
         {
             lightColor += CalculateDirectionalLight(uLights[i], vWorldNormal, viewDir, 1.0f);
         }
         // Ambient
-        else if(uLights[i].type == 2)
+        else if (uLights[i].type == 2)
         {
             lightColor += CalculateAmbientLight(uLights[i]);
         }
     }
     vec3 result = lightColor * color;
-    outColor = vec4(lightColor, 1.0f);
+    outColor = vec4(result, 1.0f);
 }

@@ -71,7 +71,7 @@ VulkanState::~VulkanState()
         vkDestroyImageView(m_device, m_swapchain.views[i], nullptr);
     }
 
-    m_meshLoader->Destroy();
+    MeshLoader::GetInstance().Destroy();
 
     m_deletionQueue.Flush();
 }
@@ -551,6 +551,16 @@ void VulkanState::CreatePipelines()
     }
 }
 
+void VulkanState::CreateTextures()
+{
+    // Base texture for instance that does not have an input color texture
+    SamplerConfig samplerConfig;
+    glm::vec4 color = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
+    VulkanTexture texture(*this, 1u, 1u, &color, samplerConfig);
+    m_baseTexture = std::move(texture);
+}
+
+
 void VulkanState::CreateRenderObjects()
 {
     // Lights
@@ -559,15 +569,13 @@ void VulkanState::CreateRenderObjects()
     // Camera
     Camera::GetInstance().Init(m_physicalDevice, m_device);
 
+    CreateTextures();
+
     // Descriptor sets
     m_computeDescriptorSet = CreateDescriptorSet(m_computePipelines[0]->GetDescriptorSetLayouts()[0]);
     m_uniformDescriptorSet = CreateDescriptorSet(m_graphicsPipelines[0]->GetDescriptorSetLayouts()[0]);
 
     OneTimeUpdateDescriptorSets();
-
-
-    // Meshes
-    m_meshLoader = std::make_unique<MeshLoader>();
 
     // UI
     m_ui = std::make_unique<UI>(m_window, m_instance, m_physicalDevice, m_device, m_queue, m_imguiDescriptorPool);
@@ -804,8 +812,7 @@ void VulkanState::LoadMeshes()
 {
     std::vector<std::string> meshPaths
     {
-        "../Assets/Models/Cube.obj",
-        "../Assets/Models/Suzanne.obj"
+        "../Assets/Models/Chessboard.obj",
     };
     std::vector<glm::vec3> locations
     {
@@ -819,7 +826,8 @@ void VulkanState::LoadMeshes()
 
         DEBUG_ASSERT(m_graphicsPipelines[0] != nullptr);
 
-        m_meshInstances.emplace_back(m_meshLoader->LoadMesh(meshPaths[index], *this), m_graphicsPipelines[0],
+        m_meshInstances.emplace_back(MeshLoader::GetInstance().LoadMesh(meshPaths[index], *this), &m_baseTexture,
+                                     m_graphicsPipelines[0], m_device, m_descriptorPool,
                                      locations[index]);
 
         m_uiQueue.instanceUniformScales.push_back(false);

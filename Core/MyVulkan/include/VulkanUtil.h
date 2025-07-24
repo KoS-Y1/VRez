@@ -27,4 +27,5 @@ namespace vk_util
 
     VkRenderingInfo GetRenderingInfo(VkRect2D area, VkRenderingAttachmentInfo *colorAttachment,
                                      VkRenderingAttachmentInfo *depthStencilAttachment);
+
 }

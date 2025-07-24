@@ -12,7 +12,7 @@
 
 #include "VulkanImage.h"
 #include "VulkanBuffer.h"
-
+#include "VulkanTexture.h"
 
 #define MIN_SWAPCHAIN_IMG_COUNT 2
 #define MAX_SWAPCHAIN_IMG_COUNT 16
@@ -143,8 +143,9 @@ private:
     std::vector<std::shared_ptr<VulkanComputePipeline>> m_computePipelines;
     std::vector<std::shared_ptr<VulkanGraphicsPipeline>> m_graphicsPipelines;
 
-    std::unique_ptr<MeshLoader> m_meshLoader;
     std::vector<MeshInstance> m_meshInstances;
+
+    VulkanTexture m_baseTexture;
 
     DeletionQueue m_deletionQueue;
     UIQueue m_uiQueue;
@@ -179,6 +180,8 @@ private:
 
     void CreatePipelines();
 
+    void CreateTextures();
+
     void CreateRenderObjects();
 
     void WaitAndResetFence(VkFence fence, uint64_t timeout = POINT_ONE_SECOND);
@@ -197,7 +200,6 @@ private:
     void OneTimeUpdateDescriptorSets();
 
     void DrawImgui(VkImageView view);
-
 
     // Meshes
     void LoadMeshes();

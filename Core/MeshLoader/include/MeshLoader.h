@@ -5,27 +5,22 @@
 #include "include/VulkanMesh.h"
 #include "include/VertexFormats.h"
 #include "include/VulkanState.h"
+#include <Singleton.h>
 
-class MeshLoader
+class MeshLoader : public Singleton<MeshLoader>
 {
 public:
-    MeshLoader() = default;
-
-    ~MeshLoader() { Destroy(); };
-
-    MeshLoader(const MeshLoader&) = delete;
-    MeshLoader(MeshLoader&&) = delete;
-
-    MeshLoader& operator=(const MeshLoader&) = delete;
-    MeshLoader& operator=(MeshLoader&&) = delete;
-
     void Destroy();
 
     VulkanMesh *LoadMesh(const std::string &file, VulkanState &state);
 
+protected:
+    MeshLoader() = default;
+
+    ~MeshLoader() { Destroy(); };
+
 private:
     std::map<std::string, VulkanMesh> m_meshes;
 
-    std::vector<VertexPNT> Load(const std::string file);
-
+    std::vector<VertexPNT> Load(const std::string &file);
 };

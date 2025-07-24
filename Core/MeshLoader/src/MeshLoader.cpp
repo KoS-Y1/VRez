@@ -13,6 +13,7 @@ void MeshLoader::Destroy()
     {
         mesh.Destroy();
     }
+    m_meshes.clear();
 }
 
 
@@ -32,7 +33,7 @@ VulkanMesh *MeshLoader::LoadMesh(const std::string &file, VulkanState &state)
     return &pair->second;
 }
 
-std::vector<VertexPNT> MeshLoader::Load(const std::string file)
+std::vector<VertexPNT> MeshLoader::Load(const std::string& file)
 {
     tinyobj::ObjReader reader;
 

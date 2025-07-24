@@ -13,6 +13,7 @@
 
 #include "VulkanMesh.h"
 
+class VulkanTexture;
 class VulkanGraphicsPipeline;
 
 class MeshInstance
@@ -22,15 +23,20 @@ public:
 
     ~MeshInstance() { Destroy(); }
 
-    MeshInstance(const VulkanMesh *mesh, std::shared_ptr<VulkanGraphicsPipeline> pipeline);
+    MeshInstance(const VulkanMesh *mesh, const VulkanTexture *baseTexture,
+                 std::shared_ptr<VulkanGraphicsPipeline> pipeline, VkDevice device, VkDescriptorPool descriptorPool);
 
-    MeshInstance(const VulkanMesh *mesh, std::shared_ptr<VulkanGraphicsPipeline> pipeline, glm::vec3 location);
+    MeshInstance(const VulkanMesh *mesh, const VulkanTexture *baseTexture, std::shared_ptr<VulkanGraphicsPipeline> pipeline,
+                 VkDevice device, VkDescriptorPool descriptorPool,
+                 glm::vec3 location);
 
-    MeshInstance(const VulkanMesh *mesh, std::shared_ptr<VulkanGraphicsPipeline> pipeline, glm::vec3 location,
-                 glm::vec3 pitchYawRoll, glm::vec3 scale);
+    MeshInstance(const VulkanMesh *mesh, const VulkanTexture *baseTexture, std::shared_ptr<VulkanGraphicsPipeline> pipeline,
+                 VkDevice device, VkDescriptorPool descriptorPool,
+                 glm::vec3 location, glm::vec3 pitchYawRoll, glm::vec3 scale);
 
-    MeshInstance(const VulkanMesh *mesh, std::shared_ptr<VulkanGraphicsPipeline> pipeline, glm::vec3 location,
-                 glm::quat rotation, glm::vec3 scale);
+    MeshInstance(const VulkanMesh *mesh, const VulkanTexture *baseTexture, std::shared_ptr<VulkanGraphicsPipeline> pipeline,
+                 VkDevice device, VkDescriptorPool descriptorPool,
+                 glm::vec3 location, glm::quat rotation, glm::vec3 scale);
 
 
     MeshInstance(const MeshInstance &) = delete;
@@ -65,6 +71,8 @@ public:
 
     void BindAndDraw(VkCommandBuffer cmdBuf) const;
 
+    // TODO: update new texture
+
     [[nodiscard]] const std::string GetName() const { return m_mesh->GetName(); }
     [[nodiscard]] const glm::mat4 GetTransformation() const { return m_transformation; }
     [[nodiscard]] const VulkanMesh *GetMesh() const { return m_mesh; }
@@ -75,16 +83,25 @@ public:
 
 private:
     const VulkanMesh *m_mesh = nullptr;
+    const VulkanTexture *m_baseTexture = nullptr;
     glm::mat4 m_transformation = glm::mat4(1.0f);
 
     glm::vec3 m_location = glm::vec3(0.0f);
     glm::vec3 m_scale = glm::vec3(1.0f);
     glm::quat m_rotation = glm::quat();
-    glm::vec3 m_pitchYawRoll = glm::vec3(1.0f);       // In radians
+    glm::vec3 m_pitchYawRoll = glm::vec3(1.0f); // In radians
 
     glm::vec3 m_originalLocation = glm::vec3(0.0f);
 
     std::shared_ptr<VulkanGraphicsPipeline> m_pipeline;
 
+    VkDevice m_device = VK_NULL_HANDLE;
+    VkDescriptorPool m_descriptorPool = VK_NULL_HANDLE;
+    std::vector<VkDescriptorSet> m_descriptorSets;
+
     void UpdateTransformation();
+
+    void CreateDescriptorSets();
+    VkDescriptorSet CreateDescriptorSet(const VkDescriptorSetLayout &layout);
+    void UpdateDescriptorSets(VkDescriptorSet set, const VulkanTexture *texture);
 };

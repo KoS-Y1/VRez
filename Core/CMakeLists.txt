@@ -25,7 +25,7 @@ target_link_libraries(UI PUBLIC imgui Window MyVulkan glm Camera Light)
 
 add_library(MeshLoader MeshLoader/include/MeshLoader.h MeshLoader/src/MeshLoader.cpp)
 target_include_directories(MeshLoader PUBLIC MeshLoader)
-target_link_libraries(MeshLoader PUBLIC MyVulkan SDL3::SDL3 tinyobjloader glm)
+target_link_libraries(MeshLoader PUBLIC MyVulkan SDL3::SDL3 tinyobjloader glm Util)
 
 add_library(Camera Camera/include/Camera.h Camera/src/Camera.cpp)
 target_include_directories(Camera PUBLIC Camera)
@@ -36,3 +36,5 @@ target_include_directories(Light PUBLIC Light)
 target_link_libraries(Light PUBLIC glm Util MyVulkan Debug)
 
 add_library(TextureLoader TextureLoader/include/TextureLoader.h TextureLoader/src/TextureLoader.cpp)
+target_include_directories(TextureLoader PUBLIC TextureLoader)
+target_link_libraries(TextureLoader PUBLIC MyVulkan Util FileSystem SDL3::SDL3 stb Debug)

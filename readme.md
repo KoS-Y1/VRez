@@ -91,4 +91,7 @@ for each module
 ~~~~
 
 ## RAII
-  + Avoid to use raw pointer, use unique_ptr, shared_ptr or weak_ptr if possible
++ Avoid to use raw pointer, use unique_ptr, shared_ptr or weak_ptr if possible
+
+## Improve/Refactor
++ Vulkan state should have a public function to destroy/free vulkan object, so that other class(e.g. VulkanImage) won't need to have a VkDevice variable that helps itself destroy vkImage 

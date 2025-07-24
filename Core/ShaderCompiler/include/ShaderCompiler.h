@@ -12,7 +12,7 @@
 
 #define SHADER_HEADERS_DIR "../Assets/Shaders/Headers/"
 
-class ShaderIncluder;
+struct ShaderIncluder;
 
 class ShaderCompiler
 {

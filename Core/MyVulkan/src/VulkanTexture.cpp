@@ -4,16 +4,14 @@
 
 #include <Debug.h>
 
-#include "include/VulkanState.h"
-#include "include/VulkanBuffer.h"
-// TODO:
-// Get image data
-// Upload data to a temporary stage buffer
-// Immediate submit commands that copys data from buffer to image
-VulkanTexture::VulkanTexture(VulkanState *state, uint32_t width, uint32_t height, const void *data,
-                             SamplerConfig config)
+#include <include/VulkanState.h>
+#include <include/VulkanBuffer.h>
+#include <include/VulkanUtil.h>
+
+VulkanTexture::VulkanTexture(VulkanState &state, uint32_t width, uint32_t height, const void *data,
+                             const SamplerConfig config)
 {
-    m_device = state->GetDevice();
+    m_device = state.GetDevice();
 
     CreateImage(state, width, height, data);
     CreateSampler(config);
@@ -33,7 +31,7 @@ void VulkanTexture::Swap(VulkanTexture &other)
 }
 
 
-void VulkanTexture::CreateImage(VulkanState *state, uint32_t width, uint32_t height, const void *data)
+void VulkanTexture::CreateImage(VulkanState &state, uint32_t width, uint32_t height, const void *data)
 {
     VkExtent3D extent
     {
@@ -41,18 +39,39 @@ void VulkanTexture::CreateImage(VulkanState *state, uint32_t width, uint32_t hei
         .height = height,
         .depth = 1,
     };
-    VulkanImage img(state->GetPhysicalDevice(), m_device, COLOR_IMG_FORMAT,
+    VulkanImage img(state.GetPhysicalDevice(), m_device, COLOR_IMG_FORMAT,
                     VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, extent, VK_IMAGE_ASPECT_COLOR_BIT);
     m_image = std::move(img);
 
     VkDeviceSize size = width * height * COLOR_FORMAT_SIZE;
 
-    VulkanBuffer stageBuffer(state->GetPhysicalDevice(), m_device, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
-    stageBuffer.Upload(size, data);
+    VulkanBuffer stagingBuffer(state.GetPhysicalDevice(), m_device, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+    stagingBuffer.Upload(size, data);
 
-    state->ImmediateSubmit([&](VkCommandBuffer cmdBuffer)
+    state.ImmediateSubmit([&](VkCommandBuffer cmdBuf)
     {
-        
+        // Layout transition
+        vk_util::CmdImageLayoutTransition(cmdBuf, m_image.GetImage(), VK_IMAGE_LAYOUT_UNDEFINED,
+                                          VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT, 0,
+                                          VK_ACCESS_TRANSFER_WRITE_BIT);
+
+        VkBufferImageCopy copy
+        {
+            .bufferOffset = 0,
+            .bufferRowLength = 0,
+            .bufferImageHeight = 0,
+            .imageSubresource = vk_util::GetImageSubresourceLayers(VK_IMAGE_ASPECT_COLOR_BIT),
+            .imageOffset = 0,
+            .imageExtent = extent
+        };
+
+        vkCmdCopyBufferToImage(cmdBuf, stagingBuffer.GetBuffer(), m_image.GetImage(),
+                               VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy);
+
+        // Layout transition
+        vk_util::CmdImageLayoutTransition(cmdBuf, m_image.GetImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                                          VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT,
+                                          VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_WRITE_BIT);
     });
 }
 
