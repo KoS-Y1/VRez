@@ -558,6 +558,11 @@ void VulkanState::CreateTextures()
     glm::vec4 color = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
     VulkanTexture texture(*this, 1u, 1u, &color, samplerConfig);
     m_baseTexture = std::move(texture);
+
+    m_deletionQueue.PushFunction([&]()
+    {
+       m_baseTexture.Destroy();
+    });
 }
 
 

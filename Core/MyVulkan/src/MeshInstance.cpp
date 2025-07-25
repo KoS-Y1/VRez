@@ -29,10 +29,10 @@ MeshInstance::MeshInstance(const VulkanMesh *mesh, const VulkanTexture *baseText
     m_mesh = mesh;
     m_baseTexture = baseTexture;
     m_pipeline = pipeline;
-    CreateDescriptorSets();
-
     m_device = device;
     m_descriptorPool = descriptorPool;
+    CreateDescriptorSets();
+
     m_originalLocation = location;
     Reset();
 }
@@ -79,11 +79,16 @@ MeshInstance::MeshInstance(const VulkanMesh *mesh, const VulkanTexture *baseText
 
 void MeshInstance::Destroy()
 {
+    if (m_device == VK_NULL_HANDLE)
+    {
+        return;
+    }
     if (!m_descriptorSets.emplace_back())
     {
         vkFreeDescriptorSets(m_device, m_descriptorPool, m_descriptorSets.size(), m_descriptorSets.data());
     }
     m_descriptorSets.clear();
+    m_baseTexture = nullptr;
     m_mesh = nullptr;
 }
 

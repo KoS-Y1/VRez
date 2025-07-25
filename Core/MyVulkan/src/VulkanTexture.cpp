@@ -19,8 +19,11 @@ VulkanTexture::VulkanTexture(VulkanState &state, uint32_t width, uint32_t height
 
 void VulkanTexture::Destroy()
 {
-    vkDestroySampler(m_device, m_sampler, nullptr);
-    m_image.Destroy();
+    if (m_device != VK_NULL_HANDLE)
+    {
+        vkDestroySampler(m_device, m_sampler, nullptr);
+        m_image.Destroy();
+    }
 }
 
 void VulkanTexture::Swap(VulkanTexture &other)
