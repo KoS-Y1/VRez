@@ -27,7 +27,8 @@ public:
     ~VulkanTexture() { Destroy(); }
 
 
-    VulkanTexture(VulkanState &state, uint32_t width, uint32_t height, const void *data, const SamplerConfig config);
+    VulkanTexture(VulkanState &state, uint32_t width, uint32_t height, VkFormat format, size_t formatSize,
+                             const void *data, const SamplerConfig config);
 
     VulkanTexture(const VulkanTexture &) = delete;
 
@@ -51,14 +52,15 @@ public:
     void Swap(VulkanTexture &other);
 
     [[nodiscard]] VkSampler GetSampler() const { return m_sampler; }
-    [[nodiscard]] VkImageView GetImageView() const { return m_image.GetImageView();}
+    [[nodiscard]] VkImageView GetImageView() const { return m_image.GetImageView(); }
 
 private:
     VulkanImage m_image;
     VkDevice m_device = VK_NULL_HANDLE;
     VkSampler m_sampler = VK_NULL_HANDLE;
 
-    void CreateImage(VulkanState &state, uint32_t width, uint32_t height, const void *data);
+    void CreateImage(VulkanState &state, uint32_t width, uint32_t height, VkFormat format, size_t formatSize,
+                     const void *data);
 
     void CreateSampler(SamplerConfig config);
 };

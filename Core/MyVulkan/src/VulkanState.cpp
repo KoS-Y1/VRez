@@ -555,13 +555,13 @@ void VulkanState::CreateTextures()
 {
     // Base texture for instance that does not have an input color texture
     SamplerConfig samplerConfig;
-    glm::vec4 color = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
-    VulkanTexture texture(*this, 1u, 1u, &color, samplerConfig);
+    glm::vec4 color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+    VulkanTexture texture(*this, 1u, 1u, VK_FORMAT_R32G32B32A32_SFLOAT, 4 * sizeof(float), &color, samplerConfig);
     m_baseTexture = std::move(texture);
 
     m_deletionQueue.PushFunction([&]()
     {
-       m_baseTexture.Destroy();
+        m_baseTexture.Destroy();
     });
 }
 

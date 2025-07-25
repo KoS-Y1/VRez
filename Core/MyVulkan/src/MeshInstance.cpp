@@ -83,7 +83,7 @@ void MeshInstance::Destroy()
     {
         return;
     }
-    if (!m_descriptorSets.emplace_back())
+    if (!m_descriptorSets.empty())
     {
         vkFreeDescriptorSets(m_device, m_descriptorPool, m_descriptorSets.size(), m_descriptorSets.data());
     }

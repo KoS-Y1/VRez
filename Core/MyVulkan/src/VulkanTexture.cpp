@@ -8,12 +8,12 @@
 #include <include/VulkanBuffer.h>
 #include <include/VulkanUtil.h>
 
-VulkanTexture::VulkanTexture(VulkanState &state, uint32_t width, uint32_t height, const void *data,
-                             const SamplerConfig config)
+VulkanTexture::VulkanTexture(VulkanState &state, uint32_t width, uint32_t height, VkFormat format, size_t formatSize,
+                             const void *data, const SamplerConfig config)
 {
     m_device = state.GetDevice();
 
-    CreateImage(state, width, height, data);
+    CreateImage(state, width, height, format, formatSize, data);
     CreateSampler(config);
 }
 
@@ -34,7 +34,8 @@ void VulkanTexture::Swap(VulkanTexture &other)
 }
 
 
-void VulkanTexture::CreateImage(VulkanState &state, uint32_t width, uint32_t height, const void *data)
+void VulkanTexture::CreateImage(VulkanState &state, uint32_t width, uint32_t height, VkFormat format, size_t formatSize,
+                                const void *data)
 {
     VkExtent3D extent
     {
@@ -42,11 +43,11 @@ void VulkanTexture::CreateImage(VulkanState &state, uint32_t width, uint32_t hei
         .height = height,
         .depth = 1,
     };
-    VulkanImage img(state.GetPhysicalDevice(), m_device, COLOR_IMG_FORMAT,
+    VulkanImage img(state.GetPhysicalDevice(), m_device, format,
                     VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, extent, VK_IMAGE_ASPECT_COLOR_BIT);
     m_image = std::move(img);
 
-    VkDeviceSize size = width * height * COLOR_FORMAT_SIZE;
+    VkDeviceSize size = width * height * formatSize;
 
     VulkanBuffer stagingBuffer(state.GetPhysicalDevice(), m_device, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
     stagingBuffer.Upload(size, data);

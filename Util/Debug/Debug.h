@@ -1,6 +1,6 @@
 #pragma once
 #include <stdlib.h>
-#include <SDL3//SDL.h>
+#include <SDL3/SDL.h>
 #include <vulkan/vulkan_core.h>
 
 inline void Assert(const char* expression, bool condition, const char* file, int line)
