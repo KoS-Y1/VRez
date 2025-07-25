@@ -109,7 +109,7 @@ void Camera::Reset()
     m_fov = DEFAULT_FOV;
 
     m_speed = 0.005f;
-    m_sensity = 0.1f;
+    m_sensity = 0.001f;
 }
 
 void Camera::UpdateCameraVectors()
@@ -118,9 +118,9 @@ void Camera::UpdateCameraVectors()
     float pitch = m_pitchYawRoll.x;
     float yaw = m_pitchYawRoll.y;
 
-    front.x = glm::cos(glm::radians(yaw)) * glm::cos(glm::radians(pitch));
-    front.y = glm::sin(glm::radians(pitch));
-    front.z = glm::sin(glm::radians(yaw)) * glm::cos(glm::radians(pitch));
+    front.x = glm::cos(yaw) * glm::cos(pitch);
+    front.y = glm::sin(pitch);
+    front.z = glm::sin(yaw) * glm::cos(pitch);
 
     m_front = glm::normalize(front);
     m_right = glm::normalize(glm::cross(m_front, m_worldUp));

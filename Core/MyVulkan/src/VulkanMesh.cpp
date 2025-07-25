@@ -25,7 +25,7 @@ VulkanMesh::VulkanMesh(VulkanState &state, std::string name, size_t vertexCount,
     m_name = name;
 }
 
-void VulkanMesh::Swap(VulkanMesh &other)
+void VulkanMesh::Swap(VulkanMesh &other) noexcept
 {
     std::swap(m_vertexBuffer, other.m_vertexBuffer);
     std::swap(m_vertexCount, other.m_vertexCount);

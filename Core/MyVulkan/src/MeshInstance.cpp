@@ -90,6 +90,9 @@ void MeshInstance::Destroy()
     m_descriptorSets.clear();
     m_baseTexture = nullptr;
     m_mesh = nullptr;
+
+    m_device = VK_NULL_HANDLE;
+    m_descriptorPool = VK_NULL_HANDLE;
 }
 
 void MeshInstance::Swap(MeshInstance &other) noexcept

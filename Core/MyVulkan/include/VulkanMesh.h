@@ -31,7 +31,7 @@ public:
         return *this;
     }
 
-    void Swap(VulkanMesh &other);
+    void Swap(VulkanMesh &other) noexcept;
 
     void Destroy();
 

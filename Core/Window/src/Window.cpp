@@ -108,6 +108,7 @@ void Window::ProcessCameraKeyboard(const SDL_Event &event, float deltaTime)
             break;
         case SDL_SCANCODE_D:
             Camera::GetInstance().ProcessMovement(CameraMoveDirection::RIGHT, deltaTime);
+            break;
         case SDL_SCANCODE_E:
             Camera::GetInstance().ProcessMovement(CameraMoveDirection::UP, deltaTime);
             break;

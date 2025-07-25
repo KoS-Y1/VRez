@@ -23,10 +23,12 @@ void VulkanTexture::Destroy()
     {
         vkDestroySampler(m_device, m_sampler, nullptr);
         m_image.Destroy();
+
+        m_device = VK_NULL_HANDLE;
     }
 }
 
-void VulkanTexture::Swap(VulkanTexture &other)
+void VulkanTexture::Swap(VulkanTexture &other) noexcept
 {
     std::swap(m_image, other.m_image);
     std::swap(m_sampler, other.m_sampler);

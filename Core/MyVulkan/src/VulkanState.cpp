@@ -14,6 +14,7 @@
 #include <include/Camera.h>
 #include <include/LightManager.h>
 #include <include/UI.h>
+#include <include/TextureLoader.h>
 
 
 VulkanState::VulkanState(SDL_Window *window, uint32_t width, uint32_t height)
@@ -71,7 +72,14 @@ VulkanState::~VulkanState()
         vkDestroyImageView(m_device, m_swapchain.views[i], nullptr);
     }
 
+    for (auto& mesh : m_meshInstances)
+    {
+        mesh.Destroy();
+    }
+
+    m_baseTexture.Destroy();
     MeshLoader::GetInstance().Destroy();
+    TextureLoader::GetInstance().Destroy();
 
     m_deletionQueue.Flush();
 }
@@ -559,10 +567,6 @@ void VulkanState::CreateTextures()
     VulkanTexture texture(*this, 1u, 1u, VK_FORMAT_R32G32B32A32_SFLOAT, 4 * sizeof(float), &color, samplerConfig);
     m_baseTexture = std::move(texture);
 
-    m_deletionQueue.PushFunction([&]()
-    {
-        m_baseTexture.Destroy();
-    });
 }
 
 
@@ -817,7 +821,15 @@ void VulkanState::LoadMeshes()
 {
     std::vector<std::string> meshPaths
     {
-        "../Assets/Models/Chessboard.obj",
+        "../Assets/Models/Chessboard/Chessboard.obj",
+    };
+    std::vector<std::string> texturePaths
+    {
+        "../Assets/Models/Chessboard/chessboard_base_color.jpg",
+    };
+    std::vector<SamplerConfig> samplerConfigs
+    {
+        {}
     };
     std::vector<glm::vec3> locations
     {
@@ -831,9 +843,18 @@ void VulkanState::LoadMeshes()
 
         DEBUG_ASSERT(m_graphicsPipelines[0] != nullptr);
 
-        m_meshInstances.emplace_back(MeshLoader::GetInstance().LoadMesh(meshPaths[index], *this), &m_baseTexture,
-                                     m_graphicsPipelines[0], m_device, m_descriptorPool,
-                                     locations[index]);
+        if (texturePaths[i] != "")
+        {
+            m_meshInstances.emplace_back(MeshLoader::GetInstance().LoadMesh(meshPaths[index], *this), TextureLoader::GetInstance().LoadTexture(texturePaths[i], *this, samplerConfigs[i]),
+                              m_graphicsPipelines[0], m_device, m_descriptorPool,
+                              locations[index]);
+        }
+        else
+        {
+            m_meshInstances.emplace_back(MeshLoader::GetInstance().LoadMesh(meshPaths[index], *this), &m_baseTexture,
+                              m_graphicsPipelines[0], m_device, m_descriptorPool,
+                              locations[index]);
+        }
 
         m_uiQueue.instanceUniformScales.push_back(false);
         m_uiQueue.PushFunction([&, index]()

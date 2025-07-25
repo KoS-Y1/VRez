@@ -11,7 +11,7 @@ class VulkanTexture;
 class VulkanState;
 struct SamplerConfig;
 
-class TextureLoader : Singleton<TextureLoader>
+class TextureLoader : public Singleton<TextureLoader>
 {
 public:
     void Destroy();
@@ -21,7 +21,7 @@ public:
 protected:
     TextureLoader() = default;
 
-    ~TextureLoader() = default;
+    ~TextureLoader() {Destroy();}
 
 private:
     std::map<std::string, VulkanTexture> m_textures;

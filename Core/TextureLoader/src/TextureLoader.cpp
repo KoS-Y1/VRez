@@ -28,7 +28,8 @@ VulkanTexture *TextureLoader::LoadTexture(const std::string &file, VulkanState &
 
         int width = 0, height = 0;
         const unsigned char *data = Load(file, state, &width, &height);
-        pair = m_textures.emplace(file, VulkanTexture(state, width, height, data, config)).first;
+        pair = m_textures.emplace(file, VulkanTexture(state, width, height, VK_FORMAT_R8G8B8A8_SRGB,
+                                                      sizeof(unsigned char) * 4, data, config)).first;
     }
 
     return &pair->second;

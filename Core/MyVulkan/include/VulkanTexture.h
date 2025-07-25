@@ -28,15 +28,15 @@ public:
 
 
     VulkanTexture(VulkanState &state, uint32_t width, uint32_t height, VkFormat format, size_t formatSize,
-                             const void *data, const SamplerConfig config);
+                  const void *data, const SamplerConfig config);
 
     VulkanTexture(const VulkanTexture &) = delete;
 
     VulkanTexture &operator=(const VulkanTexture &) = delete;
 
-    VulkanTexture(VulkanTexture &&other) { Swap(other); }
+    VulkanTexture(VulkanTexture &&other) noexcept { Swap(other); }
 
-    VulkanTexture &operator=(VulkanTexture &&other)
+    VulkanTexture &operator=(VulkanTexture &&other) noexcept
     {
         if (this != &other)
         {
@@ -49,7 +49,7 @@ public:
 
     void Destroy();
 
-    void Swap(VulkanTexture &other);
+    void Swap(VulkanTexture &other) noexcept;
 
     [[nodiscard]] VkSampler GetSampler() const { return m_sampler; }
     [[nodiscard]] VkImageView GetImageView() const { return m_image.GetImageView(); }
