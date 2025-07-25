@@ -81,3 +81,57 @@ const VkPipelineVertexInputStateCreateInfo *VertexPNT::GetVertexInputStateCreate
 
     return &infoVertex;
 }
+
+const VkPipelineVertexInputStateCreateInfo *VertexPNTT::GetVertexInputStateCreateInfo()
+{
+    static const std::vector<VkVertexInputBindingDescription> bindingDescriptions
+    {
+        {
+            .binding = 0,
+            .stride = sizeof(VertexPNTT),
+            .inputRate = VK_VERTEX_INPUT_RATE_VERTEX
+        }
+    };
+
+    static const std::vector<VkVertexInputAttributeDescription> attributeDescriptions
+    {
+        {
+            .location = 0,
+            .binding = 0,
+            .format = VK_FORMAT_R32G32B32_SFLOAT,
+            .offset = offsetof(VertexPNTT, position)
+        },
+        {
+            .location = 1,
+            .binding = 0,
+            .format = VK_FORMAT_R32G32B32_SFLOAT,
+            .offset = offsetof(VertexPNTT, normal)
+        },
+        {
+
+            .location = 2,
+            .binding = 0,
+            .format = VK_FORMAT_R32G32B32_SFLOAT,
+            .offset = offsetof(VertexPNTT, tangent)
+        },
+        {
+            .location = 3,
+            .binding = 0,
+            .format = VK_FORMAT_R32G32_SFLOAT,
+            .offset = offsetof(VertexPNTT, texCoords)
+        }
+    };
+
+    static const VkPipelineVertexInputStateCreateInfo infoVertex
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0,
+        .vertexBindingDescriptionCount = static_cast<uint32_t>(bindingDescriptions.size()),
+        .pVertexBindingDescriptions = bindingDescriptions.data(),
+        .vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size()),
+        .pVertexAttributeDescriptions = attributeDescriptions.data()
+    };
+
+    return &infoVertex;
+}

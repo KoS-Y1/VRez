@@ -6,12 +6,13 @@
 #include <include/VulkanGraphicsPipeline.h>
 #include <include/VulkanUtil.h>
 
-MeshInstance::MeshInstance(const VulkanMesh *mesh, const VulkanTexture *baseTexture,
+MeshInstance::MeshInstance(const VulkanMesh *mesh, const VulkanTexture *baseTexture, const VulkanTexture *normalMap,
                            std::shared_ptr<VulkanGraphicsPipeline> pipeline, VkDevice device,
                            VkDescriptorPool descriptorPool)
 {
     m_mesh = mesh;
     m_baseTexture = baseTexture;
+    m_normalMap = normalMap;
     m_pipeline = pipeline;
     m_device = device;
     m_descriptorPool = descriptorPool;
@@ -21,13 +22,14 @@ MeshInstance::MeshInstance(const VulkanMesh *mesh, const VulkanTexture *baseText
     Reset();
 }
 
-MeshInstance::MeshInstance(const VulkanMesh *mesh, const VulkanTexture *baseTexture,
+MeshInstance::MeshInstance(const VulkanMesh *mesh, const VulkanTexture *baseTexture, const VulkanTexture *normalMap,
                            std::shared_ptr<VulkanGraphicsPipeline> pipeline, VkDevice device,
                            VkDescriptorPool descriptorPool,
                            glm::vec3 location)
 {
     m_mesh = mesh;
     m_baseTexture = baseTexture;
+    m_normalMap = normalMap;
     m_pipeline = pipeline;
     m_device = device;
     m_descriptorPool = descriptorPool;
@@ -37,7 +39,7 @@ MeshInstance::MeshInstance(const VulkanMesh *mesh, const VulkanTexture *baseText
     Reset();
 }
 
-MeshInstance::MeshInstance(const VulkanMesh *mesh, const VulkanTexture *baseTexture,
+MeshInstance::MeshInstance(const VulkanMesh *mesh, const VulkanTexture *baseTexture, const VulkanTexture *normalMap,
                            std::shared_ptr<VulkanGraphicsPipeline> pipeline, VkDevice device,
                            VkDescriptorPool descriptorPool,
                            glm::vec3 location,
@@ -45,6 +47,7 @@ MeshInstance::MeshInstance(const VulkanMesh *mesh, const VulkanTexture *baseText
 {
     m_mesh = mesh;
     m_baseTexture = baseTexture;
+    m_normalMap = normalMap;
     m_pipeline = pipeline;
     m_device = device;
     m_descriptorPool = descriptorPool;
@@ -58,13 +61,14 @@ MeshInstance::MeshInstance(const VulkanMesh *mesh, const VulkanTexture *baseText
     UpdateTransformation();
 }
 
-MeshInstance::MeshInstance(const VulkanMesh *mesh, const VulkanTexture *baseTexture,
+MeshInstance::MeshInstance(const VulkanMesh *mesh, const VulkanTexture *baseTexture, const VulkanTexture *normalMap,
                            std::shared_ptr<VulkanGraphicsPipeline> pipeline, VkDevice device,
                            VkDescriptorPool descriptorPool, glm::vec3 location,
                            glm::vec3 pitchYawRoll, glm::vec3 scale)
 {
     m_mesh = mesh;
     m_baseTexture = baseTexture;
+    m_normalMap = normalMap;
     m_pipeline = pipeline;
     m_device = device;
     m_descriptorPool = descriptorPool;
@@ -89,6 +93,7 @@ void MeshInstance::Destroy()
     }
     m_descriptorSets.clear();
     m_baseTexture = nullptr;
+    m_normalMap = nullptr;
     m_mesh = nullptr;
 
     m_device = VK_NULL_HANDLE;
@@ -105,6 +110,8 @@ void MeshInstance::Swap(MeshInstance &other) noexcept
     m_originalLocation = other.m_originalLocation;
     std::swap(m_mesh, other.m_mesh);
     std::swap(m_pipeline, other.m_pipeline);
+    std::swap(m_baseTexture, other.m_baseTexture);
+    std::swap(m_normalMap, other.m_normalMap);
     std::swap(m_device, other.m_device);
     std::swap(m_descriptorPool, other.m_descriptorPool);
     std::swap(m_descriptorSets, other.m_descriptorSets);
@@ -165,7 +172,7 @@ void MeshInstance::CreateDescriptorSets()
     }
 
     // TODO recfactor this
-    UpdateDescriptorSets(m_descriptorSets[0], m_baseTexture);
+    UpdateDescriptorSets(m_descriptorSets[0]);
 }
 
 
@@ -187,13 +194,20 @@ VkDescriptorSet MeshInstance::CreateDescriptorSet(const VkDescriptorSetLayout &l
     return set;
 }
 
-void MeshInstance::UpdateDescriptorSets(VkDescriptorSet set, const VulkanTexture *texture)
+void MeshInstance::UpdateDescriptorSets(VkDescriptorSet set)
 {
-    VkDescriptorImageInfo infoImage
+    std::vector<VkDescriptorImageInfo> infoImage
     {
-        .sampler = texture->GetSampler(),
-        .imageView = texture->GetImageView(),
-        .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+        {
+            .sampler = m_baseTexture->GetSampler(),
+            .imageView = m_baseTexture->GetImageView(),
+            .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+        },
+        {
+            .sampler = m_normalMap->GetSampler(),
+            .imageView = m_normalMap->GetImageView(),
+            .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+        }
     };
 
     VkWriteDescriptorSet writeSet
@@ -203,9 +217,9 @@ void MeshInstance::UpdateDescriptorSets(VkDescriptorSet set, const VulkanTexture
         .dstSet = set,
         .dstBinding = 0,
         .dstArrayElement = 0,
-        .descriptorCount = 1,
+        .descriptorCount = static_cast<uint32_t>(infoImage.size()),
         .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-        .pImageInfo = &infoImage,
+        .pImageInfo = infoImage.data(),
         .pBufferInfo = nullptr,
         .pTexelBufferView = nullptr,
     };

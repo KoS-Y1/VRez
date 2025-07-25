@@ -26,8 +26,25 @@ struct VertexPNT
 
     VertexPNT() = default;
 
-    explicit VertexPNT(const glm::vec3 &position, const glm::vec3 &normal,
-                       const glm::vec2 &texCoords) : position(position), normal(normal), texCoords(texCoords) {}
+    VertexPNT(const glm::vec3 &position, const glm::vec3 &normal,
+              const glm::vec2 &texCoords) : position(position), normal(normal), texCoords(texCoords) {}
+
+    static const VkPipelineVertexInputStateCreateInfo *GetVertexInputStateCreateInfo();
+};
+
+
+// Vertex with 3D positon, normal ,tangent, and texture coordinate
+struct VertexPNTT
+{
+    glm::vec3 position;
+    glm::vec3 normal;
+    glm::vec3 tangent;
+    glm::vec2 texCoords;
+
+    VertexPNTT() = default;
+
+    VertexPNTT(const glm::vec3 &position, const glm::vec3 &normal, const glm::vec3 &tangent,
+               const glm::vec2 texCoord) : position(position), normal(normal), tangent(tangent), texCoords(texCoord) {}
 
     static const VkPipelineVertexInputStateCreateInfo *GetVertexInputStateCreateInfo();
 };

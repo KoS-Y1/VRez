@@ -9,7 +9,7 @@
 
 void MeshLoader::Destroy()
 {
-    for (auto& [file, mesh] : m_meshes)
+    for (auto &[file, mesh]: m_meshes)
     {
         mesh.Destroy();
     }
@@ -25,7 +25,7 @@ VulkanMesh *MeshLoader::LoadMesh(const std::string &file, VulkanState &state)
     if (pair == m_meshes.end())
     {
         SDL_Log("Loading mesh from file %s", file.c_str());
-        const std::vector<VertexPNT> vertices = Load(file);
+        const std::vector<VertexPNTT> vertices = Load(file);
         pair = m_meshes.emplace(file, VulkanMesh(state, file_system::GetFileName(file), vertices.size(),
                                                  sizeof(VertexPNT), vertices.data())).first;
     }
@@ -33,10 +33,9 @@ VulkanMesh *MeshLoader::LoadMesh(const std::string &file, VulkanState &state)
     return &pair->second;
 }
 
-std::vector<VertexPNT> MeshLoader::Load(const std::string& file)
+std::vector<VertexPNTT> MeshLoader::Load(const std::string &file)
 {
     tinyobj::ObjReader reader;
-
 
     if (!reader.ParseFromFile(file))
     {
@@ -57,7 +56,7 @@ std::vector<VertexPNT> MeshLoader::Load(const std::string& file)
     const std::vector<tinyobj::real_t> &normals = attrib.normals;
     const std::vector<tinyobj::real_t> &texCoords = attrib.texcoords;
 
-    std::vector<VertexPNT> vertices;
+    std::vector<VertexPNTT> vertices;
 
     // Loop over shapes
     for (const tinyobj::shape_t &shape: reader.GetShapes())
@@ -72,6 +71,36 @@ std::vector<VertexPNT> MeshLoader::Load(const std::string& file)
         {
             // Must be triangles
             DEBUG_ASSERT(f == 3);
+
+            // Calculate tangent space
+            std::vector<glm::vec3> vPos;
+            std::vector<glm::vec2> UVs;
+            for (size_t v = 0; v < f; ++v)
+            {
+                const tinyobj::index_t &idx = mesh.indices[i + v];
+                DEBUG_ASSERT(idx.texcoord_index >= 0);
+
+                vPos.push_back(
+                    glm::vec3{
+                        -positions[3 * idx.vertex_index + 0],
+                        positions[3 * idx.vertex_index + 1],
+                        positions[3 * idx.vertex_index + 2]
+                    }
+                );
+
+                UVs.push_back(
+                    glm::vec2{
+                        texCoords[2 * idx.texcoord_index + 0],
+                        texCoords[2 * idx.texcoord_index + 1]
+                    });
+            }
+
+            glm::vec3 deltaPos1 = vPos[1] - vPos[0];
+            glm::vec3 deltaPos2 = vPos[2] - vPos[0];
+            glm::vec2 deltaUV1 = UVs[1] - UVs[0];
+            glm::vec2 deltaUV2 = UVs[2] - UVs[1];
+            float r = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV1.y * deltaUV2.x);
+            glm::vec3  tangent   = (deltaPos1 * deltaUV2.y - deltaPos2 * deltaUV1.y) * r;
 
             // Loop over vertices in the polygon
             for (size_t v = 0; v < f; ++v)
@@ -95,6 +124,7 @@ std::vector<VertexPNT> MeshLoader::Load(const std::string& file)
                         normals[3 * idx.normal_index + 1],
                         normals[3 * idx.normal_index + 2]
                     },
+                    tangent,
                     glm::vec2{
                         texCoords[2 * idx.texcoord_index + 0],
                         texCoords[2 * idx.texcoord_index + 1]

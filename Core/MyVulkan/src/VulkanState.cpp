@@ -72,12 +72,13 @@ VulkanState::~VulkanState()
         vkDestroyImageView(m_device, m_swapchain.views[i], nullptr);
     }
 
-    for (auto& mesh : m_meshInstances)
+    for (auto &mesh: m_meshInstances)
     {
         mesh.Destroy();
     }
 
     m_baseTexture.Destroy();
+    m_normalMap.Destroy();
     MeshLoader::GetInstance().Destroy();
     TextureLoader::GetInstance().Destroy();
 
@@ -567,6 +568,10 @@ void VulkanState::CreateTextures()
     VulkanTexture texture(*this, 1u, 1u, VK_FORMAT_R32G32B32A32_SFLOAT, 4 * sizeof(float), &color, samplerConfig);
     m_baseTexture = std::move(texture);
 
+    // A default flat normal map
+    glm::vec4 normal = glm::vec4(0.5f, 0.5f, 1.0f, 1.0f);
+    VulkanTexture tempNormal(*this, 1u, 1u, VK_FORMAT_R32G32B32A32_SFLOAT, 4 * sizeof(float), &normal, samplerConfig);
+    m_normalMap = std::move(tempNormal);
 }
 
 
@@ -827,6 +832,10 @@ void VulkanState::LoadMeshes()
     {
         "../Assets/Models/Chessboard/chessboard_base_color.jpg",
     };
+    std::vector<std::string> normalMapPaths
+    {
+        ""
+    };
     std::vector<SamplerConfig> samplerConfigs
     {
         {}
@@ -843,18 +852,21 @@ void VulkanState::LoadMeshes()
 
         DEBUG_ASSERT(m_graphicsPipelines[0] != nullptr);
 
+        const VulkanTexture *baseTexture = &m_baseTexture;
+        const VulkanTexture *normalMap = &m_normalMap;
         if (texturePaths[i] != "")
         {
-            m_meshInstances.emplace_back(MeshLoader::GetInstance().LoadMesh(meshPaths[index], *this), TextureLoader::GetInstance().LoadTexture(texturePaths[i], *this, samplerConfigs[i]),
-                              m_graphicsPipelines[0], m_device, m_descriptorPool,
-                              locations[index]);
+            baseTexture = TextureLoader::GetInstance().LoadTexture(texturePaths[i], *this, samplerConfigs[i]);
         }
-        else
+        if (normalMapPaths[i] != "")
         {
-            m_meshInstances.emplace_back(MeshLoader::GetInstance().LoadMesh(meshPaths[index], *this), &m_baseTexture,
-                              m_graphicsPipelines[0], m_device, m_descriptorPool,
-                              locations[index]);
+            normalMap = TextureLoader::GetInstance().LoadTexture(normalMapPaths[i], *this, samplerConfigs[i]);
         }
+
+        m_meshInstances.emplace_back(MeshLoader::GetInstance().LoadMesh(meshPaths[index], *this), baseTexture,
+                                     normalMap,
+                                     m_graphicsPipelines[0], m_device, m_descriptorPool,
+                                     locations[index]);
 
         m_uiQueue.instanceUniformScales.push_back(false);
         m_uiQueue.PushFunction([&, index]()

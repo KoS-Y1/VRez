@@ -22,5 +22,5 @@ protected:
 private:
     std::map<std::string, VulkanMesh> m_meshes;
 
-    std::vector<VertexPNT> Load(const std::string &file);
+    std::vector<VertexPNTT> Load(const std::string &file);
 };

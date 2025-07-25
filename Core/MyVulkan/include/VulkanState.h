@@ -146,6 +146,7 @@ private:
     std::vector<MeshInstance> m_meshInstances;
 
     VulkanTexture m_baseTexture;
+    VulkanTexture m_normalMap;
 
     DeletionQueue m_deletionQueue;
     UIQueue m_uiQueue;
