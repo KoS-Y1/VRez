@@ -99,7 +99,9 @@ VkImageSubresourceLayers vk_util::GetImageSubresourceLayers(VkImageAspectFlags a
 
 VkRenderingAttachmentInfo vk_util::GetRenderingAttachmentInfo(VkImageView view, VkImageLayout layout,
                                                               VkClearValue *clear, VkAttachmentLoadOp loadOp,
-                                                              VkAttachmentStoreOp storeOp)
+                                                              VkAttachmentStoreOp storeOp,
+                                                              VkResolveModeFlagBits resolveMode,
+                                                              VkImageView resolveView, VkImageLayout resolveLayout)
 {
     VkRenderingAttachmentInfo infoAttachment
     {
@@ -107,9 +109,9 @@ VkRenderingAttachmentInfo vk_util::GetRenderingAttachmentInfo(VkImageView view, 
         .pNext = nullptr,
         .imageView = view,
         .imageLayout = layout,
-        .resolveMode = VK_RESOLVE_MODE_NONE,
-        .resolveImageView = VK_NULL_HANDLE,
-        .resolveImageLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+        .resolveMode = resolveMode,
+        .resolveImageView = resolveView,
+        .resolveImageLayout = resolveLayout,
         .loadOp = loadOp,
         .storeOp = storeOp,
     };

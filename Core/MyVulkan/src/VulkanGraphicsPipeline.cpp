@@ -77,15 +77,14 @@ void VulkanGraphicsPipeline::CreatePipeline(const ShaderCompiler &shaderCompiler
         .lineWidth = 1.0f
     };
 
-    // TODO: currently using no anti-aliasing by default, needs update in the future
     VkPipelineMultisampleStateCreateInfo infoMultisample
     {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0,
-        .rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
-        .sampleShadingEnable = VK_FALSE,
-        .minSampleShading = 1.0f,
+        .rasterizationSamples = m_config.rasterizationSamples,
+        .sampleShadingEnable = VK_TRUE,
+        .minSampleShading = 0.2f,
         .pSampleMask = nullptr,
         .alphaToCoverageEnable = VK_FALSE,
         .alphaToOneEnable = VK_FALSE

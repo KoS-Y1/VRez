@@ -23,13 +23,15 @@
   + ~~Translation, etc..~~
 + ~~Traditional Graphics, Rasterization Shaders(make sure models' normal working)~~
   + ~~Basic rendering(e.g. phong..)~~
+  + Using PBR instead of phong blinn
 
 + **Advanced(Vulkan Ray Tracing Extension/RT Pipeline)**
 ## Texture
 + Texture loader
 + Different kind of textures with corresponding shaders
-  + Basic texture mapping
-  + Normal mapping...
+  + ~~Basic texture mapping~~
+  + ~~Normal mapping~~...
+  + Emissive, ORM... mappings
   + Shadow mapping
     + Soft shadow
     + Antialiasing

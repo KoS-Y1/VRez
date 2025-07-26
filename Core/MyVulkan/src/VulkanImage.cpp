@@ -6,13 +6,12 @@
 #include "include/VulkanUtil.h"
 
 VulkanImage::VulkanImage(VkPhysicalDevice physicalDevice, VkDevice device, VkFormat format, VkImageUsageFlags usage,
-                         VkExtent3D extent,
-                         VkImageAspectFlags aspect)
+                         VkExtent3D extent, VkImageAspectFlags aspect, VkSampleCountFlagBits samples)
 {
     m_device = device;
     m_format = format;
     m_extent = extent;
-    CreateImage(usage, extent);
+    CreateImage(usage, extent, samples);
     BindMemory(physicalDevice);
     CreateImageView(aspect);
 }
@@ -33,7 +32,7 @@ void VulkanImage::Destroy()
 }
 
 
-void VulkanImage::CreateImage(VkImageUsageFlags usage, VkExtent3D extent)
+void VulkanImage::CreateImage(VkImageUsageFlags usage, VkExtent3D extent, VkSampleCountFlagBits samples)
 {
     VkImageCreateInfo infoImage
     {
@@ -45,7 +44,7 @@ void VulkanImage::CreateImage(VkImageUsageFlags usage, VkExtent3D extent)
         .extent = extent,
         .mipLevels = 1,
         .arrayLayers = 1,
-        .samples = VK_SAMPLE_COUNT_1_BIT,
+        .samples = samples,
         .tiling = VK_IMAGE_TILING_OPTIMAL,
         .usage = usage,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,

@@ -23,9 +23,10 @@ namespace vk_util
 
 
     VkRenderingAttachmentInfo GetRenderingAttachmentInfo(VkImageView view, VkImageLayout layout, VkClearValue *clear,
-                                                         VkAttachmentLoadOp loadOp, VkAttachmentStoreOp storeOp);
+                                                         VkAttachmentLoadOp loadOp, VkAttachmentStoreOp storeOp,
+                                                         VkResolveModeFlagBits resolveMode,
+                                                         VkImageView resolveView, VkImageLayout resolveLayout);
 
     VkRenderingInfo GetRenderingInfo(VkRect2D area, VkRenderingAttachmentInfo *colorAttachment,
                                      VkRenderingAttachmentInfo *depthStencilAttachment);
-
 }

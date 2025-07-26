@@ -66,6 +66,8 @@ VulkanState::~VulkanState()
 
     m_drawImage.Destroy();
     m_depthImage.Destroy();
+    m_msaaColorImage.Destroy();
+    m_msaaDepthImage.Destroy();
 
     for (size_t i = 0; i < m_swapchain.count; i++)
     {
@@ -154,6 +156,27 @@ void VulkanState::CreatePhysicalDevice()
 
     VkPhysicalDeviceProperties properties = {0};
     vkGetPhysicalDeviceProperties(m_physicalDevice, &properties);
+    VkSampleCountFlags sampleCounts = properties.limits.framebufferColorSampleCounts & properties.limits.
+                                      framebufferDepthSampleCounts;
+
+    // Set sample count
+    if (sampleCounts & VK_SAMPLE_COUNT_8_BIT)
+    {
+        m_sampleCount = VK_SAMPLE_COUNT_8_BIT;
+    }
+    else if (sampleCounts & VK_SAMPLE_COUNT_4_BIT)
+    {
+        m_sampleCount = VK_SAMPLE_COUNT_4_BIT;
+    }
+    else if (sampleCounts & VK_SAMPLE_COUNT_2_BIT)
+    {
+        m_sampleCount = VK_SAMPLE_COUNT_2_BIT;
+    }
+    else if (sampleCounts & VK_SAMPLE_COUNT_1_BIT)
+    {
+        m_sampleCount = VK_SAMPLE_COUNT_1_BIT;
+    }
+
     SDL_Log("Selected physical device: %s %d.%d.%d", properties.deviceName,
             VK_API_VERSION_MAJOR(properties.apiVersion), VK_API_VERSION_MINOR(properties.apiVersion),
             VK_API_VERSION_PATCH(properties.apiVersion));
@@ -179,7 +202,13 @@ void VulkanState::CreateDevice()
         VK_KHR_SWAPCHAIN_EXTENSION_NAME,
         "VK_KHR_create_renderpass2",
         "VK_KHR_depth_stencil_resolve",
-        "VK_KHR_dynamic_rendering"
+        "VK_KHR_dynamic_rendering",
+        "VK_KHR_depth_stencil_resolve"
+    };
+
+    VkPhysicalDeviceFeatures feature
+    {
+        .sampleRateShading = VK_TRUE
     };
 
     VkPhysicalDeviceVulkan13Features feature13
@@ -200,7 +229,7 @@ void VulkanState::CreateDevice()
         .ppEnabledLayerNames = nullptr,
         .enabledExtensionCount = static_cast<uint32_t>(extensions.size()),
         .ppEnabledExtensionNames = extensions.data(),
-        .pEnabledFeatures = nullptr,
+        .pEnabledFeatures = &feature,
     };
     DEBUG_VK_ASSERT(vkCreateDevice(m_physicalDevice, &infoDevice, nullptr, &m_device));
 
@@ -271,7 +300,7 @@ void VulkanState::CreateSwapchain(uint32_t width, uint32_t height)
     DEBUG_VK_ASSERT(vkGetSwapchainImagesKHR(m_device, m_swapchain.swapchain, &m_swapchain.count, nullptr));
     DEBUG_VK_ASSERT(vkGetSwapchainImagesKHR(m_device, m_swapchain.swapchain, &m_swapchain.count, m_swapchain.images));
 
-    // Create image view for each swapchian image
+    // Create image view for each swapchain image
     {
         VkImageViewCreateInfo infoView
         {
@@ -308,6 +337,14 @@ void VulkanState::CreateSwapchain(uint32_t width, uint32_t height)
                          | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, {m_width, m_height, 1},
                          VK_IMAGE_ASPECT_DEPTH_BIT);
     m_depthImage = std::move(depthImg);
+
+    // Init msaa images for anti aliasing
+    VulkanImage msaaColorImage(m_physicalDevice, m_device, COLOR_IMG_FORMAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT,
+                               {m_width, m_height, 1}, VK_IMAGE_ASPECT_COLOR_BIT, m_sampleCount);
+    m_msaaColorImage = std::move(msaaColorImage);
+    VulkanImage msaaDepthImage(m_physicalDevice, m_device, DEPTH_IMG_FORMAT, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT,
+                               {m_width, m_height, 1}, VK_IMAGE_ASPECT_DEPTH_BIT, m_sampleCount);
+    m_msaaDepthImage = std::move(msaaDepthImage);
 
     m_deletionQueue.PushFunction([&]()
     {
@@ -482,8 +519,16 @@ void VulkanState::Present()
                                       VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT,
                                       VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
 
-    // Layout trainsiton for depth testing
+    // Layout transition for depth testing
     vk_util::CmdImageLayoutTransition(m_cmdBuf, m_depthImage.GetImage(), VK_IMAGE_LAYOUT_UNDEFINED,
+                                      VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL, VK_IMAGE_ASPECT_DEPTH_BIT, 0,
+                                      VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT);
+
+    // Layout transition for msaa
+    vk_util::CmdImageLayoutTransition(m_cmdBuf, m_msaaColorImage.GetImage(), VK_IMAGE_LAYOUT_UNDEFINED,
+                                      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT, 0,
+                                      VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
+    vk_util::CmdImageLayoutTransition(m_cmdBuf, m_msaaDepthImage.GetImage(), VK_IMAGE_LAYOUT_UNDEFINED,
                                       VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL, VK_IMAGE_ASPECT_DEPTH_BIT, 0,
                                       VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT);
     // Draw geometry
@@ -498,7 +543,7 @@ void VulkanState::Present()
                                       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT,
                                       0, VK_ACCESS_TRANSFER_WRITE_BIT);
 
-    // Copy draw image to the current swapchian image
+    // Copy draw image to the current swapchain image
     vk_util::CopyImageToImage(m_cmdBuf, m_drawImage.GetImage(), m_swapchain.images[imageIndex], m_drawImage.GetExtent(),
                               {m_width, m_height, 1}, VK_IMAGE_ASPECT_COLOR_BIT);
 
@@ -542,6 +587,7 @@ void VulkanState::CreatePipelines()
     graphicsConfig.depthWriteEnable = VK_TRUE;
     graphicsConfig.depthFormat = DEPTH_IMG_FORMAT;
     graphicsConfig.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
+    graphicsConfig.rasterizationSamples = m_sampleCount;
 
     for (const auto &source: shaderSources)
     {
@@ -755,7 +801,7 @@ void VulkanState::DrawImgui(VkImageView view)
     };
     VkRenderingAttachmentInfo infoColorAttachment = vk_util::GetRenderingAttachmentInfo(
         view, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, nullptr, VK_ATTACHMENT_LOAD_OP_LOAD,
-        VK_ATTACHMENT_STORE_OP_STORE);
+        VK_ATTACHMENT_STORE_OP_STORE, VK_RESOLVE_MODE_NONE, VK_NULL_HANDLE, VK_IMAGE_LAYOUT_UNDEFINED);
     VkRenderingInfo infoRendering = vk_util::GetRenderingInfo(renderAreas, &infoColorAttachment, nullptr);
 
     vkCmdBeginRendering(m_cmdBuf, &infoRendering);
@@ -774,8 +820,9 @@ void VulkanState::DrawGeometry()
     };
 
     VkRenderingAttachmentInfo infoColorAttachment = vk_util::GetRenderingAttachmentInfo(
-        m_drawImage.GetImageView(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, nullptr, VK_ATTACHMENT_LOAD_OP_LOAD,
-        VK_ATTACHMENT_STORE_OP_STORE);
+        m_msaaColorImage.GetImageView(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, nullptr, VK_ATTACHMENT_LOAD_OP_LOAD,
+        VK_ATTACHMENT_STORE_OP_STORE, VK_RESOLVE_MODE_AVERAGE_BIT, m_drawImage.GetImageView(),
+        VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
     VkClearValue depthClear =
     {
@@ -786,8 +833,8 @@ void VulkanState::DrawGeometry()
         }
     };
     VkRenderingAttachmentInfo infoDepthAttachment = vk_util::GetRenderingAttachmentInfo(
-        m_depthImage.GetImageView(), VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL, &depthClear, VK_ATTACHMENT_LOAD_OP_CLEAR,
-        VK_ATTACHMENT_STORE_OP_STORE);
+        m_msaaDepthImage.GetImageView(), VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL, &depthClear, VK_ATTACHMENT_LOAD_OP_CLEAR,
+        VK_ATTACHMENT_STORE_OP_STORE, VK_RESOLVE_MODE_NONE, VK_NULL_HANDLE, VK_IMAGE_LAYOUT_UNDEFINED);
 
     VkRenderingInfo infoRender = vk_util::GetRenderingInfo(renderAreas, &infoColorAttachment, &infoDepthAttachment);
 

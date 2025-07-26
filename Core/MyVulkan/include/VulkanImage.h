@@ -13,8 +13,7 @@ public:
 
     // Create both image and image view
     VulkanImage(VkPhysicalDevice physicalDevice, VkDevice device, VkFormat format, VkImageUsageFlags usage,
-                VkExtent3D extent,
-                VkImageAspectFlags aspect);
+                VkExtent3D extent, VkImageAspectFlags aspect, VkSampleCountFlagBits samples = VK_SAMPLE_COUNT_1_BIT);
 
 
     ~VulkanImage() { Destroy(); };
@@ -51,7 +50,7 @@ private:
     VkDevice m_device = VK_NULL_HANDLE;
     VkFormat m_format = VK_FORMAT_UNDEFINED;
 
-    void CreateImage(VkImageUsageFlags usage, VkExtent3D extent);
+    void CreateImage(VkImageUsageFlags usage, VkExtent3D extent, VkSampleCountFlagBits samples);
 
     void CreateImageView(VkImageAspectFlags aspect);
 
