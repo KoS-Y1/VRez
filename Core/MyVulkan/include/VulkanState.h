@@ -140,7 +140,6 @@ private:
     VulkanImage m_drawImage;
     VulkanImage m_depthImage;
     VulkanImage m_msaaColorImage;
-    VulkanImage m_msaaDepthImage;
 
     std::vector<std::shared_ptr<VulkanComputePipeline>> m_computePipelines;
     std::vector<std::shared_ptr<VulkanGraphicsPipeline>> m_graphicsPipelines;
