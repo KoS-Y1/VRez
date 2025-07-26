@@ -536,7 +536,7 @@ void VulkanState::CreatePipelines()
     };
 
     GraphicsPipelineConfig graphicsConfig;
-    graphicsConfig.infoVertex = VertexPNT::GetVertexInputStateCreateInfo();
+    graphicsConfig.infoVertex = VertexPNTT::GetVertexInputStateCreateInfo();
     graphicsConfig.colorFormats = std::vector<VkFormat>{COLOR_IMG_FORMAT};
     graphicsConfig.depthTestEnable = VK_TRUE;
     graphicsConfig.depthWriteEnable = VK_TRUE;
@@ -827,23 +827,30 @@ void VulkanState::LoadMeshes()
     std::vector<std::string> meshPaths
     {
         "../Assets/Models/Chessboard/Chessboard.obj",
+        "../Assets/Models/Castle/Castle.obj",
     };
     std::vector<std::string> texturePaths
     {
         "../Assets/Models/Chessboard/chessboard_base_color.jpg",
+        "../Assets/Models/Castle/castle_white_base_color.jpg",
     };
+
     std::vector<std::string> normalMapPaths
     {
-        ""
+        "../Assets/Models/Chessboard/chessboard_normal.jpg",
+        "../Assets/Models/Castle/Castle_normal.jpg",
     };
+
     std::vector<SamplerConfig> samplerConfigs
     {
+        {},
         {}
     };
     std::vector<glm::vec3> locations
     {
         glm::vec3(0.0f, 0.0f, 0.0f),
-        glm::vec3(0.3f, 0.3f, 0.3f),
+        // glm::vec3(0.3f, 0.3f, 0.3f),
+        glm::vec3(0.0f, 0.0f, 0.0f),
     };
 
     for (size_t i = 0; i < meshPaths.size(); i++)

@@ -5,7 +5,7 @@
 
 layout (location = 0) in vec3 vWorldPosition;
 layout (location = 1) in mat3 vTBN;
-layout (location = 2) in vec2 vTexcoord;
+layout (location = 4) in vec2 vTexcoord;
 
 layout (location = 0) out vec4 outColor;
 

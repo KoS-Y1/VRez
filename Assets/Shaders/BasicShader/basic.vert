@@ -9,7 +9,7 @@ layout (location = 3) in vec2 inTexcoord;
 
 layout (location = 0) out vec3 vWorldPositon;
 layout (location = 1) out mat3 vTBN;
-layout (location = 2) out vec2 vTexcoord;
+layout (location = 4) out vec2 vTexcoord;
 
 layout (push_constant) uniform PushConstantData
 {

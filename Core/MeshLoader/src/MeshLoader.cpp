@@ -27,7 +27,7 @@ VulkanMesh *MeshLoader::LoadMesh(const std::string &file, VulkanState &state)
         SDL_Log("Loading mesh from file %s", file.c_str());
         const std::vector<VertexPNTT> vertices = Load(file);
         pair = m_meshes.emplace(file, VulkanMesh(state, file_system::GetFileName(file), vertices.size(),
-                                                 sizeof(VertexPNT), vertices.data())).first;
+                                                 sizeof(VertexPNTT), vertices.data())).first;
     }
 
     return &pair->second;
@@ -98,7 +98,7 @@ std::vector<VertexPNTT> MeshLoader::Load(const std::string &file)
             glm::vec3 deltaPos1 = vPos[1] - vPos[0];
             glm::vec3 deltaPos2 = vPos[2] - vPos[0];
             glm::vec2 deltaUV1 = UVs[1] - UVs[0];
-            glm::vec2 deltaUV2 = UVs[2] - UVs[1];
+            glm::vec2 deltaUV2 = UVs[2] - UVs[0];
             float r = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV1.y * deltaUV2.x);
             glm::vec3  tangent   = (deltaPos1 * deltaUV2.y - deltaPos2 * deltaUV1.y) * r;
 
