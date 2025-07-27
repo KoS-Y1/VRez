@@ -134,7 +134,6 @@ private:
     VkDescriptorPool m_descriptorPool = VK_NULL_HANDLE;
     VkDescriptorPool m_imguiDescriptorPool = VK_NULL_HANDLE;
 
-    VkDescriptorSet m_computeDescriptorSet = VK_NULL_HANDLE;
     VkDescriptorSet m_uniformDescriptorSet = VK_NULL_HANDLE;
 
     VulkanImage m_drawImage;
@@ -196,8 +195,6 @@ private:
                                    VkSemaphore waitSemaphore, VkSemaphore signalSemaphore);
 
     void QueuePresent(VkSemaphore waitSemaphore, uint32_t imageIndex);
-
-    void DrawBackground();
 
     void DrawGeometry();
 

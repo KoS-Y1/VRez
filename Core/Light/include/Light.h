@@ -6,7 +6,6 @@ enum class LightType : uint32_t
 {
     Point = 0,
     Directional,
-    Ambient,
 };
 
 struct alignas(16) Light
@@ -20,5 +19,5 @@ public:
 
     glm::vec3 direction = glm::vec3(0.0f, -1.0f, 0.0f); // Directional direction
 
-    float intensity = 1.0f;
+    float intensity = 10.0f;
 };

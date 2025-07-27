@@ -48,7 +48,6 @@ VulkanState::~VulkanState()
 {
     WaitIdle();
 
-    vkFreeDescriptorSets(m_device, m_descriptorPool, 1, &m_computeDescriptorSet);
     vkFreeDescriptorSets(m_device, m_descriptorPool, 1, &m_uniformDescriptorSet);
 
     LightManager::GetInstance().Destroy();
@@ -332,13 +331,14 @@ void VulkanState::CreateSwapchain(uint32_t width, uint32_t height)
 
     // Init depth image for depth testing
     VulkanImage depthImg(m_physicalDevice, m_device, DEPTH_IMG_FORMAT,
-                         VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_STORAGE_BIT
-                         | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, {m_width, m_height, 1},
+                         VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT |
+                         VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, {m_width, m_height, 1},
                          VK_IMAGE_ASPECT_DEPTH_BIT, m_sampleCount);
     m_depthImage = std::move(depthImg);
 
     // Init msaa images for anti aliasing
-    VulkanImage msaaColorImage(m_physicalDevice, m_device, COLOR_IMG_FORMAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT,
+    VulkanImage msaaColorImage(m_physicalDevice, m_device, COLOR_IMG_FORMAT,
+                               VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT,
                                {m_width, m_height, 1}, VK_IMAGE_ASPECT_COLOR_BIT, m_sampleCount);
     m_msaaColorImage = std::move(msaaColorImage);
 
@@ -507,8 +507,6 @@ void VulkanState::Present()
     vk_util::CmdImageLayoutTransition(m_cmdBuf, m_drawImage.GetImage(), VK_IMAGE_LAYOUT_UNDEFINED,
                                       VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_ASPECT_COLOR_BIT, 0,
                                       VK_ACCESS_TRANSFER_WRITE_BIT);
-    // Clear color image
-    DrawBackground();
 
     // Layout transition for drawing
     vk_util::CmdImageLayoutTransition(m_cmdBuf, m_drawImage.GetImage(), VK_IMAGE_LAYOUT_GENERAL,
@@ -563,7 +561,6 @@ void VulkanState::CreatePipelines()
 {
     std::vector<std::pair<std::vector<std::string>, PipelineType> > shaderSources
     {
-        {{"../Assets/Shaders/gradient.comp"}, PipelineType::Compute},
         {
             {
                 "../Assets/Shaders/BasicShader/basic.vert",
@@ -625,7 +622,6 @@ void VulkanState::CreateRenderObjects()
     CreateTextures();
 
     // Descriptor sets
-    m_computeDescriptorSet = CreateDescriptorSet(m_computePipelines[0]->GetDescriptorSetLayouts()[0]);
     m_uniformDescriptorSet = CreateDescriptorSet(m_graphicsPipelines[0]->GetDescriptorSetLayouts()[0]);
 
     OneTimeUpdateDescriptorSets();
@@ -710,49 +706,8 @@ void VulkanState::QueuePresent(VkSemaphore waitSemaphore, uint32_t imageIndex)
     DEBUG_VK_ASSERT(vkQueuePresentKHR(m_queue, &infoPresent));
 }
 
-void VulkanState::DrawBackground()
-{
-    // Compute pipeline to dispatch
-    vkCmdBindPipeline(m_cmdBuf, VK_PIPELINE_BIND_POINT_COMPUTE, m_computePipelines[0]->GetPipeline());
-    vkCmdBindDescriptorSets(m_cmdBuf, VK_PIPELINE_BIND_POINT_COMPUTE, m_computePipelines[0]->GetLayout(), 0, 1,
-                            &m_computeDescriptorSet,
-                            0,
-                            nullptr);
-
-    std::vector<glm::vec4> constants
-    {
-        glm::vec4(0.0f, 1.0f, 0.0f, 1.0f),
-        glm::vec4(0.0f, 0.0f, 1.0f, 1.0f),
-    };
-    vkCmdPushConstants(m_cmdBuf, m_computePipelines[0]->GetLayout(), VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(constants),
-                       constants.data());
-    vkCmdDispatch(m_cmdBuf, std::ceil(m_width / 16.0), std::ceil(m_height / 16.0), 1);
-}
-
 void VulkanState::OneTimeUpdateDescriptorSets()
 {
-    VkDescriptorImageInfo infoImage
-    {
-        .sampler = VK_NULL_HANDLE,
-        .imageView = m_drawImage.GetImageView(),
-        .imageLayout = VK_IMAGE_LAYOUT_GENERAL,
-    };
-
-    VkWriteDescriptorSet writeSetCompute
-    {
-        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-        .pNext = nullptr,
-        .dstSet = m_computeDescriptorSet,
-        .dstBinding = 0,
-        .dstArrayElement = 0,
-        .descriptorCount = 1,
-        .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
-        .pImageInfo = &infoImage,
-        .pBufferInfo = nullptr,
-        .pTexelBufferView = nullptr,
-    };
-
-
     std::vector<VkDescriptorBufferInfo> infoBuffers
     {
         {
@@ -781,7 +736,6 @@ void VulkanState::OneTimeUpdateDescriptorSets()
         .pTexelBufferView = nullptr,
     };
 
-    vkUpdateDescriptorSets(m_device, 1, &writeSetCompute, 0, nullptr);
     vkUpdateDescriptorSets(m_device, 1, &writeSetView, 0, nullptr);
 }
 
@@ -817,7 +771,8 @@ void VulkanState::DrawGeometry()
     };
 
     VkRenderingAttachmentInfo infoColorAttachment = vk_util::GetRenderingAttachmentInfo(
-        m_msaaColorImage.GetImageView(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, &colorClear, VK_ATTACHMENT_LOAD_OP_CLEAR,
+        m_msaaColorImage.GetImageView(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, &colorClear,
+        VK_ATTACHMENT_LOAD_OP_CLEAR,
         VK_ATTACHMENT_STORE_OP_STORE, VK_RESOLVE_MODE_AVERAGE_BIT, m_drawImage.GetImageView(),
         VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
@@ -884,6 +839,7 @@ void VulkanState::LoadMeshes()
         "../Assets/Models/Chessboard/chessboard_normal.jpg",
         "../Assets/Models/Castle/Castle_normal.jpg",
     };
+
 
     std::vector<SamplerConfig> samplerConfigs
     {

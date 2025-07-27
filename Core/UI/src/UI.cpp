@@ -175,7 +175,6 @@ void UI::LightsWindow()
 {
     bool addPoint = false;
     bool addDirectional = false;
-    bool addAmbient = false;
 
     int removeLightIndex = -1;
 
@@ -187,10 +186,6 @@ void UI::LightsWindow()
     if (ImGui::Button("Add Directional"))
     {
         addDirectional = true;
-    }
-    if (ImGui::Button("Add Ambient"))
-    {
-        addAmbient = true;
     }
 
     size_t lightCount = LightManager::GetInstance().GetLightCount();
@@ -223,11 +218,6 @@ void UI::LightsWindow()
     {
         LightManager::GetInstance().AddLight(LightType::Directional);
     }
-    if (addAmbient)
-    {
-        LightManager::GetInstance().AddLight(LightType::Ambient);
-    }
-
     if (removeLightIndex > -1)
     {
         LightManager::GetInstance().RemoveLight(removeLightIndex);
@@ -241,7 +231,7 @@ int32_t UI::LightSection(size_t idx)
 
     float step = 0.01f;
     float minIntensity = 0.0f;
-    float maxIntensity = 1.0f;
+    float maxIntensity = 50.0f;
     float minRange = 0.0f;
     float maxRange = 20.f;
 
@@ -259,10 +249,6 @@ int32_t UI::LightSection(size_t idx)
         case LightType::Directional:
             ImGui::Text("Directional Light");
             ImGui::DragFloat3("Direction", glm::value_ptr(light.direction), step);
-            break;
-
-        case LightType::Ambient:
-            ImGui::Text("Ambient Light");
             break;
     }
 

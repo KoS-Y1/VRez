@@ -2,6 +2,7 @@
 
 #include <uniform_lights.glsl>
 #include <uniform_camera.glsl>
+#include <pbr.glsl>
 
 layout (location = 0) in vec3 vWorldPosition;
 layout (location = 1) in mat3 vTBN;
@@ -16,7 +17,7 @@ void main()
 {
     int i = 0;
 
-    vec3 color = texture(uBaseTexture, vTexcoord).xyz;
+    vec3 albedo = texture(uBaseTexture, vTexcoord).xyz;
 
     vec3 lightColor = vec3(0.0f);
 
@@ -26,22 +27,11 @@ void main()
     for (i = 0; i < uLightCount; ++i)
     {
         vec3 viewDir = normalize(uViewPosition - vWorldPosition);
-        // Point
-        if (uLights[i].type == 0)
-        {
-            lightColor += CalculatePointLight(uLights[i], normal, vWorldPosition, viewDir, 1.0f);
-        }
-        // Directional
-        else if (uLights[i].type == 1)
-        {
-            lightColor += CalculateDirectionalLight(uLights[i], normal, viewDir, 1.0f);
-        }
-        // Ambient
-        else if (uLights[i].type == 2)
-        {
-            lightColor += CalculateAmbientLight(uLights[i]);
-        }
+
+        lightColor += CalculatePBRLight(uLights[i].position, uLights[i].direction, uLights[i].color, uLights[i].intensity,
+        uLights[i].range, uLights[i].type, normal, viewDir, vWorldPosition, albedo, 0.2f, 1.0f);
     }
-    vec3 result = lightColor * color;
-    outColor = vec4(result, 1.0f);
+
+    // Gamma correction
+    outColor = vec4(pow(lightColor, vec3(1.0/2.2)), 1.0f);
 }
