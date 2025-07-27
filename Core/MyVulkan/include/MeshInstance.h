@@ -23,20 +23,20 @@ public:
 
     ~MeshInstance() { Destroy(); }
 
-    MeshInstance(const VulkanMesh *mesh, const VulkanTexture *baseTexture, const VulkanTexture *normalMap,
+    MeshInstance(const VulkanMesh *mesh, const VulkanTexture *baseTexture, const VulkanTexture *normalMap, const VulkanTexture *ormTexture,
                  std::shared_ptr<VulkanGraphicsPipeline> pipeline, VkDevice device, VkDescriptorPool descriptorPool);
 
-    MeshInstance(const VulkanMesh *mesh, const VulkanTexture *baseTexture, const VulkanTexture *normalMap,
+    MeshInstance(const VulkanMesh *mesh, const VulkanTexture *baseTexture, const VulkanTexture *normalMap, const VulkanTexture *ormTexture,
                  std::shared_ptr<VulkanGraphicsPipeline> pipeline,
                  VkDevice device, VkDescriptorPool descriptorPool,
                  glm::vec3 location);
 
-    MeshInstance(const VulkanMesh *mesh, const VulkanTexture *baseTexture, const VulkanTexture *normalMap,
+    MeshInstance(const VulkanMesh *mesh, const VulkanTexture *baseTexture, const VulkanTexture *normalMap, const VulkanTexture *ormTexture,
                  std::shared_ptr<VulkanGraphicsPipeline> pipeline,
                  VkDevice device, VkDescriptorPool descriptorPool,
                  glm::vec3 location, glm::vec3 pitchYawRoll, glm::vec3 scale);
 
-    MeshInstance(const VulkanMesh *mesh, const VulkanTexture *baseTexture, const VulkanTexture *normalMap,
+    MeshInstance(const VulkanMesh *mesh, const VulkanTexture *baseTexture, const VulkanTexture *normalMap, const VulkanTexture *ormTexture,
                  std::shared_ptr<VulkanGraphicsPipeline> pipeline,
                  VkDevice device, VkDescriptorPool descriptorPool,
                  glm::vec3 location, glm::quat rotation, glm::vec3 scale);
@@ -86,6 +86,7 @@ private:
     const VulkanMesh *m_mesh = nullptr;
     const VulkanTexture *m_baseTexture = nullptr;
     const VulkanTexture *m_normalMap = nullptr;
+    const VulkanTexture *m_ormTexture = nullptr;
     glm::mat4 m_transformation = glm::mat4(1.0f);
 
     glm::vec3 m_location = glm::vec3(0.0f);

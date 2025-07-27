@@ -19,5 +19,5 @@ public:
 
     glm::vec3 direction = glm::vec3(0.0f, -1.0f, 0.0f); // Directional direction
 
-    float intensity = 10.0f;
+    float intensity = 1.0f;
 };

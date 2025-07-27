@@ -84,7 +84,7 @@ void VulkanGraphicsPipeline::CreatePipeline(const ShaderCompiler &shaderCompiler
         .flags = 0,
         .rasterizationSamples = m_config.rasterizationSamples,
         .sampleShadingEnable = VK_TRUE,
-        .minSampleShading = 0.2f,
+        .minSampleShading = 0.5f,
         .pSampleMask = nullptr,
         .alphaToCoverageEnable = VK_FALSE,
         .alphaToOneEnable = VK_FALSE

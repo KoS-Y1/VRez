@@ -147,6 +147,7 @@ private:
 
     VulkanTexture m_baseTexture;
     VulkanTexture m_normalMap;
+    VulkanTexture m_ormTexture;
 
     VkSampleCountFlagBits m_sampleCount = VK_SAMPLE_COUNT_1_BIT;
 

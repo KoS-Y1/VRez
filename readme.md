@@ -23,7 +23,8 @@
   + ~~Translation, etc..~~
 + ~~Traditional Graphics, Rasterization Shaders(make sure models' normal working)~~
   + ~~Basic rendering(e.g. phong..)~~
-  + Using PBR instead of phong blinn
+  + ~~Using PBR instead of phong blinn~~
+  + IBL for skybox
 
 + **Advanced(Vulkan Ray Tracing Extension/RT Pipeline)**
 ## Texture
@@ -31,7 +32,7 @@
 + Different kind of textures with corresponding shaders
   + ~~Basic texture mapping~~
   + ~~Normal mapping~~...
-  + Emissive, ORM... mappings
+  + Emissive, ~~ORM~~... mappings
   + Shadow mapping
     + Soft shadow
     + Antialiasing

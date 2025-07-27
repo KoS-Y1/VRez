@@ -79,6 +79,7 @@ VulkanState::~VulkanState()
 
     m_baseTexture.Destroy();
     m_normalMap.Destroy();
+    m_ormTexture.Destroy();
     MeshLoader::GetInstance().Destroy();
     TextureLoader::GetInstance().Destroy();
 
@@ -608,6 +609,11 @@ void VulkanState::CreateTextures()
     glm::vec4 normal = glm::vec4(0.5f, 0.5f, 1.0f, 1.0f);
     VulkanTexture tempNormal(*this, 1u, 1u, VK_FORMAT_R32G32B32A32_SFLOAT, 4 * sizeof(float), &normal, samplerConfig);
     m_normalMap = std::move(tempNormal);
+
+    // A default orm map
+    glm::vec4 orm = glm::vec4(0.2f, 1.0f, 0.1f, 1.0f);
+    VulkanTexture ormTexture(*this, 1u, 1u, VK_FORMAT_R32G32_SFLOAT, 4 * sizeof(float), &orm, samplerConfig);
+    m_ormTexture = std::move(ormTexture);
 }
 
 
@@ -828,16 +834,21 @@ void VulkanState::LoadMeshes()
         "../Assets/Models/Chessboard/Chessboard.obj",
         "../Assets/Models/Castle/Castle.obj",
     };
+
     std::vector<std::string> texturePaths
     {
         "../Assets/Models/Chessboard/chessboard_base_color.jpg",
         "../Assets/Models/Castle/castle_white_base_color.jpg",
     };
-
     std::vector<std::string> normalMapPaths
     {
         "../Assets/Models/Chessboard/chessboard_normal.jpg",
         "../Assets/Models/Castle/Castle_normal.jpg",
+    };
+    std::vector<std::string> ormPaths
+    {
+        "../Assets/Models/Chessboard/Chessboard_ORM.jpg",
+        "../Assets/Models/Castle/Castle_ORM.jpg",
     };
 
 
@@ -861,6 +872,7 @@ void VulkanState::LoadMeshes()
 
         const VulkanTexture *baseTexture = &m_baseTexture;
         const VulkanTexture *normalMap = &m_normalMap;
+        const VulkanTexture *orm = &m_ormTexture;
         if (texturePaths[i] != "")
         {
             baseTexture = TextureLoader::GetInstance().LoadTexture(texturePaths[i], *this, samplerConfigs[i]);
@@ -869,9 +881,13 @@ void VulkanState::LoadMeshes()
         {
             normalMap = TextureLoader::GetInstance().LoadTexture(normalMapPaths[i], *this, samplerConfigs[i]);
         }
+        if (ormPaths[i] != "")
+        {
+            orm = TextureLoader::GetInstance().LoadTexture(ormPaths[i], *this, samplerConfigs[i]);
+        }
 
         m_meshInstances.emplace_back(MeshLoader::GetInstance().LoadMesh(meshPaths[index], *this), baseTexture,
-                                     normalMap,
+                                     normalMap, orm,
                                      m_graphicsPipelines[0], m_device, m_descriptorPool,
                                      locations[index]);
 
