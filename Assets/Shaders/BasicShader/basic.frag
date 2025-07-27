@@ -21,7 +21,7 @@ void main()
 
     vec3 lightColor = vec3(0.0f);
 
-    vec3 tNormal = texture(uNormalMap, vTexcoord).xyz;
+    vec3 tNormal = texture(uNormalMap, vTexcoord).xyz * 2.0 - 1.0;
     vec3 normal = normalize(vTBN * tNormal);
 
     for (i = 0; i < uLightCount; ++i)
