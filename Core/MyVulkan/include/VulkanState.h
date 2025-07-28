@@ -10,6 +10,7 @@
 #include <Debug.h>
 #include <string>
 
+#include "VertexFormats.h"
 #include "VulkanImage.h"
 #include "VulkanBuffer.h"
 #include "VulkanTexture.h"
@@ -25,6 +26,21 @@ class MeshLoader;
 class VulkanMesh;
 class MeshInstance;
 class UI;
+
+struct Skybox
+{
+    std::vector<VertexP> vertices;
+
+    const VulkanTexture *skybox;
+    VulkanBuffer vertexBuffer;
+
+    void Destroy()
+    {
+        vertices.clear();
+        skybox = nullptr;
+        vertexBuffer.Destroy();
+    }
+};
 
 struct VulkanSwapchain
 {
@@ -135,22 +151,27 @@ private:
     VkDescriptorPool m_imguiDescriptorPool = VK_NULL_HANDLE;
 
     VkDescriptorSet m_uniformDescriptorSet = VK_NULL_HANDLE;
+    VkDescriptorSet m_uniformViewDescriptorSet = VK_NULL_HANDLE;
+    VkDescriptorSet m_skyboxDescriptorSet = VK_NULL_HANDLE;
 
     VulkanImage m_drawImage;
     VulkanImage m_depthImage;
     VulkanImage m_msaaColorImage;
 
-    std::vector<std::shared_ptr<VulkanComputePipeline>> m_computePipelines;
-    std::vector<std::shared_ptr<VulkanGraphicsPipeline>> m_graphicsPipelines;
+    std::vector<std::shared_ptr<VulkanComputePipeline> > m_computePipelines;
+    std::vector<std::shared_ptr<VulkanGraphicsPipeline> > m_graphicsPipelines;
+    std::unique_ptr<VulkanGraphicsPipeline> m_skyboxPipeline;
 
     std::vector<MeshInstance> m_meshInstances;
 
-    VulkanTexture m_baseTexture;
+    VulkanTexture m_albedoTexture;
     VulkanTexture m_normalMap;
     VulkanTexture m_ormTexture;
     VulkanTexture m_emissiveTexture;
 
     VkSampleCountFlagBits m_sampleCount = VK_SAMPLE_COUNT_1_BIT;
+
+    Skybox m_skybox;
 
     DeletionQueue m_deletionQueue;
     UIQueue m_uiQueue;
@@ -187,6 +208,8 @@ private:
 
     void CreateTextures();
 
+    void CreateSkybox();
+
     void CreateRenderObjects();
 
     void WaitAndResetFence(VkFence fence, uint64_t timeout = POINT_ONE_SECOND);
@@ -197,6 +220,10 @@ private:
                                    VkSemaphore waitSemaphore, VkSemaphore signalSemaphore);
 
     void QueuePresent(VkSemaphore waitSemaphore, uint32_t imageIndex);
+
+    void Draw();
+
+    void DrawSkybox();
 
     void DrawGeometry();
 
