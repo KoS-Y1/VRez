@@ -600,7 +600,6 @@ void VulkanState::CreatePipelines()
     };
     GraphicsPipelineConfig skyboxConfig;
     skyboxConfig.infoVertex = VertexP::GetVertexInputStateCreateInfo();
-    skyboxConfig.infoVertex = VertexPNTT::GetVertexInputStateCreateInfo();
     skyboxConfig.colorFormats = std::vector<VkFormat>{COLOR_IMG_FORMAT};
     skyboxConfig.depthTestEnable = VK_TRUE;
     skyboxConfig.depthWriteEnable = VK_TRUE;
