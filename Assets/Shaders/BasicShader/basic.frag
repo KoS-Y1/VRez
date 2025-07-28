@@ -13,6 +13,7 @@ layout (location = 0) out vec4 outColor;
 layout (set = 1, binding = 0) uniform sampler2D uBaseTexture;
 layout (set = 1, binding = 1) uniform sampler2D uNormalMap;
 layout (set = 1, binding = 2) uniform sampler2D uORMTexture;
+layout (set = 1, binding = 3) uniform sampler2D uEmissiveTexture;
 
 void main()
 {
@@ -38,6 +39,8 @@ void main()
         uLights[i].range, uLights[i].type, normal, viewDir, vWorldPosition, albedo, roughness, metallic);
     }
 
+    vec3 emissive = texture(uEmissiveTexture, vTexcoord).rgb;
+
     // Gamma correction
-    outColor = vec4(pow(Lo, vec3(1.0/2.2)), 1.0f);
+    outColor = vec4(pow(Lo + emissive, vec3(1.0/2.2)), 1.0f);
 }

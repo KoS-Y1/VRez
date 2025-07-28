@@ -80,6 +80,7 @@ VulkanState::~VulkanState()
     m_baseTexture.Destroy();
     m_normalMap.Destroy();
     m_ormTexture.Destroy();
+    m_emissiveTexture.Destroy();
     MeshLoader::GetInstance().Destroy();
     TextureLoader::GetInstance().Destroy();
 
@@ -614,6 +615,11 @@ void VulkanState::CreateTextures()
     glm::vec4 orm = glm::vec4(0.2f, 1.0f, 0.1f, 1.0f);
     VulkanTexture ormTexture(*this, 1u, 1u, VK_FORMAT_R32G32_SFLOAT, 4 * sizeof(float), &orm, samplerConfig);
     m_ormTexture = std::move(ormTexture);
+
+    // A default emissive map
+    glm::vec4 emissive = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+    VulkanTexture emissiveTexture(*this, 1u, 1u, VK_FORMAT_R32G32_SFLOAT, 4 * sizeof(float), &emissive, samplerConfig);
+    m_emissiveTexture = std::move(emissiveTexture);
 }
 
 
@@ -833,36 +839,46 @@ void VulkanState::LoadMeshes()
     {
         "../Assets/Models/Chessboard/Chessboard.obj",
         "../Assets/Models/Castle/Castle.obj",
+        "../Assets/Models/BoomBox/BoomBox.obj",
     };
 
     std::vector<std::string> texturePaths
     {
         "../Assets/Models/Chessboard/chessboard_base_color.jpg",
         "../Assets/Models/Castle/castle_white_base_color.jpg",
+        "../Assets/Models/BoomBox/BoomBox_baseColor.png",
     };
     std::vector<std::string> normalMapPaths
     {
         "../Assets/Models/Chessboard/chessboard_normal.jpg",
         "../Assets/Models/Castle/Castle_normal.jpg",
+        "../Assets/Models/BoomBox/BoomBox_normal.png",
     };
     std::vector<std::string> ormPaths
     {
         "../Assets/Models/Chessboard/Chessboard_ORM.jpg",
         "../Assets/Models/Castle/Castle_ORM.jpg",
+        "../Assets/Models/BoomBox/BoomBox_occlusionRoughnessMetallic.png",
     };
-
+    std::vector<std::string> emissivePaths
+    {
+        "",
+        "",
+        "../Assets/Models/BoomBox/BoomBox_emissive.png",
+    };
 
     std::vector<SamplerConfig> samplerConfigs
     {
         {},
-        {}
+        {},
+        {},
     };
     std::vector<glm::vec3> locations
     {
         glm::vec3(0.0f, 0.0f, 0.0f),
-        // glm::vec3(0.3f, 0.3f, 0.3f),
         glm::vec3(0.0f, 0.0f, 0.0f),
-    };
+            glm::vec3(0.0f, 0.1f, 0.0f),
+};
 
     for (size_t i = 0; i < meshPaths.size(); i++)
     {
@@ -873,6 +889,7 @@ void VulkanState::LoadMeshes()
         const VulkanTexture *baseTexture = &m_baseTexture;
         const VulkanTexture *normalMap = &m_normalMap;
         const VulkanTexture *orm = &m_ormTexture;
+        const VulkanTexture *emissive = &m_emissiveTexture;
         if (texturePaths[i] != "")
         {
             baseTexture = TextureLoader::GetInstance().LoadTexture(texturePaths[i], *this, samplerConfigs[i]);
@@ -885,9 +902,13 @@ void VulkanState::LoadMeshes()
         {
             orm = TextureLoader::GetInstance().LoadTexture(ormPaths[i], *this, samplerConfigs[i]);
         }
+        if (emissivePaths[i] != "")
+        {
+            emissive = TextureLoader::GetInstance().LoadTexture(emissivePaths[i], *this, samplerConfigs[i]);
+        }
 
         m_meshInstances.emplace_back(MeshLoader::GetInstance().LoadMesh(meshPaths[index], *this), baseTexture,
-                                     normalMap, orm,
+                                     normalMap, orm, emissive,
                                      m_graphicsPipelines[0], m_device, m_descriptorPool,
                                      locations[index]);
 

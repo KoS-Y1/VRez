@@ -7,7 +7,7 @@
 #include <include/VulkanUtil.h>
 
 MeshInstance::MeshInstance(const VulkanMesh *mesh, const VulkanTexture *baseTexture, const VulkanTexture *normalMap,
-                           const VulkanTexture *ormTexture,
+                           const VulkanTexture *ormTexture, const VulkanTexture *emissiveTexture,
                            std::shared_ptr<VulkanGraphicsPipeline> pipeline, VkDevice device,
                            VkDescriptorPool descriptorPool)
 {
@@ -15,6 +15,7 @@ MeshInstance::MeshInstance(const VulkanMesh *mesh, const VulkanTexture *baseText
     m_baseTexture = baseTexture;
     m_normalMap = normalMap;
     m_ormTexture = ormTexture;
+    m_emissiveTexture = emissiveTexture;
     m_pipeline = pipeline;
     m_device = device;
     m_descriptorPool = descriptorPool;
@@ -25,7 +26,7 @@ MeshInstance::MeshInstance(const VulkanMesh *mesh, const VulkanTexture *baseText
 }
 
 MeshInstance::MeshInstance(const VulkanMesh *mesh, const VulkanTexture *baseTexture, const VulkanTexture *normalMap,
-                           const VulkanTexture *ormTexture,
+                           const VulkanTexture *ormTexture, const VulkanTexture *emissiveTexture,
                            std::shared_ptr<VulkanGraphicsPipeline> pipeline, VkDevice device,
                            VkDescriptorPool descriptorPool,
                            glm::vec3 location)
@@ -34,6 +35,7 @@ MeshInstance::MeshInstance(const VulkanMesh *mesh, const VulkanTexture *baseText
     m_baseTexture = baseTexture;
     m_normalMap = normalMap;
     m_ormTexture = ormTexture;
+    m_emissiveTexture = emissiveTexture;
     m_pipeline = pipeline;
     m_device = device;
     m_descriptorPool = descriptorPool;
@@ -44,7 +46,7 @@ MeshInstance::MeshInstance(const VulkanMesh *mesh, const VulkanTexture *baseText
 }
 
 MeshInstance::MeshInstance(const VulkanMesh *mesh, const VulkanTexture *baseTexture, const VulkanTexture *normalMap,
-                           const VulkanTexture *ormTexture,
+                           const VulkanTexture *ormTexture, const VulkanTexture *emissiveTexture,
                            std::shared_ptr<VulkanGraphicsPipeline> pipeline, VkDevice device,
                            VkDescriptorPool descriptorPool,
                            glm::vec3 location,
@@ -54,6 +56,7 @@ MeshInstance::MeshInstance(const VulkanMesh *mesh, const VulkanTexture *baseText
     m_baseTexture = baseTexture;
     m_normalMap = normalMap;
     m_ormTexture = ormTexture;
+    m_emissiveTexture = emissiveTexture;
     m_pipeline = pipeline;
     m_device = device;
     m_descriptorPool = descriptorPool;
@@ -68,7 +71,7 @@ MeshInstance::MeshInstance(const VulkanMesh *mesh, const VulkanTexture *baseText
 }
 
 MeshInstance::MeshInstance(const VulkanMesh *mesh, const VulkanTexture *baseTexture, const VulkanTexture *normalMap,
-                           const VulkanTexture *ormTexture,
+                           const VulkanTexture *ormTexture, const VulkanTexture *emissiveTexture,
                            std::shared_ptr<VulkanGraphicsPipeline> pipeline, VkDevice device,
                            VkDescriptorPool descriptorPool, glm::vec3 location,
                            glm::vec3 pitchYawRoll, glm::vec3 scale)
@@ -77,6 +80,7 @@ MeshInstance::MeshInstance(const VulkanMesh *mesh, const VulkanTexture *baseText
     m_baseTexture = baseTexture;
     m_normalMap = normalMap;
     m_ormTexture = ormTexture;
+    m_emissiveTexture = emissiveTexture;
     m_pipeline = pipeline;
     m_device = device;
     m_descriptorPool = descriptorPool;
@@ -102,6 +106,8 @@ void MeshInstance::Destroy()
     m_descriptorSets.clear();
     m_baseTexture = nullptr;
     m_normalMap = nullptr;
+    m_ormTexture = nullptr;
+    m_emissiveTexture = nullptr;
     m_mesh = nullptr;
 
     m_device = VK_NULL_HANDLE;
@@ -120,6 +126,8 @@ void MeshInstance::Swap(MeshInstance &other) noexcept
     std::swap(m_pipeline, other.m_pipeline);
     std::swap(m_baseTexture, other.m_baseTexture);
     std::swap(m_normalMap, other.m_normalMap);
+    std::swap(m_ormTexture, other.m_ormTexture);
+    std::swap(m_emissiveTexture, other.m_emissiveTexture);
     std::swap(m_device, other.m_device);
     std::swap(m_descriptorPool, other.m_descriptorPool);
     std::swap(m_descriptorSets, other.m_descriptorSets);
@@ -218,6 +226,11 @@ void MeshInstance::UpdateDescriptorSets(VkDescriptorSet set)
         {
             .sampler = m_ormTexture->GetSampler(),
             .imageView = m_ormTexture->GetImageView(),
+            .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+        },
+        {
+            .sampler = m_emissiveTexture->GetSampler(),
+            .imageView = m_emissiveTexture->GetImageView(),
             .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
         }
     };
