@@ -1,8 +1,11 @@
 #include "include/VulkanMesh.h"
 
+#include "include/VulkanState.h"
+
 VulkanMesh::VulkanMesh(VulkanState &state, std::string name, size_t vertexCount, size_t vertexSize, const void *data)
 {
     VkDeviceSize size = vertexCount * vertexSize;
+    m_vertexSize = vertexSize;
     VulkanBuffer stagingBuffer(state.GetPhysicalDevice(), state.GetDevice(), size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
     stagingBuffer.Upload(size, data);
 

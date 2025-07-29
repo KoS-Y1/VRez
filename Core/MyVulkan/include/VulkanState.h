@@ -12,8 +12,8 @@
 
 #include "VertexFormats.h"
 #include "VulkanImage.h"
-#include "VulkanBuffer.h"
 #include "VulkanTexture.h"
+#include "VulkanMesh.h"
 
 #define MIN_SWAPCHAIN_IMG_COUNT 2
 #define MAX_SWAPCHAIN_IMG_COUNT 16
@@ -23,22 +23,18 @@
 class VulkanComputePipeline;
 class VulkanGraphicsPipeline;
 class MeshLoader;
-class VulkanMesh;
 class MeshInstance;
 class UI;
 
 struct Skybox
 {
-    std::vector<VertexP> vertices;
-
     const VulkanTexture *skybox;
-    VulkanBuffer vertexBuffer;
+    VulkanMesh mesh;
 
     void Destroy()
     {
-        vertices.clear();
         skybox = nullptr;
-        vertexBuffer.Destroy();
+        mesh.Destroy();
     }
 };
 

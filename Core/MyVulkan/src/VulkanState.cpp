@@ -601,6 +601,7 @@ void VulkanState::CreatePipelines()
     GraphicsPipelineConfig skyboxConfig;
     skyboxConfig.infoVertex = VertexP::GetVertexInputStateCreateInfo();
     skyboxConfig.colorFormats = std::vector<VkFormat>{COLOR_IMG_FORMAT};
+    skyboxConfig.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
     skyboxConfig.depthTestEnable = VK_TRUE;
     skyboxConfig.depthWriteEnable = VK_TRUE;
     skyboxConfig.depthFormat = DEPTH_IMG_FORMAT;
@@ -653,12 +654,9 @@ void VulkanState::CreateSkybox()
         VertexP(glm::vec3(-1.0f, 1.0f, -1.0f)),
         VertexP(glm::vec3(1.0f, 1.0f, -1.)),
     };
-    m_skybox.vertices = vertices;
 
-    VulkanBuffer vertexBuffer(m_physicalDevice, m_device, sizeof(VertexP) * m_skybox.vertices.size(),
-                              VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
-    vertexBuffer.Upload(sizeof(VertexP) * m_skybox.vertices.size(), m_skybox.vertices.data());
-    m_skybox.vertexBuffer = std::move(vertexBuffer);
+    m_skybox.mesh = VulkanMesh(*this, "skybox", vertices.size(), sizeof(VertexP), vertices.data());
+
 
     std::string skyboxPath = "../Assets/Models/Skybox/Skybox.png";
 
@@ -925,8 +923,8 @@ void VulkanState::DrawSkybox()
 
 
     const VkDeviceSize offset = 0;
-    vkCmdBindVertexBuffers(m_cmdBuf, 0, 1, &m_skybox.vertexBuffer.GetBuffer(), &offset);
-    vkCmdDraw(m_cmdBuf, m_skybox.vertices.size(), 1, 0, 0);
+    vkCmdBindVertexBuffers(m_cmdBuf, 0, 1, &m_skybox.mesh.GetVertexBuffer(), &offset);
+    vkCmdDraw(m_cmdBuf, m_skybox.mesh.GetVertexCount(), 1, 0, 0);
 }
 
 

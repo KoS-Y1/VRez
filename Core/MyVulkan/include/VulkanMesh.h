@@ -2,8 +2,9 @@
 
 #include <string>
 
-#include "include/VulkanState.h"
 #include "include/VulkanBuffer.h"
+
+class VulkanState;
 
 class VulkanMesh
 {
@@ -42,5 +43,6 @@ public:
 private:
     VulkanBuffer m_vertexBuffer;
     size_t m_vertexCount = 0;
+    size_t m_vertexSize = 0;
     std::string m_name;
 };
