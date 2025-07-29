@@ -3,6 +3,7 @@
 #include <uniform_lights.glsl>
 #include <uniform_camera.glsl>
 #include <pbr.glsl>
+#include <ibl.glsl>
 
 layout (location = 0) in vec3 vWorldPosition;
 layout (location = 1) in mat3 vTBN;
@@ -26,11 +27,11 @@ void main()
     vec3 normal = normalize(vTBN * tNormal);
 
     vec3 orm = texture(uORMTexture, vTexcoord).xyz;
-    // TODO: use ao when there's ambient light/IBL
     float ao = orm.r;
     float roughness = orm.g;
     float metallic = orm.b;
 
+    // PBR
     for (i = 0; i < uLightCount; ++i)
     {
         vec3 viewDir = normalize(uViewPosition - vWorldPosition);
@@ -41,6 +42,15 @@ void main()
 
     vec3 emissive = texture(uEmissiveTexture, vTexcoord).rgb;
 
+    vec3 V = normalize(uViewPosition - vWorldPosition.xyz);
+    float NdotV = max(dot(N, V), 0.0f);
+    vec3 R = reflect(-V, N);
+    vec3 F0 = mix(vec3(0.04), albedo, metallic);
+
+    // IBL
+    vec3 ibl = IBL(normal, NdotV, R, F0, metallic, roughness, albedo, ao) * 0.5f;
+
     // Gamma correction
-    outColor = vec4(pow(Lo + emissive, vec3(1.0/2.2)), 1.0f);
+//    outColor = vec4(pow(Lo + emissive, vec3(1.0/2.2)), 1.0f);
+    outColor = vec4((ibl+ Lo + emissive), 1.0);
 }
