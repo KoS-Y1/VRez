@@ -1,5 +1,5 @@
 #ifndef UNIFORM_LIGHTS_GLSL
-#define UINFORM_LIGHTS_GLSL
+#define UNIFORM_LIGHTS_GLSL
 
 const int MAX_LIGHTS = 16;
 
@@ -23,6 +23,5 @@ layout(std140, set = 0, binding = 1) uniform Lights
     int uPadding2;
     Light uLights[MAX_LIGHTS];
 };
-
 
 #endif

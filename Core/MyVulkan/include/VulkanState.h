@@ -29,6 +29,9 @@ class UI;
 struct Skybox
 {
     const VulkanTexture *skybox;
+    const VulkanTexture *specular;
+    const VulkanTexture *irradiance;
+    const VulkanTexture *brdf;
     VulkanMesh mesh;
 
     void Destroy()

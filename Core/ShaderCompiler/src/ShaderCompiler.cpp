@@ -176,6 +176,7 @@ void ShaderCompiler::Compile(const std::string &dir)
     shader.setEnvClient(glslang::EShClientVulkan, glslang::EShTargetVulkan_1_4);
     shader.setEnvTarget(glslang::EshTargetSpv, glslang::EShTargetSpv_1_3);
     shader.setEntryPoint("main");
+    SDL_Log("Start compiling %s...", dir.c_str());
     if (!shader.parse(&DefaultTBuiltInResource, 100, false, EShMsgDefault, *m_includer))
     {
         SDL_Log("GLSL Parsing Failed: %s", shader.getInfoLog());

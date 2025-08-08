@@ -8,6 +8,8 @@
 
 MeshInstance::MeshInstance(const VulkanMesh *mesh, const VulkanTexture *baseTexture, const VulkanTexture *normalMap,
                            const VulkanTexture *ormTexture, const VulkanTexture *emissiveTexture,
+                           const VulkanTexture *brdfTexture, const VulkanTexture *skyboxSpecular,
+                           const VulkanTexture *skyboxIrradiance,
                            std::shared_ptr<VulkanGraphicsPipeline> pipeline, VkDevice device,
                            VkDescriptorPool descriptorPool)
 {
@@ -16,6 +18,11 @@ MeshInstance::MeshInstance(const VulkanMesh *mesh, const VulkanTexture *baseText
     m_normalMap = normalMap;
     m_ormTexture = ormTexture;
     m_emissiveTexture = emissiveTexture;
+
+    m_brdfTexture = brdfTexture;
+    m_skyboxSpecular = skyboxSpecular;
+    m_skyboxIrradiance = skyboxIrradiance;
+
     m_pipeline = pipeline;
     m_device = device;
     m_descriptorPool = descriptorPool;
@@ -27,6 +34,8 @@ MeshInstance::MeshInstance(const VulkanMesh *mesh, const VulkanTexture *baseText
 
 MeshInstance::MeshInstance(const VulkanMesh *mesh, const VulkanTexture *baseTexture, const VulkanTexture *normalMap,
                            const VulkanTexture *ormTexture, const VulkanTexture *emissiveTexture,
+                           const VulkanTexture *brdfTexture, const VulkanTexture *skyboxSpecular,
+                           const VulkanTexture *skyboxIrradiance,
                            std::shared_ptr<VulkanGraphicsPipeline> pipeline, VkDevice device,
                            VkDescriptorPool descriptorPool,
                            glm::vec3 location)
@@ -36,6 +45,11 @@ MeshInstance::MeshInstance(const VulkanMesh *mesh, const VulkanTexture *baseText
     m_normalMap = normalMap;
     m_ormTexture = ormTexture;
     m_emissiveTexture = emissiveTexture;
+
+    m_brdfTexture = brdfTexture;
+    m_skyboxSpecular = skyboxSpecular;
+    m_skyboxIrradiance = skyboxIrradiance;
+
     m_pipeline = pipeline;
     m_device = device;
     m_descriptorPool = descriptorPool;
@@ -47,6 +61,8 @@ MeshInstance::MeshInstance(const VulkanMesh *mesh, const VulkanTexture *baseText
 
 MeshInstance::MeshInstance(const VulkanMesh *mesh, const VulkanTexture *baseTexture, const VulkanTexture *normalMap,
                            const VulkanTexture *ormTexture, const VulkanTexture *emissiveTexture,
+                           const VulkanTexture *brdfTexture, const VulkanTexture *skyboxSpecular,
+                           const VulkanTexture *skyboxIrradiance,
                            std::shared_ptr<VulkanGraphicsPipeline> pipeline, VkDevice device,
                            VkDescriptorPool descriptorPool,
                            glm::vec3 location,
@@ -57,6 +73,11 @@ MeshInstance::MeshInstance(const VulkanMesh *mesh, const VulkanTexture *baseText
     m_normalMap = normalMap;
     m_ormTexture = ormTexture;
     m_emissiveTexture = emissiveTexture;
+
+    m_brdfTexture = brdfTexture;
+    m_skyboxSpecular = skyboxSpecular;
+    m_skyboxIrradiance = skyboxIrradiance;
+
     m_pipeline = pipeline;
     m_device = device;
     m_descriptorPool = descriptorPool;
@@ -72,6 +93,8 @@ MeshInstance::MeshInstance(const VulkanMesh *mesh, const VulkanTexture *baseText
 
 MeshInstance::MeshInstance(const VulkanMesh *mesh, const VulkanTexture *baseTexture, const VulkanTexture *normalMap,
                            const VulkanTexture *ormTexture, const VulkanTexture *emissiveTexture,
+                           const VulkanTexture *brdfTexture, const VulkanTexture *skyboxSpecular,
+                           const VulkanTexture *skyboxIrradiance,
                            std::shared_ptr<VulkanGraphicsPipeline> pipeline, VkDevice device,
                            VkDescriptorPool descriptorPool, glm::vec3 location,
                            glm::vec3 pitchYawRoll, glm::vec3 scale)
@@ -81,6 +104,11 @@ MeshInstance::MeshInstance(const VulkanMesh *mesh, const VulkanTexture *baseText
     m_normalMap = normalMap;
     m_ormTexture = ormTexture;
     m_emissiveTexture = emissiveTexture;
+
+    m_brdfTexture = brdfTexture;
+    m_skyboxSpecular = skyboxSpecular;
+    m_skyboxIrradiance = skyboxIrradiance;
+
     m_pipeline = pipeline;
     m_device = device;
     m_descriptorPool = descriptorPool;
@@ -110,6 +138,10 @@ void MeshInstance::Destroy()
     m_emissiveTexture = nullptr;
     m_mesh = nullptr;
 
+    m_brdfTexture = nullptr;
+    m_skyboxSpecular = nullptr;
+    m_skyboxIrradiance = nullptr;
+
     m_device = VK_NULL_HANDLE;
     m_descriptorPool = VK_NULL_HANDLE;
 }
@@ -128,6 +160,11 @@ void MeshInstance::Swap(MeshInstance &other) noexcept
     std::swap(m_normalMap, other.m_normalMap);
     std::swap(m_ormTexture, other.m_ormTexture);
     std::swap(m_emissiveTexture, other.m_emissiveTexture);
+
+    std::swap(m_brdfTexture, other.m_brdfTexture);
+    std::swap(m_skyboxSpecular, other.m_skyboxSpecular);
+    std::swap(m_skyboxIrradiance, other.m_skyboxIrradiance);
+
     std::swap(m_device, other.m_device);
     std::swap(m_descriptorPool, other.m_descriptorPool);
     std::swap(m_descriptorSets, other.m_descriptorSets);
@@ -187,7 +224,8 @@ void MeshInstance::CreateDescriptorSets()
         m_descriptorSets.push_back(set);
     }
 
-    UpdateDescriptorSets(m_descriptorSets[0]);
+    UpdatePBRDescriptorSet();
+    UpdateIBLDescriptorSet();
 }
 
 
@@ -209,7 +247,7 @@ VkDescriptorSet MeshInstance::CreateDescriptorSet(const VkDescriptorSetLayout &l
     return set;
 }
 
-void MeshInstance::UpdateDescriptorSets(VkDescriptorSet set)
+void MeshInstance::UpdatePBRDescriptorSet()
 {
     std::vector<VkDescriptorImageInfo> infoImage
     {
@@ -239,7 +277,7 @@ void MeshInstance::UpdateDescriptorSets(VkDescriptorSet set)
     {
         .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
         .pNext = nullptr,
-        .dstSet = set,
+        .dstSet = m_descriptorSets[0],
         .dstBinding = 0,
         .dstArrayElement = 0,
         .descriptorCount = static_cast<uint32_t>(infoImage.size()),
@@ -251,6 +289,45 @@ void MeshInstance::UpdateDescriptorSets(VkDescriptorSet set)
 
     vkUpdateDescriptorSets(m_device, 1, &writeSet, 0, nullptr);
 }
+
+void MeshInstance::UpdateIBLDescriptorSet()
+{
+    std::vector<VkDescriptorImageInfo> infoImage
+    {
+        {
+            .sampler = m_brdfTexture->GetSampler(),
+            .imageView = m_brdfTexture->GetImageView(),
+            .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+        },
+        {
+            .sampler = m_skyboxIrradiance->GetSampler(),
+            .imageView = m_skyboxIrradiance->GetImageView(),
+            .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+        },
+        {
+            .sampler = m_skyboxSpecular->GetSampler(),
+            .imageView = m_skyboxSpecular->GetImageView(),
+            .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+        }
+    };
+
+    VkWriteDescriptorSet writeSet
+    {
+        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .pNext = nullptr,
+        .dstSet = m_descriptorSets[1],
+        .dstBinding = 0,
+        .dstArrayElement = 0,
+        .descriptorCount = static_cast<uint32_t>(infoImage.size()),
+        .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+        .pImageInfo = infoImage.data(),
+        .pBufferInfo = nullptr,
+        .pTexelBufferView = nullptr,
+    };
+
+    vkUpdateDescriptorSets(m_device, 1, &writeSet, 0, nullptr);
+}
+
 
 void MeshInstance::BindAndDraw(VkCommandBuffer cmdBuf) const
 {

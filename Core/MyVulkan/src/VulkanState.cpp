@@ -659,8 +659,14 @@ void VulkanState::CreateSkybox()
 
 
     std::string skyboxPath = "../Assets/Models/Skybox/Skybox.png";
+    std::string specularPath = "../Assets/Models/Skybox/specular.png";
+    std::string irradiancePath = "../Assets/Models/Skybox/irradiance.png";
+    std::string brdfPath = "../Assets/Models/Skybox/brdf_lut.png";
 
     m_skybox.skybox = TextureLoader::GetInstance().LoadTexture(skyboxPath, *this, {});
+    m_skybox.specular = TextureLoader::GetInstance().LoadTexture(specularPath, *this, {});
+    m_skybox.irradiance = TextureLoader::GetInstance().LoadTexture(irradiancePath, *this, {});
+    m_skybox.brdf = TextureLoader::GetInstance().LoadTexture(brdfPath, *this, {});
 };
 
 
@@ -1016,7 +1022,7 @@ void VulkanState::LoadMeshes()
         }
 
         m_meshInstances.emplace_back(MeshLoader::GetInstance().LoadMesh(meshPaths[index], *this), baseTexture,
-                                     normalMap, orm, emissive,
+                                     normalMap, orm, emissive, m_skybox.brdf, m_skybox.specular, m_skybox.irradiance,
                                      m_graphicsPipelines[0], m_device, m_descriptorPool,
                                      locations[index]);
 

@@ -25,20 +25,28 @@ public:
 
     MeshInstance(const VulkanMesh *mesh, const VulkanTexture *baseTexture, const VulkanTexture *normalMap,
                  const VulkanTexture *ormTexture, const VulkanTexture *emissiveTexture,
+                 const VulkanTexture *brdfTexture, const VulkanTexture *skyboxSpecular,
+                 const VulkanTexture *skyboxIrradiance,
                  std::shared_ptr<VulkanGraphicsPipeline> pipeline, VkDevice device, VkDescriptorPool descriptorPool);
 
     MeshInstance(const VulkanMesh *mesh, const VulkanTexture *baseTexture, const VulkanTexture *normalMap,
                  const VulkanTexture *ormTexture, const VulkanTexture *emissiveTexture,
+                 const VulkanTexture *brdfTexture, const VulkanTexture *skyboxSpecular,
+                 const VulkanTexture *skyboxIrradiance,
                  std::shared_ptr<VulkanGraphicsPipeline> pipeline, VkDevice device, VkDescriptorPool descriptorPool,
                  glm::vec3 location);
 
     MeshInstance(const VulkanMesh *mesh, const VulkanTexture *baseTexture, const VulkanTexture *normalMap,
                  const VulkanTexture *ormTexture, const VulkanTexture *emissiveTexture,
+                 const VulkanTexture *brdfTexture, const VulkanTexture *skyboxSpecular,
+                 const VulkanTexture *skyboxIrradiance,
                  std::shared_ptr<VulkanGraphicsPipeline> pipeline, VkDevice device, VkDescriptorPool descriptorPool,
                  glm::vec3 location, glm::vec3 pitchYawRoll, glm::vec3 scale);
 
     MeshInstance(const VulkanMesh *mesh, const VulkanTexture *baseTexture, const VulkanTexture *normalMap,
                  const VulkanTexture *ormTexture, const VulkanTexture *emissiveTexture,
+                 const VulkanTexture *brdfTexture, const VulkanTexture *skyboxSpecular,
+                 const VulkanTexture *skyboxIrradiance,
                  std::shared_ptr<VulkanGraphicsPipeline> pipeline, VkDevice device, VkDescriptorPool descriptorPool,
                  glm::vec3 location, glm::quat rotation, glm::vec3 scale);
 
@@ -90,6 +98,10 @@ private:
     const VulkanTexture *m_ormTexture = nullptr;
     const VulkanTexture *m_emissiveTexture = nullptr;
 
+    const VulkanTexture *m_brdfTexture = nullptr;
+    const VulkanTexture *m_skyboxSpecular = nullptr;
+    const VulkanTexture *m_skyboxIrradiance = nullptr;
+
     glm::mat4 m_transformation = glm::mat4(1.0f);
 
     glm::vec3 m_location = glm::vec3(0.0f);
@@ -111,5 +123,7 @@ private:
 
     VkDescriptorSet CreateDescriptorSet(const VkDescriptorSetLayout &layout);
 
-    void UpdateDescriptorSets(VkDescriptorSet set);
+    void UpdatePBRDescriptorSet();
+
+    void UpdateIBLDescriptorSet();
 };

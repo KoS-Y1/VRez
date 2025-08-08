@@ -42,13 +42,13 @@ void main()
 
     vec3 emissive = texture(uEmissiveTexture, vTexcoord).rgb;
 
-    vec3 V = normalize(uViewPosition - vWorldPosition.xyz);
-    float NdotV = max(dot(N, V), 0.0f);
+    vec3 N = normal;
+    vec3 V = normalize(uViewPosition - vWorldPosition);
     vec3 R = reflect(-V, N);
+    float NdotV = max(dot(N, V), 0.0f);
     vec3 F0 = mix(vec3(0.04), albedo, metallic);
-
     // IBL
-    vec3 ibl = IBL(normal, NdotV, R, F0, metallic, roughness, albedo, ao) * 0.5f;
+    vec3 ibl = IBL(N, NdotV, R, F0, metallic, roughness, albedo, ao);
 
     // Gamma correction
 //    outColor = vec4(pow(Lo + emissive, vec3(1.0/2.2)), 1.0f);
