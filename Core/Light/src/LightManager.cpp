@@ -39,6 +39,17 @@ void LightManager::AddLight(LightType type)
         return;
     }
 
+    // Only one directional light
+    if (m_directionalLight && type == LightType::Directional)
+    {
+        return;
+    }
+
+    if (type == LightType::Directional)
+    {
+        m_directionalLight = true;
+    }
+
     Light light;
     light.type = static_cast<uint32_t>(type);
     m_lights.push_back(light);
@@ -46,5 +57,9 @@ void LightManager::AddLight(LightType type)
 
 void LightManager::RemoveLight(size_t index)
 {
+    if (m_lights[index].type == static_cast<uint32_t>(LightType::Directional))
+    {
+        m_directionalLight = false;
+    }
     m_lights.erase(m_lights.begin() + index);
 }

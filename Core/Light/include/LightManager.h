@@ -53,5 +53,6 @@ protected:
 
 private:
     std::vector<Light> m_lights;
+    bool m_directionalLight = false;
     VulkanBuffer m_buffer;
 };
