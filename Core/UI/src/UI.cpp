@@ -159,6 +159,7 @@ void UI::CameraWindow()
     {
         isReset = true;
     }
+
     ImGui::End();
 
     Camera::GetInstance().SetLocation(location);

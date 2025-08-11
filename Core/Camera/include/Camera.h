@@ -1,5 +1,7 @@
 #pragma once
 
+#include <array>
+
 #include <glm/glm.hpp>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/detail/type_quat.hpp>
@@ -19,6 +21,10 @@
 #define RATIO               (16.0f / 9.0f)
 #define NEAR                0.1f
 #define FAR                 100.0f
+
+#define CASCADES_NUM        3
+#define CASCADE_LAMBDA      0.75f
+#define FRUSTUM_CORNER_NUM  8
 
 enum class CameraMoveDirection : uint8_t
 {
@@ -92,7 +98,16 @@ private:
     float m_sensity;
     float m_speed;
 
+    std::array<float, CASCADES_NUM + 1> m_splits;
+    std::vector<std::array<glm::vec3, FRUSTUM_CORNER_NUM> > m_frustumCorners;
+
     VulkanBuffer m_buffer;
 
     void UpdateCameraVectors();
+
+    void PracticalCascadeSplits();
+
+    void GetFrustumCorners();
+
+    std::array<glm::vec3, FRUSTUM_CORNER_NUM> CalculateFrustumCornersWorldSpace(float nearPlane, float farPlane);
 };
