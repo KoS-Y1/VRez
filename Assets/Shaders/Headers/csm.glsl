@@ -6,16 +6,17 @@
 
 int GetLayer(vec4 viewSpacePos)
 {
+    const float depth = -viewSpacePos.z;
     int layer = 0;
-    if(viewSpacePos.z > uSplits.x)
+    if(depth > uSplits.x)
     {
         layer = 1;
     }
-    if(viewSpacePos.z > uSplits.y)
+    if(depth > uSplits.y)
     {
         layer = 2;
     }
-    if(viewSpacePos.z > uSplits.z)
+    if(depth > uSplits.z)
     {
         layer = 3;
     }

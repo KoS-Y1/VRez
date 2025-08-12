@@ -20,7 +20,7 @@
 
 #define RATIO               (16.0f / 9.0f)
 #define NEAR                0.001f
-#define FAR                 16.0f
+#define FAR                 64.0f
 
 #define CASCADES_NUM        3
 #define CASCADE_LAMBDA      0.75f
