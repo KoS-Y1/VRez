@@ -2,6 +2,8 @@
 
 #include <algorithm>
 
+#include "SDL3/SDL_log.h"
+
 void Camera::Init(VkPhysicalDevice physicalDevice, VkDevice device)
 {
     Reset();
@@ -25,7 +27,7 @@ void Camera::Update()
     data.view = GetViewMatrix();
     data.projection = GetProjectonMatrix();
     data.position = m_location;
-
+    data.splits = glm::vec4(m_splits[0], m_splits[1], m_splits[2], m_splits[3]);
 
     m_buffer.Upload(sizeof(CameraData), &data);
 }
@@ -143,6 +145,7 @@ void Camera::PracticalCascadeSplits()
         float log = nearPlane * std::pow(farPlane / nearPlane, u); // Logarithmic
         float uniform = nearPlane + (farPlane - nearPlane) * u; // Uniform
         m_splits[i] = glm::mix(uniform, log, CASCADE_LAMBDA); // Practical blend
+        SDL_Log("%d splits %f", i, m_splits[i]);
     }
 
     m_splits[CASCADES_NUM] = FAR;

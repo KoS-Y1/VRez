@@ -4,6 +4,7 @@
 #include <uniform_camera.glsl>
 #include <pbr.glsl>
 #include <ibl.glsl>
+#include <csm.glsl>
 
 layout (location = 0) in vec3 vWorldPosition;
 layout (location = 1) in mat3 vTBN;
@@ -31,6 +32,8 @@ void main()
     float roughness = orm.g;
     float metallic = orm.b;
 
+    vec4 viewSpacePos = uView * vec4(vWorldPosition, 1.0f);
+
     // PBR
     for (i = 0; i < uLightCount; ++i)
     {
@@ -53,4 +56,8 @@ void main()
     // Gamma correction
 //    outColor = vec4(pow(Lo + emissive, vec3(1.0/2.2)), 1.0f);
     outColor = vec4((ibl+ Lo + emissive), 1.0);
+
+    // TODO: csm debugging
+    vec4 csmDebug = CSMDebugColor(viewSpacePos);
+    outColor = mix(outColor, csmDebug, 0.5f);
 }
