@@ -27,7 +27,7 @@ void Camera::Update()
     data.view = GetViewMatrix();
     data.projection = GetProjectonMatrix();
     data.position = m_location;
-    data.splits = glm::vec4(m_splits[0], m_splits[1], m_splits[2], m_splits[3]);
+    data.splits = glm::vec3(m_splits[1], m_splits[2], m_splits[3]);
 
     m_buffer.Upload(sizeof(CameraData), &data);
 }

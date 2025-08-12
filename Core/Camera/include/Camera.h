@@ -19,8 +19,8 @@
 #define DEFAULT_FOV        15.0f
 
 #define RATIO               (16.0f / 9.0f)
-#define NEAR                0.01f
-#define FAR                 64.0f
+#define NEAR                0.001f
+#define FAR                 16.0f
 
 #define CASCADES_NUM        3
 #define CASCADE_LAMBDA      0.75f
@@ -41,8 +41,9 @@ struct alignas(16) CameraData
     glm::mat4 view;
     glm::mat4 projection;
     glm::vec3 position;
-    glm::vec4 splits;
-    // float padding;
+    float padding0;
+    glm::vec3 splits;
+    float padding1;
 };
 
 // Camera class as a singleton, since we only have 1 camera

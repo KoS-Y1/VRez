@@ -7,22 +7,19 @@
 int GetLayer(vec4 viewSpacePos)
 {
     int layer = 0;
-    if(viewSpacePos.z > uSplits[0])
-    {
-        layer = 0;
-    }
-    if(viewSpacePos.z > uSplits[1])
+    if(viewSpacePos.z > uSplits.x)
     {
         layer = 1;
     }
-    if(viewSpacePos.z > uSplits[2])
+    if(viewSpacePos.z > uSplits.y)
     {
         layer = 2;
     }
-    if(viewSpacePos.z > uSplits[3])
+    if(viewSpacePos.z > uSplits.z)
     {
         layer = 3;
     }
+
     return layer;
 }
 
