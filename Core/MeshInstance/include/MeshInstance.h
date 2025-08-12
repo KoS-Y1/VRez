@@ -11,7 +11,7 @@
 #include <glm/glm.hpp>
 #include <glm/detail/type_quat.hpp>
 
-#include "VulkanMesh.h"
+#include <include/VulkanMesh.h>
 
 class VulkanTexture;
 class VulkanGraphicsPipeline;
