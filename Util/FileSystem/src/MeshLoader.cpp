@@ -74,7 +74,7 @@ std::vector<VertexPNTT> file_system::LoadMesh(const std::string &file) {
                     glm::vec3{-positions[3 * idx.vertex_index + 0], positions[3 * idx.vertex_index + 1], positions[3 * idx.vertex_index + 2]},
                     glm::vec3{-normals[3 * idx.normal_index + 0], normals[3 * idx.normal_index + 1], normals[3 * idx.normal_index + 2]},
                     tangent,
-                    glm::vec2{texCoords[2 * idx.texcoord_index + 0], texCoords[2 * idx.texcoord_index + 1]}
+                    glm::vec2{1.0f - texCoords[2 * idx.texcoord_index + 0], texCoords[2 * idx.texcoord_index + 1]}
                 );
             }
 
