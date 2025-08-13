@@ -4,4 +4,4 @@
 
 namespace file_system {
 unsigned char *LoadTexture(const std::string &file, int *width, int *height);
-}
+} // namespace file_system

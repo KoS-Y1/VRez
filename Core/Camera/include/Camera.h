@@ -2,32 +2,31 @@
 
 #include <array>
 
-#include <glm/glm.hpp>
-#include <glm/ext/matrix_transform.hpp>
 #include <glm/detail/type_quat.hpp>
+#include <glm/ext/matrix_transform.hpp>
+#include <glm/glm.hpp>
 
 #include <Singleton.h>
 #include <include/VulkanBuffer.h>
 
-#define YAW                 (-90.0f)
-#define PITCH               0.0f
-#define ROLL                0.0f
-#define PITCH_BOUND         89.0f
+#define YAW         (-90.0f)
+#define PITCH       0.0f
+#define ROLL        0.0f
+#define PITCH_BOUND 89.0f
 
-#define MAX_FOV            45.0f
-#define MIN_FOV            1.0f
-#define DEFAULT_FOV        15.0f
+#define MAX_FOV     45.0f
+#define MIN_FOV     1.0f
+#define DEFAULT_FOV 15.0f
 
-#define RATIO               (16.0f / 9.0f)
-#define NEAR                0.001f
-#define FAR                 64.0f
+#define RATIO (16.0f / 9.0f)
+#define NEAR  0.001f
+#define FAR   64.0f
 
-#define CASCADES_NUM        3
-#define CASCADE_LAMBDA      0.75f
-#define FRUSTUM_CORNER_NUM  8
+#define CASCADES_NUM       3
+#define CASCADE_LAMBDA     0.75f
+#define FRUSTUM_CORNER_NUM 8
 
-enum class CameraMoveDirection : uint8_t
-{
+enum class CameraMoveDirection : uint8_t {
     FORWARD,
     BACKWARD,
     LEFT,
@@ -36,19 +35,17 @@ enum class CameraMoveDirection : uint8_t
     DOWN,
 };
 
-struct alignas(16) CameraData
-{
+struct alignas(16) CameraData {
     glm::mat4 view;
     glm::mat4 projection;
     glm::vec3 position;
-    float padding0;
+    float     padding0;
     glm::vec3 splits;
-    float padding1;
+    float     padding1;
 };
 
 // Camera class as a singleton, since we only have 1 camera
-class Camera : public Singleton<Camera>
-{
+class Camera : public Singleton<Camera> {
 public:
     void Init(VkPhysicalDevice physicalDevice, VkDevice device);
 
@@ -72,14 +69,14 @@ public:
 
     [[nodiscard]] glm::mat4 GetViewMatrix() const { return glm::lookAt(m_location, m_location + m_front, m_up); }
 
-    [[nodiscard]] glm::mat4 GetProjectonMatrix() const
-    {
-        return glm::perspective(glm::radians(m_fov), RATIO, NEAR, FAR);
-    }
+    [[nodiscard]] glm::mat4 GetProjectonMatrix() const { return glm::perspective(glm::radians(m_fov), RATIO, NEAR, FAR); }
 
     [[nodiscard]] float GetFOV() const { return m_fov; }
+
     [[nodiscard]] glm::vec3 GetPitchYawRoll() const { return m_pitchYawRoll; }
+
     [[nodiscard]] glm::vec3 GetLocation() const { return m_location; }
+
     [[nodiscard]] const VkBuffer &GetBuffer() const { return m_buffer.GetBuffer(); }
 
 protected:
@@ -100,8 +97,8 @@ private:
     float m_sensity;
     float m_speed;
 
-    std::array<float, CASCADES_NUM + 1> m_splits;
-    std::vector<std::array<glm::vec3, FRUSTUM_CORNER_NUM> > m_frustumCorners;
+    std::array<float, CASCADES_NUM + 1>                    m_splits;
+    std::vector<std::array<glm::vec3, FRUSTUM_CORNER_NUM>> m_frustumCorners;
 
     VulkanBuffer m_buffer;
 

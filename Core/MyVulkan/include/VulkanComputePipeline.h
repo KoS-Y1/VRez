@@ -3,8 +3,7 @@
 
 #include <string>
 
-class VulkanComputePipeline : public VulkanPipeline
-{
+class VulkanComputePipeline : public VulkanPipeline {
 public:
     VulkanComputePipeline() = delete;
 

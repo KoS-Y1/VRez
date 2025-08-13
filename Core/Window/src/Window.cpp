@@ -6,51 +6,42 @@
 
 #include <Debug.h>
 
-#include <include/VulkanState.h>
 #include <include/Camera.h>
+#include <include/VulkanState.h>
 
-
-Window::Window()
-{
+Window::Window() {
     m_lastTime = SDL_GetTicks();
     CreateWindow();
 }
 
-Window::~Window()
-{
+Window::~Window() {
     SDL_DestroyWindow(m_window);
 }
 
-void Window::CreateWindow()
-{
-    m_window = SDL_CreateWindow("VulkanRayTracer", WINDOW_WIDTH, WINDOW_HEIGHT,
-                                SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_VULKAN);
+void Window::CreateWindow() {
+    m_window = SDL_CreateWindow("VulkanRayTracer", WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_VULKAN);
 
-    m_width = WINDOW_WIDTH;
+    m_width  = WINDOW_WIDTH;
     m_height = WINDOW_HEIGHT;
     DEBUG_ASSERT(m_window);
 }
 
-void Window::Run()
-{
+void Window::Run() {
     SDL_Log("SDL Window(%dx%d) running", WINDOW_WIDTH, WINDOW_HEIGHT);
     m_running = true;
 
     VulkanState vulkanState(m_window, m_width, m_height);
 
-    while (m_running)
-    {
-        uint32_t time = SDL_GetTicks();
+    while (m_running) {
+        uint32_t  time = SDL_GetTicks();
         SDL_Event event;
-        while (SDL_PollEvent(&event))
-        {
-            switch (event.type)
-            {
-                case SDL_EVENT_QUIT:
-                    m_running = false;
-                    break;
-                default:
-                    break;
+        while (SDL_PollEvent(&event)) {
+            switch (event.type) {
+            case SDL_EVENT_QUIT:
+                m_running = false;
+                break;
+            default:
+                break;
             }
             // Process input
             ProcessCamera(event, static_cast<float>(time - m_lastTime) / 1000.0f);
@@ -80,71 +71,60 @@ void Window::Run()
     ImGui::DestroyContext();
 }
 
-void Window::ProcessCamera(const SDL_Event &event, float deltaTime)
-{
+void Window::ProcessCamera(const SDL_Event &event, float deltaTime) {
     ProcessCameraKeyboard(event, deltaTime);
     ProcessCameraMouse();
     ProcessCameraScroll(event);
 }
 
-
-void Window::ProcessCameraKeyboard(const SDL_Event &event, float deltaTime)
-{
-    if (event.type != SDL_EVENT_KEY_DOWN)
-    {
+void Window::ProcessCameraKeyboard(const SDL_Event &event, float deltaTime) {
+    if (event.type != SDL_EVENT_KEY_DOWN) {
         return;
     }
 
-    switch (event.key.scancode)
-    {
-        case SDL_SCANCODE_W:
-            Camera::GetInstance().ProcessMovement(CameraMoveDirection::FORWARD, deltaTime);
-            break;
-        case SDL_SCANCODE_S:
-            Camera::GetInstance().ProcessMovement(CameraMoveDirection::BACKWARD, deltaTime);
-            break;
-        case SDL_SCANCODE_A:
-            Camera::GetInstance().ProcessMovement(CameraMoveDirection::LEFT, deltaTime);
-            break;
-        case SDL_SCANCODE_D:
-            Camera::GetInstance().ProcessMovement(CameraMoveDirection::RIGHT, deltaTime);
-            break;
-        case SDL_SCANCODE_E:
-            Camera::GetInstance().ProcessMovement(CameraMoveDirection::UP, deltaTime);
-            break;
-        case SDL_SCANCODE_Q:
-            Camera::GetInstance().ProcessMovement(CameraMoveDirection::DOWN, deltaTime);
-            break;
-        // Camera mode
-        case SDL_SCANCODE_LSHIFT:
-            if (m_cameraMode)
-            {
-                m_cameraMode = false;
-            }
-            else
-            {
-                m_cameraMode = true;
-                m_firstMouse = true;
-            }
-            SDL_Log("Camera mood = %s", m_cameraMode ? "ON" : "OFF");
-        default:
-            break;
+    switch (event.key.scancode) {
+    case SDL_SCANCODE_W:
+        Camera::GetInstance().ProcessMovement(CameraMoveDirection::FORWARD, deltaTime);
+        break;
+    case SDL_SCANCODE_S:
+        Camera::GetInstance().ProcessMovement(CameraMoveDirection::BACKWARD, deltaTime);
+        break;
+    case SDL_SCANCODE_A:
+        Camera::GetInstance().ProcessMovement(CameraMoveDirection::LEFT, deltaTime);
+        break;
+    case SDL_SCANCODE_D:
+        Camera::GetInstance().ProcessMovement(CameraMoveDirection::RIGHT, deltaTime);
+        break;
+    case SDL_SCANCODE_E:
+        Camera::GetInstance().ProcessMovement(CameraMoveDirection::UP, deltaTime);
+        break;
+    case SDL_SCANCODE_Q:
+        Camera::GetInstance().ProcessMovement(CameraMoveDirection::DOWN, deltaTime);
+        break;
+    // Camera mode
+    case SDL_SCANCODE_LSHIFT:
+        if (m_cameraMode) {
+            m_cameraMode = false;
+        } else {
+            m_cameraMode = true;
+            m_firstMouse = true;
+        }
+        SDL_Log("Camera mood = %s", m_cameraMode ? "ON" : "OFF");
+    default:
+        break;
     }
 }
 
-void Window::ProcessCameraMouse()
-{
-    if (!m_cameraMode)
-    {
+void Window::ProcessCameraMouse() {
+    if (!m_cameraMode) {
         return;
     }
     float xPos, yPos;
     SDL_GetMouseState(&xPos, &yPos);
 
-    if (m_firstMouse)
-    {
-        m_mouseX = xPos;
-        m_mouseY = yPos;
+    if (m_firstMouse) {
+        m_mouseX     = xPos;
+        m_mouseY     = yPos;
         m_firstMouse = false;
     }
 
@@ -154,13 +134,10 @@ void Window::ProcessCameraMouse()
     m_mouseY = yPos;
 }
 
-void Window::ProcessCameraScroll(const SDL_Event &event)
-{
-    if (!m_cameraMode || event.type != SDL_EVENT_MOUSE_WHEEL)
-    {
+void Window::ProcessCameraScroll(const SDL_Event &event) {
+    if (!m_cameraMode || event.type != SDL_EVENT_MOUSE_WHEEL) {
         return;
     }
 
     Camera::GetInstance().ProcessZoom(event.wheel.y);
-
 }

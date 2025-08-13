@@ -4,9 +4,7 @@
 
 #include <Debug.h>
 
-
-unsigned char *file_system::LoadTexture(const std::string &file, int *width, int *height)
-{
+unsigned char *file_system::LoadTexture(const std::string &file, int *width, int *height) {
     int channels;
     // Weird texture because of different tex coordinates
     stbi_set_flip_vertically_on_load(true);

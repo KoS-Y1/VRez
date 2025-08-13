@@ -1,12 +1,12 @@
 #pragma once
 
-#include <string>
-#include <vector>
 #include <map>
 #include <memory>
+#include <string>
+#include <vector>
 
-#include <vulkan/vulkan.h>
 #include <spirv_reflect.h>
+#include <vulkan/vulkan.h>
 
 #include <glslang/Public/ShaderLang.h>
 
@@ -14,8 +14,7 @@
 
 struct ShaderIncluder;
 
-class ShaderCompiler
-{
+class ShaderCompiler {
 public:
     ShaderCompiler() = delete;
 
@@ -31,23 +30,20 @@ public:
 
     ShaderCompiler &operator=(ShaderCompiler &&) = delete;
 
-    [[nodiscard]] std::map<VkShaderStageFlagBits, std::vector<uint32_t> > CompileToSpirv() const { return m_spirvs; }
+    [[nodiscard]] std::map<VkShaderStageFlagBits, std::vector<uint32_t>> CompileToSpirv() const { return m_spirvs; }
 
-    [[nodiscard]] std::vector<VkDescriptorSetLayoutCreateInfo> GetDescriptorSetLayoutInfos() const
-    {
-        return m_descriptorSetLayoutInfos;
-    }
+    [[nodiscard]] std::vector<VkDescriptorSetLayoutCreateInfo> GetDescriptorSetLayoutInfos() const { return m_descriptorSetLayoutInfos; }
 
     [[nodiscard]] std::vector<VkPushConstantRange> GetPushConstantRanges() const { return m_pushConstantRanges; }
 
 private:
-    std::map<uint32_t, std::vector<VkDescriptorSetLayoutBinding> > m_bindingsPerSet;
+    std::map<uint32_t, std::vector<VkDescriptorSetLayoutBinding>> m_bindingsPerSet;
 
     std::vector<VkDescriptorSetLayoutCreateInfo> m_descriptorSetLayoutInfos;
-    std::vector<VkPushConstantRange> m_pushConstantRanges;
+    std::vector<VkPushConstantRange>             m_pushConstantRanges;
 
-    std::map<VkShaderStageFlagBits, std::vector<uint32_t> > m_spirvs;
-    std::vector<SpvReflectShaderModule> m_shaderModules;
+    std::map<VkShaderStageFlagBits, std::vector<uint32_t>> m_spirvs;
+    std::vector<SpvReflectShaderModule>                    m_shaderModules;
 
     static std::shared_ptr<ShaderIncluder> m_includer;
 

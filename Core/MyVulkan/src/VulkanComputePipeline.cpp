@@ -6,12 +6,10 @@
 
 #include <include/ShaderCompiler.h>
 
-VulkanComputePipeline::VulkanComputePipeline(VkDevice device, const std::vector<std::string> &paths)
-{
+VulkanComputePipeline::VulkanComputePipeline(VkDevice device, const std::vector<std::string> &paths) {
     m_device = device;
 
-    if (paths.size() > 1)
-    {
+    if (paths.size() > 1) {
         SDL_Log("Warning: passing more than one shaders to computer shader! Program is ignoring the rest!");
     }
 
@@ -22,23 +20,18 @@ VulkanComputePipeline::VulkanComputePipeline(VkDevice device, const std::vector<
     CreatePipeline(shaderCompiler);
 }
 
-
-void VulkanComputePipeline::CreatePipeline(const ShaderCompiler &shaderCompiler)
-{
+void VulkanComputePipeline::CreatePipeline(const ShaderCompiler &shaderCompiler) {
     CreateShaderModules(shaderCompiler);
 
-    VkComputePipelineCreateInfo infoCompute
-    {
-        .sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0,
-        .stage = CreateShaderStages()[0],
-        .layout = m_layout,
+    VkComputePipelineCreateInfo infoCompute{
+        .sType              = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO,
+        .pNext              = nullptr,
+        .flags              = 0,
+        .stage              = CreateShaderStages()[0],
+        .layout             = m_layout,
         .basePipelineHandle = VK_NULL_HANDLE,
-        .basePipelineIndex = -1
+        .basePipelineIndex  = -1
     };
 
     DEBUG_VK_ASSERT(vkCreateComputePipelines(m_device, VK_NULL_HANDLE, 1, &infoCompute, nullptr, &m_pipeline));
 }
-
-
