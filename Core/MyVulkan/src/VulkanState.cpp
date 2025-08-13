@@ -10,11 +10,11 @@
 #include <include/Camera.h>
 #include <include/LightManager.h>
 #include <include/MeshInstance.h>
-#include <include/MeshLoader.h>
-#include <include/TextureLoader.h>
 #include <include/UI.h>
 #include <include/VulkanComputePipeline.h>
 #include <include/VulkanGraphicsPipeline.h>
+#include <include/TextureManager.h>
+#include <include/MeshManager.h>
 
 VulkanState::VulkanState(SDL_Window *window, uint32_t width, uint32_t height)
 {
@@ -88,8 +88,8 @@ VulkanState::~VulkanState()
     m_normalMap.Destroy();
     m_ormTexture.Destroy();
     m_emissiveTexture.Destroy();
-    MeshLoader::GetInstance().Destroy();
-    TextureLoader::GetInstance().Destroy();
+    MeshManager::GetInstance().Destroy();
+    TextureManager::GetInstance().Destroy();
 
     m_deletionQueue.Flush();
 }
@@ -654,13 +654,13 @@ void VulkanState::CreateSkybox()
     std::string brdfPath = "../Assets/Models/Skybox/brdf_lut.png";
 
     m_skybox.skybox =
-        TextureLoader::GetInstance().LoadTexture(skyboxPath, *this, {});
+        TextureManager::GetInstance().LoadTexture(skyboxPath, *this, {});
     m_skybox.specular =
-        TextureLoader::GetInstance().LoadTexture(specularPath, *this, {});
+        TextureManager::GetInstance().LoadTexture(specularPath, *this, {});
     m_skybox.irradiance =
-        TextureLoader::GetInstance().LoadTexture(irradiancePath, *this, {});
+        TextureManager::GetInstance().LoadTexture(irradiancePath, *this, {});
     m_skybox.brdf =
-        TextureLoader::GetInstance().LoadTexture(brdfPath, *this, {});
+        TextureManager::GetInstance().LoadTexture(brdfPath, *this, {});
 };
 
 void VulkanState::CreateRenderObjects()
@@ -974,27 +974,27 @@ void VulkanState::LoadMeshes()
         const VulkanTexture *emissive = &m_emissiveTexture;
         if (texturePaths[i] != "")
         {
-            baseTexture = TextureLoader::GetInstance().LoadTexture(
+            baseTexture = TextureManager::GetInstance().LoadTexture(
                 texturePaths[i], *this, samplerConfigs[i]);
         }
         if (normalMapPaths[i] != "")
         {
-            normalMap = TextureLoader::GetInstance().LoadTexture(
+            normalMap = TextureManager::GetInstance().LoadTexture(
                 normalMapPaths[i], *this, samplerConfigs[i]);
         }
         if (ormPaths[i] != "")
         {
-            orm = TextureLoader::GetInstance().LoadTexture(ormPaths[i], *this,
+            orm = TextureManager::GetInstance().LoadTexture(ormPaths[i], *this,
                                                            samplerConfigs[i]);
         }
         if (emissivePaths[i] != "")
         {
-            emissive = TextureLoader::GetInstance().LoadTexture(
+            emissive = TextureManager::GetInstance().LoadTexture(
                 emissivePaths[i], *this, samplerConfigs[i]);
         }
 
         m_meshInstances.emplace_back(
-            MeshLoader::GetInstance().LoadMesh(meshPaths[index], *this),
+            MeshManager::GetInstance().LoadMesh(meshPaths[index], *this),
             baseTexture, normalMap, orm, emissive, m_skybox.brdf,
             m_skybox.specular, m_skybox.irradiance, m_graphicsPipelines[0],
             m_device, m_descriptorPool, locations[index]);

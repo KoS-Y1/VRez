@@ -53,7 +53,7 @@ void ThreadPool::Worker() {
     }
 }
 
-void ThreadPool::FinishRemainWork() {
+void ThreadPool::FinishRemainWork() noexcept {
     {
         std::scoped_lock lock(m_mutex);
         // Making sure it only called once

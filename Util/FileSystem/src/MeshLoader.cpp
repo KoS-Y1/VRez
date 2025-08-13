@@ -1,39 +1,10 @@
+#include "include/MeshLoader.h"
+
 #include <SDL3/SDL.h>
 #include <tiny_obj_loader.h>
 #include <glm/vec3.hpp>
 
-#include "include/MeshLoader.h"
-
-#include "include/FileSystem.h"
-
-
-void MeshLoader::Destroy()
-{
-    for (auto &[file, mesh]: m_meshes)
-    {
-        mesh.Destroy();
-    }
-    m_meshes.clear();
-}
-
-
-VulkanMesh *MeshLoader::LoadMesh(const std::string &file, VulkanState &state)
-{
-    auto pair = m_meshes.find(file);
-
-    // If does not find the mesh, then load the file
-    if (pair == m_meshes.end())
-    {
-        SDL_Log("Loading mesh from file %s", file.c_str());
-        const std::vector<VertexPNTT> vertices = Load(file);
-        pair = m_meshes.emplace(file, VulkanMesh(state, file_system::GetFileName(file), vertices.size(),
-                                                 sizeof(VertexPNTT), vertices.data())).first;
-    }
-
-    return &pair->second;
-}
-
-std::vector<VertexPNTT> MeshLoader::Load(const std::string &file)
+std::vector<VertexPNTT> file_system::LoadMesh(const std::string &file)
 {
     tinyobj::ObjReader reader;
 

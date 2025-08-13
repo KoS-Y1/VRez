@@ -4,16 +4,14 @@
 
 #include <SDL3/SDL_log.h>
 
-std::string file_system::Read(const std::string &path)
-{
+std::string file_system::Read(const std::string &path) {
     std::ifstream file(path, std::ios::binary | std::ios::ate);
-    if (!file.is_open())
-    {
+    if (!file.is_open()) {
         SDL_Log("Failed to open file %s", path.c_str());
         exit(EXIT_FAILURE);
- }
+    }
 
-    size_t fileSize = file.tellg();
+    size_t      fileSize = file.tellg();
     std::string buf(fileSize, '\0');
     file.seekg(0, std::ios::beg);
     file.read(&buf[0], fileSize);
@@ -22,14 +20,11 @@ std::string file_system::Read(const std::string &path)
     return buf;
 }
 
-std::string file_system::GetFileName(const std::string &path)
-{
+std::string file_system::GetFileName(const std::string &path) {
     size_t pos = path.find_last_of("/\\");
     // If no slash found
-    if (pos == std::string::npos)
-    {
+    if (pos == std::string::npos) {
         return path;
     }
     return path.substr(pos + 1);
 }
-
