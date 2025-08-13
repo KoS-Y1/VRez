@@ -1,7 +1,3 @@
-add_library(JobSystem JobSystem/include/Job.h JobSystem/include/JobSystem.h JobSystem/src/JobSystem.cpp)
-target_include_directories(JobSystem PUBLIC JobSystem)
-target_link_libraries(JobSystem PUBLIC Util)
-
 add_library(MyVulkan MyVulkan/include/VulkanState.h MyVulkan/src/VulkanState.cpp MyVulkan/include/VulkanUtil.h MyVulkan/src/VulkanUtil.cpp
         MyVulkan/include/VulkanImage.h MyVulkan/src/VulkanImage.cpp MyVulkan/include/VulkanPipeline.h MyVulkan/src/VulkanPipeline.cpp
         MyVulkan/include/VulkanComputePipeline.h MyVulkan/src/VulkanComputePipeline.cpp MyVulkan/include/VulkanGraphicsPipeline.h
@@ -39,6 +35,11 @@ add_library(TextureLoader TextureLoader/include/TextureLoader.h TextureLoader/sr
 target_include_directories(TextureLoader PUBLIC TextureLoader)
 target_link_libraries(TextureLoader PUBLIC MyVulkan Util FileSystem SDL3::SDL3 stb Debug)
 
-add_library(MeshInstance MeshInstance/include/MeshInstance.h MeshInstance/src/MeshInstance.cpp)
+add_library(MeshInstance MeshInstance/include/MeshInstance.h MeshInstance/src/MeshInstance.cpp MeshInstance/include/MeshInstanceManager.h
+    MeshInstance/src/MeshInstance.cpp)
 target_include_directories(MeshInstance PUBLIC MeshInstance)
-target_link_libraries(MeshInstance PUBLIC MyVulkan glm)
+target_link_libraries(MeshInstance PUBLIC MyVulkan glm Util)
+
+add_library(ThreadPool ThreadPool/include/ThreadPool.h ThreadPool/src/ThreadPool.cpp)
+target_include_directories(ThreadPool PUBLIC ThreadPool)
+target_link_libraries(ThreadPool PUBLIC Util Debug)
