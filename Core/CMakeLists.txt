@@ -33,4 +33,4 @@ target_link_libraries(ThreadPool PUBLIC Util Debug)
 add_library(AssetManager AssetManager/include/ResourceManager.h AssetManager/include/TextureManager.h
         AssetManager/src/TextureManager.cpp AssetManager/include/MeshManager.h AssetManager/src/MeshManager.cpp)
 target_include_directories(AssetManager PUBLIC AssetManager)
-target_link_libraries(AssetManager PUBLIC ThreadPool TextureLoader MeshLoader MyVulkan Util SDL3::SDL3)
+target_link_libraries(AssetManager PUBLIC ThreadPool FileSystem MyVulkan Util SDL3::SDL3)

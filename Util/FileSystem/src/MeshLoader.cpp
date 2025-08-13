@@ -4,6 +4,8 @@
 #include <glm/vec3.hpp>
 #include <tiny_obj_loader.h>
 
+#include <Debug.h>
+
 std::vector<VertexPNTT> file_system::LoadMesh(const std::string &file) {
     tinyobj::ObjReader reader;
 

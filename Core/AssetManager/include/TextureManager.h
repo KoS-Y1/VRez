@@ -15,7 +15,7 @@ class TextureManager
     , public ResourceManager<TextureManager, std::string, VulkanTexture> {
 public:
     VulkanTexture *LoadTexture(const std::string &key, VulkanState &state, const SamplerConfig &config) {
-        return Load(key, std::move(state), std::move(config));
+        return Load(key, state, config);
     }
 
     void Destroy() { DestroyAll(); };
@@ -25,4 +25,7 @@ protected:
     ~TextureManager() = default;
 
     VulkanTexture CreateResource(const std::string &key, VulkanState &state, const SamplerConfig &config);
+
+private:
+    friend class ResourceManager<TextureManager, std::string, VulkanTexture>;
 };

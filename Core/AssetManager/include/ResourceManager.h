@@ -6,15 +6,14 @@
 template<class Derived, class Key, class Resource>
 class ResourceManager {
 protected:
-    std::map<Key, Resource *> m_cache;
+    std::map<Key, Resource> m_cache;
 
     template<class... Args>
-    Resource *Load(const Key &key, const Args &&...args) {
+    Resource *Load(const Key &key, Args &&...args) {
         auto pair = m_cache.find(key);
 
         if (pair == m_cache.end()) {
-            Resource resource = static_cast<Derived *>(this)->CreateResource(key, std::forward<Args>(args)...);
-            pair              = m_cache.emplace(key, std::move(resource)).first;
+            pair = m_cache.emplace(key, static_cast<Derived *>(this)->CreateResource(key, std::forward<Args>(args)...)).first;
         }
 
         return &pair->second;
