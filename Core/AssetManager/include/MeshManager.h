@@ -12,7 +12,9 @@ class MeshManager
     : public Singleton<MeshManager>
     , public ResourceManager<MeshManager, std::string, VulkanMesh> {
     public:
-    VulkanMesh *LoadMesh(const std::string &key, VulkanState &state) { return Load(key, state); }
+    VulkanMesh *LoadMesh(const std::string &key) { return Load(key); }
+
+    void Init();
 
     void Destroy() { DestroyAll(); };
 
@@ -20,7 +22,7 @@ protected:
     MeshManager()  = default;
     ~MeshManager() = default;
 
-    VulkanMesh CreateResource(const std::string &key, VulkanState &state);
+    VulkanMesh CreateResource(const std::string &key);
 private:
     friend class ResourceManager<MeshManager, std::string, VulkanMesh>;
 };
