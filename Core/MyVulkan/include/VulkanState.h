@@ -5,6 +5,7 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include <mutex>
 
 #include <glm/glm.hpp>
 
@@ -96,6 +97,7 @@ public:
 
     template<class Func>
     void ImmediateSubmit(Func &&func) {
+        std::scoped_lock<std::mutex> lock(m_mutex);
         DEBUG_VK_ASSERT(vkResetCommandBuffer(m_immediateCmdBuf, 0));
 
         BeginCommandBuffer(m_immediateCmdBuf, 0);
@@ -160,6 +162,8 @@ private:
     uint32_t    m_height;
 
     std::unique_ptr<UI> m_ui;
+
+    std::mutex m_mutex;
 
     void CreateInstance();
 
