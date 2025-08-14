@@ -58,6 +58,6 @@ void main()
     outColor = vec4((ibl+ Lo + emissive), 1.0);
 
     // TODO: csm debugging
-    vec4 csmDebug = CSMDebugColor(viewSpacePos);
-    outColor = mix(outColor, csmDebug, 0.5f);
+//    vec4 csmDebug = CSMDebugColor(viewSpacePos);
+//    outColor = mix(outColor, csmDebug, 0.5f);
 }
