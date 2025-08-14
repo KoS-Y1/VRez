@@ -6,7 +6,7 @@ class VulkanBuffer {
 public:
     VulkanBuffer() = default;
 
-    VulkanBuffer(VkPhysicalDevice physicalDevice, VkDevice device, VkDeviceSize size, VkBufferUsageFlags usage);
+    VulkanBuffer(VkDeviceSize size, VkBufferUsageFlags usage);
 
     ~VulkanBuffer() { Destroy(); }
 
@@ -35,10 +35,8 @@ public:
 private:
     VkBuffer         m_buffer         = VK_NULL_HANDLE;
     VkDeviceMemory   m_memory         = VK_NULL_HANDLE;
-    VkDevice         m_device         = VK_NULL_HANDLE;
-    VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;
 
     void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage);
 
-    void BindMemory(VkPhysicalDevice physicalDevice);
+    void BindMemory();
 };

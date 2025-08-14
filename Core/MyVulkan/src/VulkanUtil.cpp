@@ -1,5 +1,8 @@
+#include "include/VulkanUtil.h"
+
 #include <SDL3/SDL.h>
-#include <include/VulkanUtil.h>
+
+#include <include/VulkanState.h>
 
 void vk_util::CmdImageLayoutTransition(
     VkCommandBuffer    cmdBuf,
@@ -38,10 +41,10 @@ VkImageSubresourceRange vk_util::GetSubresourceRange(VkImageAspectFlags aspect) 
     return subresourceRange;
 }
 
-uint32_t vk_util::FindMemoryType(VkPhysicalDevice physicalDevice, uint32_t memoryTypeBitsRequirement, VkMemoryPropertyFlags requiredProperties) {
+uint32_t vk_util::FindMemoryType(uint32_t memoryTypeBitsRequirement, VkMemoryPropertyFlags requiredProperties) {
     // Get physical device properties first
     VkPhysicalDeviceMemoryProperties memoryProperties;
-    vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memoryProperties);
+    vkGetPhysicalDeviceMemoryProperties(VulkanState::GetInstance().GetPhysicalDevice(), &memoryProperties);
 
     for (uint32_t memoryIndex = 0; memoryIndex < memoryProperties.memoryTypeCount; memoryIndex++) {
         const uint32_t memoryTypeBits       = (1 << memoryIndex);

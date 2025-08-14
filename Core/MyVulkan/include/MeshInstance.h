@@ -11,14 +11,14 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
 
-#include <include/VulkanMesh.h>
+#include "VulkanMesh.h"
 
 class VulkanTexture;
 class VulkanGraphicsPipeline;
 
 class MeshInstance {
 public:
-    MeshInstance() = delete;
+    MeshInstance() = default;
 
     ~MeshInstance() { Destroy(); }
 
@@ -32,7 +32,6 @@ public:
         const VulkanTexture                    *skyboxSpecular,
         const VulkanTexture                    *skyboxIrradiance,
         std::shared_ptr<VulkanGraphicsPipeline> pipeline,
-        VkDevice                                device,
         VkDescriptorPool                        descriptorPool
     );
 
@@ -46,7 +45,6 @@ public:
         const VulkanTexture                    *skyboxSpecular,
         const VulkanTexture                    *skyboxIrradiance,
         std::shared_ptr<VulkanGraphicsPipeline> pipeline,
-        VkDevice                                device,
         VkDescriptorPool                        descriptorPool,
         glm::vec3                               location
     );
@@ -61,7 +59,6 @@ public:
         const VulkanTexture                    *skyboxSpecular,
         const VulkanTexture                    *skyboxIrradiance,
         std::shared_ptr<VulkanGraphicsPipeline> pipeline,
-        VkDevice                                device,
         VkDescriptorPool                        descriptorPool,
         glm::vec3                               location,
         glm::vec3                               pitchYawRoll,
@@ -78,7 +75,6 @@ public:
         const VulkanTexture                    *skyboxSpecular,
         const VulkanTexture                    *skyboxIrradiance,
         std::shared_ptr<VulkanGraphicsPipeline> pipeline,
-        VkDevice                                device,
         VkDescriptorPool                        descriptorPool,
         glm::vec3                               location,
         glm::quat                               rotation,
@@ -152,7 +148,6 @@ private:
 
     std::shared_ptr<VulkanGraphicsPipeline> m_pipeline;
 
-    VkDevice                     m_device         = VK_NULL_HANDLE;
     VkDescriptorPool             m_descriptorPool = VK_NULL_HANDLE;
     std::vector<VkDescriptorSet> m_descriptorSets;
 

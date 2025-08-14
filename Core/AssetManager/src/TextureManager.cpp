@@ -12,5 +12,5 @@ VulkanTexture TextureManager::CreateResource(const std::string &key, VulkanState
     int                  height = 0;
     const unsigned char *data   = file_system::LoadTexture(key, &width, &height);
 
-    return VulkanTexture(state, width, height, VK_FORMAT_R8G8B8A8_UNORM, sizeof(unsigned char) * 4, data, config);
+    return VulkanTexture(width, height, VK_FORMAT_R8G8B8A8_UNORM, sizeof(unsigned char) * 4, data, config);
 }

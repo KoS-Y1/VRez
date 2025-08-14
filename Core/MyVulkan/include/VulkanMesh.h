@@ -2,15 +2,13 @@
 
 #include <string>
 
-#include "include/VulkanBuffer.h"
-
-class VulkanState;
+#include "VulkanBuffer.h"
 
 class VulkanMesh {
 public:
     VulkanMesh() = default;
 
-    VulkanMesh(VulkanState &state, std::string name, size_t vertexCount, size_t vertexSize, const void *data);
+    VulkanMesh(std::string name, size_t vertexCount, size_t vertexSize, const void *data);
 
     ~VulkanMesh() { Destroy(); }
 

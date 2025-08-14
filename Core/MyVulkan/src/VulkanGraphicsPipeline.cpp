@@ -1,11 +1,11 @@
 #include "include/VulkanGraphicsPipeline.h"
 
-#include "Debug.h"
+#include <Debug.h>
 
+#include <include/VulkanState.h>
 #include <include/ShaderCompiler.h>
 
-VulkanGraphicsPipeline::VulkanGraphicsPipeline(VkDevice device, const std::vector<std::string> &paths, const GraphicsPipelineConfig &config) {
-    m_device = device;
+VulkanGraphicsPipeline::VulkanGraphicsPipeline( const std::vector<std::string> &paths, const GraphicsPipelineConfig &config) {
     m_config = config;
 
     ShaderCompiler shaderCompiler(paths);
@@ -152,5 +152,5 @@ void VulkanGraphicsPipeline::CreatePipeline(const ShaderCompiler &shaderCompiler
         .basePipelineIndex   = 0,
     };
 
-    DEBUG_VK_ASSERT(vkCreateGraphicsPipelines(m_device, VK_NULL_HANDLE, 1, &infoPipeline, nullptr, &m_pipeline));
+    DEBUG_VK_ASSERT(vkCreateGraphicsPipelines(VulkanState::GetInstance().GetDevice(), VK_NULL_HANDLE, 1, &infoPipeline, nullptr, &m_pipeline));
 }

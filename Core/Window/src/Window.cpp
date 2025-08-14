@@ -30,7 +30,7 @@ void Window::Run() {
     SDL_Log("SDL Window(%dx%d) running", WINDOW_WIDTH, WINDOW_HEIGHT);
     m_running = true;
 
-    VulkanState vulkanState(m_window, m_width, m_height);
+    VulkanState::GetInstance().Init();
 
     while (m_running) {
         uint32_t  time = SDL_GetTicks();
@@ -52,23 +52,24 @@ void Window::Run() {
         ImGui_ImplSDL3_NewFrame();
         ImGui::NewFrame();
 
-
-        vulkanState.ShowUI();
+        VulkanState::GetInstance().ShowUI();
 
         //make imgui calculate internal draw structures
         ImGui::Render();
-        vulkanState.Update();
-        vulkanState.Present();
+        VulkanState::GetInstance().Update();
+        VulkanState::GetInstance().Present();
 
         m_lastTime = time;
     }
     SDL_Log("SDL Window(%dx%d) quitting", WINDOW_WIDTH, WINDOW_HEIGHT);
 
-    vulkanState.WaitIdle();
+    VulkanState::GetInstance().WaitIdle();
 
     ImGui_ImplVulkan_Shutdown();
     ImGui_ImplSDL3_Shutdown();
     ImGui::DestroyContext();
+
+    VulkanState::GetInstance().Destroy();
 }
 
 void Window::ProcessCamera(const SDL_Event &event, float deltaTime) {

@@ -9,7 +9,6 @@
 #include <include/VulkanUtil.h>
 
 VulkanTexture::VulkanTexture(
-    VulkanState        &state,
     uint32_t            width,
     uint32_t            height,
     VkFormat            format,
@@ -17,36 +16,31 @@ VulkanTexture::VulkanTexture(
     const void         *data,
     const SamplerConfig config
 ) {
-    m_device = state.GetDevice();
 
-    CreateImage(state, width, height, format, formatSize, data);
+    CreateImage(width, height, format, formatSize, data);
     CreateSampler(config);
 }
 
 void VulkanTexture::Destroy() {
-    if (m_device != VK_NULL_HANDLE) {
-        vkDestroySampler(m_device, m_sampler, nullptr);
+    if (m_sampler != VK_NULL_HANDLE) {
+        vkDestroySampler(VulkanState::GetInstance().GetDevice(), m_sampler, nullptr);
         m_image.Destroy();
-
-        m_device = VK_NULL_HANDLE;
     }
+    m_sampler = VK_NULL_HANDLE;
 }
 
 void VulkanTexture::Swap(VulkanTexture &other) noexcept {
     std::swap(m_image, other.m_image);
     std::swap(m_sampler, other.m_sampler);
-    std::swap(m_device, other.m_device);
 }
 
-void VulkanTexture::CreateImage(VulkanState &state, uint32_t width, uint32_t height, VkFormat format, size_t formatSize, const void *data) {
+void VulkanTexture::CreateImage(uint32_t width, uint32_t height, VkFormat format, size_t formatSize, const void *data) {
     VkExtent3D extent{
         .width  = width,
         .height = height,
         .depth  = 1,
     };
     VulkanImage img(
-        state.GetPhysicalDevice(),
-        m_device,
         format,
         VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
         extent,
@@ -56,10 +50,10 @@ void VulkanTexture::CreateImage(VulkanState &state, uint32_t width, uint32_t hei
 
     VkDeviceSize size = width * height * formatSize;
 
-    VulkanBuffer stagingBuffer(state.GetPhysicalDevice(), m_device, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+    VulkanBuffer stagingBuffer(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
     stagingBuffer.Upload(size, data);
 
-    state.ImmediateSubmit([&](VkCommandBuffer cmdBuf) {
+    VulkanState::GetInstance().ImmediateSubmit([&](VkCommandBuffer cmdBuf) {
         // Layout transition
         vk_util::CmdImageLayoutTransition(
             cmdBuf,
@@ -118,5 +112,5 @@ void VulkanTexture::CreateSampler(SamplerConfig config) {
 
     };
 
-    DEBUG_VK_ASSERT(vkCreateSampler(m_device, &infoSampler, nullptr, &m_sampler));
+    DEBUG_VK_ASSERT(vkCreateSampler(VulkanState::GetInstance().GetDevice(), &infoSampler, nullptr, &m_sampler));
 }

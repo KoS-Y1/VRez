@@ -4,27 +4,26 @@
 #include <functional>
 #include <memory>
 #include <vector>
+#include <string>
 
 #include <glm/glm.hpp>
 
 #include <Debug.h>
-#include <string>
+#include <Singleton.h>
+#include <include/UI.h>
 
-#include "VertexFormats.h"
 #include "VulkanImage.h"
 #include "VulkanMesh.h"
 #include "VulkanTexture.h"
+#include "MeshInstance.h"
+#include "VulkanGraphicsPipeline.h"
+#include "VulkanComputePipeline.h"
 
 #define MIN_SWAPCHAIN_IMG_COUNT 2
 #define MAX_SWAPCHAIN_IMG_COUNT 16
 
 #define POINT_ONE_SECOND 100000000u
 
-class VulkanComputePipeline;
-class VulkanGraphicsPipeline;
-class MeshLoader;
-class MeshInstance;
-class UI;
 
 struct Skybox {
     const VulkanTexture *skybox;
@@ -75,24 +74,17 @@ struct UIQueue {
     std::vector<bool> instanceUniformScales;
 };
 
-class VulkanState {
+class VulkanState : public Singleton<VulkanState>{
 public:
-    VulkanState(SDL_Window *window, uint32_t width, uint32_t height);
+    void Init();
 
-    ~VulkanState();
-
-    // Disallow copy and move
-    VulkanState(const VulkanState &) = delete;
-
-    VulkanState(VulkanState &&) = delete;
-
-    VulkanState &operator=(VulkanState const &) = delete;
-
-    VulkanState &operator=(VulkanState &&) = delete;
+    void Destroy();
 
     [[nodiscard]] VkPhysicalDevice const &GetPhysicalDevice() const { return m_physicalDevice; };
 
     [[nodiscard]] VkDevice const &GetDevice() const { return m_device; };
+
+    [[nodiscard]] VkInstance const &GetVkInstance() const { return m_instance; };
 
     void WaitIdle();
 
@@ -111,6 +103,11 @@ public:
         EndAndSubmitCommandBuffer(m_immediateCmdBuf, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, m_immediateFence, VK_NULL_HANDLE, VK_NULL_HANDLE);
         WaitAndResetFence(m_immediateFence);
     }
+
+protected:
+    VulkanState() = default;
+
+    ~VulkanState() = default;
 
 private:
     VkInstance       m_instance       = VK_NULL_HANDLE;

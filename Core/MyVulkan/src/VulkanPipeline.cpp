@@ -4,24 +4,24 @@
 
 #include <include/ShaderCompiler.h>
 #include <include/VulkanUtil.h>
+#include <include/VulkanState.h>
 
 void VulkanPipeline::Destroy() {
-    if (m_device != VK_NULL_HANDLE) {
+    if (m_pipeline != VK_NULL_HANDLE) {
         for (auto &shaderModule: m_shaderModules) {
-            vkDestroyShaderModule(m_device, shaderModule.second, nullptr);
+            vkDestroyShaderModule(VulkanState::GetInstance().GetDevice(), shaderModule.second, nullptr);
         }
 
-        vkDestroyPipeline(m_device, m_pipeline, nullptr);
-        vkDestroyPipelineLayout(m_device, m_layout, nullptr);
+        vkDestroyPipeline(VulkanState::GetInstance().GetDevice(), m_pipeline, nullptr);
+        vkDestroyPipelineLayout(VulkanState::GetInstance().GetDevice(), m_layout, nullptr);
         for (size_t i = 0; i < m_descriptorSetLayouts.size(); i++) {
-            vkDestroyDescriptorSetLayout(m_device, m_descriptorSetLayouts[i], nullptr);
+            vkDestroyDescriptorSetLayout(VulkanState::GetInstance().GetDevice(), m_descriptorSetLayouts[i], nullptr);
         }
     }
 
     m_descriptorSetLayouts.clear();
     m_pushConstantRanges.clear();
     m_shaderModules.clear();
-    m_device   = VK_NULL_HANDLE;
     m_pipeline = VK_NULL_HANDLE;
     m_layout   = VK_NULL_HANDLE;
 }
@@ -36,7 +36,7 @@ void VulkanPipeline::CreateShaderModules(const ShaderCompiler &shaderCompiler) {
             .codeSize = shaderCode.second.size() * sizeof(uint32_t),
             .pCode    = shaderCode.second.data()
         };
-        DEBUG_VK_ASSERT(vkCreateShaderModule(m_device, &infoModule, nullptr, &shaderModule));
+        DEBUG_VK_ASSERT(vkCreateShaderModule(VulkanState::GetInstance().GetDevice(), &infoModule, nullptr, &shaderModule));
 
         m_shaderModules.emplace(shaderCode.first, std::move(shaderModule));
     }
@@ -52,14 +52,14 @@ void VulkanPipeline::CreateLayout() {
         .pPushConstantRanges    = m_pushConstantRanges.data()
     };
 
-    vkCreatePipelineLayout(m_device, &infoLayout, nullptr, &m_layout);
+    vkCreatePipelineLayout(VulkanState::GetInstance().GetDevice(), &infoLayout, nullptr, &m_layout);
 }
 
 void VulkanPipeline::CreateDescriptorSetLayout(const std::vector<VkDescriptorSetLayoutCreateInfo> &infos) {
     VkDescriptorSetLayout setLayout = VK_NULL_HANDLE;
 
     for (size_t i = 0; i < infos.size(); i++) {
-        DEBUG_VK_ASSERT(vkCreateDescriptorSetLayout(m_device, &infos[i], nullptr, &setLayout));
+        DEBUG_VK_ASSERT(vkCreateDescriptorSetLayout(VulkanState::GetInstance().GetDevice(), &infos[i], nullptr, &setLayout));
         m_descriptorSetLayouts.push_back(std::move(setLayout));
     }
 }

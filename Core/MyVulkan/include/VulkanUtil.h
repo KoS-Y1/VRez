@@ -1,8 +1,5 @@
 #pragma once
-#include <string>
 #include <vulkan/vulkan_core.h>
-
-#include "VulkanState.h"
 
 namespace vk_util {
 void CmdImageLayoutTransition(
@@ -17,7 +14,7 @@ void CmdImageLayoutTransition(
 
 VkImageSubresourceRange GetSubresourceRange(VkImageAspectFlags aspect);
 
-uint32_t FindMemoryType(VkPhysicalDevice physicalDevice, uint32_t memoryTypeBitsRequirement, VkMemoryPropertyFlags requiredProperties);
+uint32_t FindMemoryType(uint32_t memoryTypeBitsRequirement, VkMemoryPropertyFlags requiredProperties);
 
 void CopyImageToImage(
     VkCommandBuffer    cmdBuf,

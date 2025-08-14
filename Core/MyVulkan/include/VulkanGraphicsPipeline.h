@@ -32,7 +32,7 @@ class VulkanGraphicsPipeline : public VulkanPipeline {
 public:
     VulkanGraphicsPipeline() = delete;
 
-    VulkanGraphicsPipeline(VkDevice device, const std::vector<std::string> &paths, const GraphicsPipelineConfig &config);
+    VulkanGraphicsPipeline(const std::vector<std::string> &paths, const GraphicsPipelineConfig &config);
 
 private:
     GraphicsPipelineConfig m_config;
