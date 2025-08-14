@@ -4,10 +4,10 @@
 
 #include <Debug.h>
 
+#include <include/VulkanState.h>
 #include <include/ShaderCompiler.h>
 
-VulkanComputePipeline::VulkanComputePipeline(VkDevice device, const std::vector<std::string> &paths) {
-    m_device = device;
+VulkanComputePipeline::VulkanComputePipeline(const std::vector<std::string> &paths) {
 
     if (paths.size() > 1) {
         SDL_Log("Warning: passing more than one shaders to computer shader! Program is ignoring the rest!");
@@ -33,5 +33,5 @@ void VulkanComputePipeline::CreatePipeline(const ShaderCompiler &shaderCompiler)
         .basePipelineIndex  = -1
     };
 
-    DEBUG_VK_ASSERT(vkCreateComputePipelines(m_device, VK_NULL_HANDLE, 1, &infoCompute, nullptr, &m_pipeline));
+    DEBUG_VK_ASSERT(vkCreateComputePipelines(VulkanState::GetInstance().GetDevice(), VK_NULL_HANDLE, 1, &infoCompute, nullptr, &m_pipeline));
 }

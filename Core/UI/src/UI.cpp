@@ -3,18 +3,20 @@
 #include "imgui.h"
 #include "imgui_impl_sdl3.h"
 #include "imgui_impl_vulkan.h"
+#include "include/VulkanState.h"
 
 #include <include/MeshInstance.h>
 #include <include/VulkanImage.h>
 
+#include <include/Window.h>
 #include <include/Camera.h>
 #include <include/LightManager.h>
 
 #include <glm/gtc/type_ptr.hpp>
 
-UI::UI(SDL_Window *window, VkInstance instance, VkPhysicalDevice physicalDevice, VkDevice device, VkQueue queue, VkDescriptorPool descriptorPool) {
+UI::UI(VkQueue queue, VkDescriptorPool descriptorPool) {
     ImGui::CreateContext();
-    ImGui_ImplSDL3_InitForVulkan(window);
+    ImGui_ImplSDL3_InitForVulkan(Window::GetInstance().GetSDLWindow());
     ImGuiIO &io     = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
@@ -33,9 +35,9 @@ UI::UI(SDL_Window *window, VkInstance instance, VkPhysicalDevice physicalDevice,
 
     ImGui_ImplVulkan_InitInfo infoInit{
         .ApiVersion                  = VK_API_VERSION_1_4,
-        .Instance                    = instance,
-        .PhysicalDevice              = physicalDevice,
-        .Device                      = device,
+        .Instance                    = VulkanState::GetInstance().GetVkInstance(),
+        .PhysicalDevice              = VulkanState::GetInstance().GetPhysicalDevice(),
+        .Device                      = VulkanState::GetInstance().GetDevice(),
         .QueueFamily                 = 0,
         .Queue                       = queue,
         .DescriptorPool              = descriptorPool,

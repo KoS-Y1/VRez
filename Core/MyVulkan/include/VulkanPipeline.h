@@ -40,7 +40,6 @@ protected:
     VkPipelineLayout                                m_layout   = VK_NULL_HANDLE;
     VkPipeline                                      m_pipeline = VK_NULL_HANDLE;
     std::map<VkShaderStageFlagBits, VkShaderModule> m_shaderModules;
-    VkDevice                                        m_device = VK_NULL_HANDLE;
 
 
     std::vector<VkDescriptorSetLayout> m_descriptorSetLayouts;

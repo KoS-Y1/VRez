@@ -47,7 +47,7 @@ struct alignas(16) CameraData {
 // Camera class as a singleton, since we only have 1 camera
 class Camera : public Singleton<Camera> {
 public:
-    void Init(VkPhysicalDevice physicalDevice, VkDevice device);
+    void Init();
 
     void Destroy();
 

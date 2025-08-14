@@ -14,6 +14,10 @@ class Window : public Singleton<Window> {
 public:
     void Run();
 
+    [[nodiscard]] SDL_Window *GetSDLWindow() { return m_window; }
+    [[nodiscard]] uint32_t GetWidth() { return m_width; }
+    [[nodiscard]] uint32_t GetHeight() { return m_height; }
+
 protected:
     Window();
 

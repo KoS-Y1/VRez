@@ -2,8 +2,6 @@
 
 #include "VulkanImage.h"
 
-class VulkanState;
-
 // TODO: add more config if needed
 struct SamplerConfig {
     VkFilter             filter           = VK_FILTER_LINEAR;
@@ -25,7 +23,6 @@ public:
     ~VulkanTexture() { Destroy(); }
 
     VulkanTexture(
-        VulkanState        &state,
         uint32_t            width,
         uint32_t            height,
         VkFormat            format,
@@ -59,10 +56,9 @@ public:
 
 private:
     VulkanImage m_image;
-    VkDevice    m_device  = VK_NULL_HANDLE;
     VkSampler   m_sampler = VK_NULL_HANDLE;
 
-    void CreateImage(VulkanState &state, uint32_t width, uint32_t height, VkFormat format, size_t formatSize, const void *data);
+    void CreateImage(uint32_t width, uint32_t height, VkFormat format, size_t formatSize, const void *data);
 
     void CreateSampler(SamplerConfig config);
 };

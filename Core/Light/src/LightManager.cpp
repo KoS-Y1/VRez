@@ -1,7 +1,7 @@
 #include "include/LightManager.h"
 
 void LightManager::Init(VkPhysicalDevice physicalDevice, VkDevice device) {
-    VulkanBuffer buffer(physicalDevice, device, sizeof(LightsData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
+    VulkanBuffer buffer(sizeof(LightsData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
     m_buffer = std::move(buffer);
 }
 

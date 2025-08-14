@@ -2,12 +2,12 @@
 
 #include <algorithm>
 
-void Camera::Init(VkPhysicalDevice physicalDevice, VkDevice device) {
+void Camera::Init() {
     Reset();
 
     PracticalCascadeSplits();
 
-    VulkanBuffer buffer(physicalDevice, device, sizeof(CameraData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
+    VulkanBuffer buffer(sizeof(CameraData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
     m_buffer = std::move(buffer);
 }
 

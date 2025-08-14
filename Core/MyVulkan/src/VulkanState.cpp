@@ -7,27 +7,28 @@
 #include <imgui_impl_vulkan.h>
 #include <include/VulkanUtil.h>
 
+#include <include/Window.h>
 #include <include/Camera.h>
 #include <include/LightManager.h>
 #include <include/MeshInstance.h>
 #include <include/MeshManager.h>
 #include <include/TextureManager.h>
-#include <include/UI.h>
 #include <include/VulkanComputePipeline.h>
 #include <include/VulkanGraphicsPipeline.h>
+#include <include/VertexFormats.h>
 
-VulkanState::VulkanState(SDL_Window *window, uint32_t width, uint32_t height) {
-    m_window = window;
-    m_width  = width;
-    m_height = height;
+void VulkanState::Init() {
+    m_window = Window::GetInstance().GetSDLWindow();
+    m_width  = Window::GetInstance().GetWidth();
+    m_height = Window::GetInstance().GetHeight();
 
     CreateInstance();
     CreatePhysicalDevice();
     CreateDevice();
     CreateCommandPool();
     CreateCommandBuffer();
-    CreateSurface(window);
-    CreateSwapchain(width, height);
+    CreateSurface(Window::GetInstance().GetSDLWindow());
+    CreateSwapchain(Window::GetInstance().GetWidth(),  Window::GetInstance().GetHeight());
 
     m_renderFence      = CreateFence(VK_FENCE_CREATE_SIGNALED_BIT);
     m_immediateFence   = CreateFence(0);
@@ -42,7 +43,7 @@ VulkanState::VulkanState(SDL_Window *window, uint32_t width, uint32_t height) {
     LoadMeshes();
 }
 
-VulkanState::~VulkanState() {
+void VulkanState::Destroy() {
     WaitIdle();
 
     vkFreeDescriptorSets(m_device, m_descriptorPool, 1, &m_uniformDescriptorSet);
@@ -73,6 +74,7 @@ VulkanState::~VulkanState() {
     for (auto &mesh: m_meshInstances) {
         mesh.Destroy();
     }
+    m_meshInstances.clear();
 
     m_skybox.Destroy();
 
@@ -282,8 +284,6 @@ void VulkanState::CreateSwapchain(uint32_t width, uint32_t height) {
 
     // Init drawImage that swapchain images copy from
     VulkanImage drawImg(
-        m_physicalDevice,
-        m_device,
         COLOR_IMG_FORMAT,
         VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
         {m_width, m_height, 1},
@@ -294,8 +294,6 @@ void VulkanState::CreateSwapchain(uint32_t width, uint32_t height) {
 
     // Init depth image for depth testing
     VulkanImage depthImg(
-        m_physicalDevice,
-        m_device,
         DEPTH_IMG_FORMAT,
         VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
         {m_width, m_height, 1},
@@ -306,8 +304,6 @@ void VulkanState::CreateSwapchain(uint32_t width, uint32_t height) {
 
     // Init msaa images for anti aliasing
     VulkanImage msaaColorImage(
-        m_physicalDevice,
-        m_device,
         COLOR_IMG_FORMAT,
         VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT,
         {m_width, m_height, 1},
@@ -557,7 +553,7 @@ void VulkanState::CreatePipelines() {
     graphicsConfig.rasterizationSamples = m_sampleCount;
 
     for (const auto &source: shaderSources) {
-        m_graphicsPipelines.emplace_back(std::make_shared<VulkanGraphicsPipeline>(m_device, source.first, graphicsConfig));
+        m_graphicsPipelines.emplace_back(std::make_shared<VulkanGraphicsPipeline>(source.first, graphicsConfig));
     }
 
     std::vector<std::string> skyboxPaths{
@@ -574,29 +570,29 @@ void VulkanState::CreatePipelines() {
     skyboxConfig.depthCompareOp       = VK_COMPARE_OP_LESS_OR_EQUAL;
     skyboxConfig.rasterizationSamples = m_sampleCount;
     skyboxConfig.cullMode             = VK_CULL_MODE_NONE;
-    m_skyboxPipeline                  = std::make_unique<VulkanGraphicsPipeline>(m_device, skyboxPaths, skyboxConfig);
+    m_skyboxPipeline                  = std::make_unique<VulkanGraphicsPipeline>(skyboxPaths, skyboxConfig);
 }
 
 void VulkanState::CreateTextures() {
     // Base texture for instance that does not have an input color texture
     SamplerConfig samplerConfig;
     glm::vec4     color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-    VulkanTexture texture(*this, 1u, 1u, VK_FORMAT_R32G32B32A32_SFLOAT, 4 * sizeof(float), &color, samplerConfig);
+    VulkanTexture texture(1u, 1u, VK_FORMAT_R32G32B32A32_SFLOAT, 4 * sizeof(float), &color, samplerConfig);
     m_albedoTexture = std::move(texture);
 
     // A default flat normal map
     glm::vec4     normal = glm::vec4(0.5f, 0.5f, 1.0f, 1.0f);
-    VulkanTexture tempNormal(*this, 1u, 1u, VK_FORMAT_R32G32B32A32_SFLOAT, 4 * sizeof(float), &normal, samplerConfig);
+    VulkanTexture tempNormal(1u, 1u, VK_FORMAT_R32G32B32A32_SFLOAT, 4 * sizeof(float), &normal, samplerConfig);
     m_normalMap = std::move(tempNormal);
 
     // A default orm map
     glm::vec4     orm = glm::vec4(0.2f, 1.0f, 0.1f, 1.0f);
-    VulkanTexture ormTexture(*this, 1u, 1u, VK_FORMAT_R32G32_SFLOAT, 4 * sizeof(float), &orm, samplerConfig);
+    VulkanTexture ormTexture(1u, 1u, VK_FORMAT_R32G32_SFLOAT, 4 * sizeof(float), &orm, samplerConfig);
     m_ormTexture = std::move(ormTexture);
 
     // A default emissive map
     glm::vec4     emissive = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-    VulkanTexture emissiveTexture(*this, 1u, 1u, VK_FORMAT_R32G32_SFLOAT, 4 * sizeof(float), &emissive, samplerConfig);
+    VulkanTexture emissiveTexture(1u, 1u, VK_FORMAT_R32G32_SFLOAT, 4 * sizeof(float), &emissive, samplerConfig);
     m_emissiveTexture = std::move(emissiveTexture);
 }
 
@@ -618,7 +614,7 @@ void VulkanState::CreateSkybox() {
         VertexP(glm::vec3(1.0f, 1.0f, -1.)),
     };
 
-    m_skybox.mesh = VulkanMesh(*this, "skybox", vertices.size(), sizeof(VertexP), vertices.data());
+    m_skybox.mesh = VulkanMesh("skybox", vertices.size(), sizeof(VertexP), vertices.data());
 
     std::string skyboxPath     = "../Assets/Models/Skybox/Skybox.png";
     std::string specularPath   = "../Assets/Models/Skybox/specular.png";
@@ -636,7 +632,7 @@ void VulkanState::CreateRenderObjects() {
     LightManager::GetInstance().Init(m_physicalDevice, m_device);
 
     // Camera
-    Camera::GetInstance().Init(m_physicalDevice, m_device);
+    Camera::GetInstance().Init();
 
     CreateTextures();
 
@@ -650,7 +646,7 @@ void VulkanState::CreateRenderObjects() {
     OneTimeUpdateDescriptorSets();
 
     // UI
-    m_ui = std::make_unique<UI>(m_window, m_instance, m_physicalDevice, m_device, m_queue, m_imguiDescriptorPool);
+    m_ui = std::make_unique<UI>(m_queue, m_imguiDescriptorPool);
 }
 
 void VulkanState::ShowUI() {
@@ -965,7 +961,6 @@ void VulkanState::LoadMeshes() {
             m_skybox.specular,
             m_skybox.irradiance,
             m_graphicsPipelines[0],
-            m_device,
             m_descriptorPool,
             locations[index]
         );

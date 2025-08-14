@@ -2,16 +2,15 @@
 
 #include "include/VulkanState.h"
 
-VulkanMesh::VulkanMesh(VulkanState &state, std::string name, size_t vertexCount, size_t vertexSize, const void *data) {
+VulkanMesh::VulkanMesh(std::string name, size_t vertexCount, size_t vertexSize, const void *data) {
     VkDeviceSize size = vertexCount * vertexSize;
     m_vertexSize      = vertexSize;
-    VulkanBuffer stagingBuffer(state.GetPhysicalDevice(), state.GetDevice(), size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+    VulkanBuffer stagingBuffer(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
     stagingBuffer.Upload(size, data);
 
-    VulkanBuffer
-        vertexBuffer(state.GetPhysicalDevice(), state.GetDevice(), size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+    VulkanBuffer vertexBuffer(size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
     // Copy data from staging buffer to vertex buffer
-    state.ImmediateSubmit([size, &stagingBuffer, &vertexBuffer](VkCommandBuffer cmdBuf) {
+    VulkanState::GetInstance().ImmediateSubmit([size, &stagingBuffer, &vertexBuffer](VkCommandBuffer cmdBuf) {
         VkBufferCopy copy{.srcOffset = 0, .dstOffset = 0, .size = size};
         vkCmdCopyBuffer(cmdBuf, stagingBuffer.GetBuffer(), vertexBuffer.GetBuffer(), 1, &copy);
     });
