@@ -15,7 +15,6 @@ Window::Window() {
 }
 
 Window::~Window() {
-    VulkanState::GetInstance().Destroy();
     SDL_DestroyWindow(m_window);
 }
 
@@ -69,6 +68,8 @@ void Window::Run() {
     ImGui_ImplVulkan_Shutdown();
     ImGui_ImplSDL3_Shutdown();
     ImGui::DestroyContext();
+
+    VulkanState::GetInstance().Destroy();
 }
 
 void Window::ProcessCamera(const SDL_Event &event, float deltaTime) {

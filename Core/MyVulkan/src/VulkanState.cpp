@@ -44,6 +44,10 @@ void VulkanState::Init() {
 }
 
 void VulkanState::Destroy() {
+    if (m_device == VK_NULL_HANDLE) {
+        return;
+    }
+
     WaitIdle();
 
     vkFreeDescriptorSets(m_device, m_descriptorPool, 1, &m_uniformDescriptorSet);
@@ -86,6 +90,8 @@ void VulkanState::Destroy() {
     TextureManager::GetInstance().Destroy();
 
     m_deletionQueue.Flush();
+
+    m_device = VK_NULL_HANDLE;
 }
 
 void VulkanState::CreateInstance() {

@@ -26,6 +26,7 @@ void VulkanTexture::Destroy() {
         vkDestroySampler(VulkanState::GetInstance().GetDevice(), m_sampler, nullptr);
         m_image.Destroy();
     }
+    m_sampler = VK_NULL_HANDLE;
 }
 
 void VulkanTexture::Swap(VulkanTexture &other) noexcept {

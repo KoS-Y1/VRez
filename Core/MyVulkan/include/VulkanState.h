@@ -107,7 +107,7 @@ public:
 protected:
     VulkanState() = default;
 
-    ~VulkanState() { Destroy(); };
+    ~VulkanState() = default;
 
 private:
     VkInstance       m_instance       = VK_NULL_HANDLE;
