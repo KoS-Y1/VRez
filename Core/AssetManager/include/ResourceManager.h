@@ -22,7 +22,6 @@ protected:
     template<class... Args>
     void Preload(const Key &key, Args &&...args) {
         Resource resource = static_cast<Derived *>(this)->CreateResource(key, std::forward<Args>(args)...);
-
         {
             std::scoped_lock<std::mutex> lk(m_cacheMutex);
             m_cache.emplace(key, std::move(resource));

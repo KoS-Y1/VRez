@@ -4,6 +4,7 @@
 
 #include <include/TextureLoader.h>
 #include <include/VulkanState.h>
+#include <include/ThreadPool.h>
 
 VulkanTexture TextureManager::CreateResource(const std::string &key, const SamplerConfig &config) {
     SDL_Log("Loading texture from file %s", key.c_str());
@@ -34,6 +35,8 @@ void TextureManager::Init() {
     };
     SamplerConfig config;
     for (const auto &key : keys) {
-        Preload(key, config);
+        ThreadPool::GetInstance().Enqueue([this, key, config]() {
+         Preload(key, config);
+     });
     }
 }

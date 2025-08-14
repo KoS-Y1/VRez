@@ -8,6 +8,7 @@
 #include <include/MeshLoader.h>
 #include <include/VertexFormats.h>
 #include <include/VulkanState.h>
+#include <include/ThreadPool.h>
 
 VulkanMesh MeshManager::CreateResource(const std::string &key) {
     SDL_Log("Loading mesh from file %s", key.c_str());
@@ -24,6 +25,8 @@ void MeshManager::Init() {
     };
 
     for (const auto &key : keys) {
-        Preload(key);
+        ThreadPool::GetInstance().Enqueue([this, key]() {
+            Preload(key);
+        });
     }
 }

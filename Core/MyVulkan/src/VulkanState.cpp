@@ -1,5 +1,7 @@
 #include "include/VulkanState.h"
 
+#include "include/ThreadPool.h"
+
 #include <vector>
 
 #include <SDL3/SDL_vulkan.h>
@@ -16,6 +18,7 @@
 #include <include/VulkanComputePipeline.h>
 #include <include/VulkanGraphicsPipeline.h>
 #include <include/VertexFormats.h>
+#include <include/ThreadPool.h>
 
 void VulkanState::Init() {
     m_window = Window::GetInstance().GetSDLWindow();
@@ -40,6 +43,8 @@ void VulkanState::Init() {
 
     MeshManager::GetInstance().Init();
     TextureManager::GetInstance().Init();
+    // Wait for all meshes and textures are loaded
+    ThreadPool::GetInstance().WaitIdle();
 
     CreateRenderObjects();
 

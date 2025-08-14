@@ -25,6 +25,8 @@ void ThreadPool::Enqueue(std::function<void()> &&func) {
         std::scoped_lock lock(m_mutex);
         DEBUG_ASSERT(m_stopped == false);
         m_tasks.push(std::move(func));
+
+        m_pendingTasks.fetch_add(1, std::memory_order_relaxed);
     }
     m_cv.notify_one();
 }
@@ -50,8 +52,21 @@ void ThreadPool::Worker() {
         }
 
         job();
+
+        m_pendingTasks.fetch_sub(1, std::memory_order::memory_order_acq_rel);
+        if (m_pendingTasks.load(std::memory_order_relaxed) == 0) {
+            m_idleCv.notify_all();
+        }
     }
 }
+
+void ThreadPool::WaitIdle() {
+    std::unique_lock lock(m_mutex);
+    m_idleCv.wait(lock, [this]() {
+        return m_pendingTasks.load(std::memory_order_relaxed) == 0;
+    });
+}
+
 
 void ThreadPool::FinishRemainWork() noexcept {
     {
