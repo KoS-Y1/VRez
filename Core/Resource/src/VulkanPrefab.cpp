@@ -4,8 +4,8 @@
 
 #include <include/VulkanGraphicsPipeline.h>
 #include <include/VulkanMesh.h>
-#include <include/VulkanUtil.h>
 #include <include/VulkanState.h>
+#include <include/VulkanUtil.h>
 
 VulkanPrefab::VulkanPrefab(
     const VulkanMesh                       *mesh,
@@ -16,8 +16,7 @@ VulkanPrefab::VulkanPrefab(
     const VulkanTexture                    *brdfTexture,
     const VulkanTexture                    *skyboxSpecular,
     const VulkanTexture                    *skyboxIrradiance,
-    std::shared_ptr<VulkanGraphicsPipeline> pipeline,
-    VkDescriptorPool                        descriptorPool
+    std::shared_ptr<VulkanGraphicsPipeline> pipeline
 ) {
     m_mesh            = mesh;
     m_baseTexture     = baseTexture;
@@ -29,8 +28,7 @@ VulkanPrefab::VulkanPrefab(
     m_skyboxSpecular   = skyboxSpecular;
     m_skyboxIrradiance = skyboxIrradiance;
 
-    m_pipeline       = pipeline;
-    m_descriptorPool = descriptorPool;
+    m_pipeline = pipeline;
     CreateDescriptorSets();
 
     m_originalLocation = glm::vec3(0.f);
@@ -47,7 +45,6 @@ VulkanPrefab::VulkanPrefab(
     const VulkanTexture                    *skyboxSpecular,
     const VulkanTexture                    *skyboxIrradiance,
     std::shared_ptr<VulkanGraphicsPipeline> pipeline,
-    VkDescriptorPool                        descriptorPool,
     glm::vec3                               location
 ) {
     m_mesh            = mesh;
@@ -60,8 +57,7 @@ VulkanPrefab::VulkanPrefab(
     m_skyboxSpecular   = skyboxSpecular;
     m_skyboxIrradiance = skyboxIrradiance;
 
-    m_pipeline       = pipeline;
-    m_descriptorPool = descriptorPool;
+    m_pipeline = pipeline;
     CreateDescriptorSets();
 
     m_originalLocation = location;
@@ -78,7 +74,6 @@ VulkanPrefab::VulkanPrefab(
     const VulkanTexture                    *skyboxSpecular,
     const VulkanTexture                    *skyboxIrradiance,
     std::shared_ptr<VulkanGraphicsPipeline> pipeline,
-    VkDescriptorPool                        descriptorPool,
     glm::vec3                               location,
     glm::quat                               rotation,
     glm::vec3                               scale
@@ -93,8 +88,7 @@ VulkanPrefab::VulkanPrefab(
     m_skyboxSpecular   = skyboxSpecular;
     m_skyboxIrradiance = skyboxIrradiance;
 
-    m_pipeline       = pipeline;
-    m_descriptorPool = descriptorPool;
+    m_pipeline = pipeline;
     CreateDescriptorSets();
 
     m_originalLocation = location;
@@ -115,7 +109,6 @@ VulkanPrefab::VulkanPrefab(
     const VulkanTexture                    *skyboxSpecular,
     const VulkanTexture                    *skyboxIrradiance,
     std::shared_ptr<VulkanGraphicsPipeline> pipeline,
-    VkDescriptorPool                        descriptorPool,
     glm::vec3                               location,
     glm::vec3                               pitchYawRoll,
     glm::vec3                               scale
@@ -130,8 +123,7 @@ VulkanPrefab::VulkanPrefab(
     m_skyboxSpecular   = skyboxSpecular;
     m_skyboxIrradiance = skyboxIrradiance;
 
-    m_pipeline       = pipeline;
-    m_descriptorPool = descriptorPool;
+    m_pipeline = pipeline;
     CreateDescriptorSets();
 
     m_originalLocation = location;
@@ -143,7 +135,12 @@ VulkanPrefab::VulkanPrefab(
 
 void VulkanPrefab::Destroy() {
     if (!m_descriptorSets.empty()) {
-        vkFreeDescriptorSets(VulkanState::GetInstance().GetDevice(), m_descriptorPool, m_descriptorSets.size(), m_descriptorSets.data());
+        vkFreeDescriptorSets(
+            VulkanState::GetInstance().GetDevice(),
+            VulkanState::GetInstance().GetDescriptorPool(),
+            m_descriptorSets.size(),
+            m_descriptorSets.data()
+        );
     }
     m_descriptorSets.clear();
     m_baseTexture     = nullptr;
@@ -155,8 +152,6 @@ void VulkanPrefab::Destroy() {
     m_brdfTexture      = nullptr;
     m_skyboxSpecular   = nullptr;
     m_skyboxIrradiance = nullptr;
-
-    m_descriptorPool = VK_NULL_HANDLE;
 }
 
 void VulkanPrefab::Swap(VulkanPrefab &other) noexcept {
@@ -177,7 +172,6 @@ void VulkanPrefab::Swap(VulkanPrefab &other) noexcept {
     std::swap(m_skyboxSpecular, other.m_skyboxSpecular);
     std::swap(m_skyboxIrradiance, other.m_skyboxIrradiance);
 
-    std::swap(m_descriptorPool, other.m_descriptorPool);
     std::swap(m_descriptorSets, other.m_descriptorSets);
 }
 
@@ -235,7 +229,7 @@ VkDescriptorSet VulkanPrefab::CreateDescriptorSet(const VkDescriptorSetLayout &l
     VkDescriptorSetAllocateInfo infoSet{
         .sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
         .pNext              = nullptr,
-        .descriptorPool     = m_descriptorPool,
+        .descriptorPool     = VulkanState::GetInstance().GetDescriptorPool(),
         .descriptorSetCount = 1,
         .pSetLayouts        = &layout
     };

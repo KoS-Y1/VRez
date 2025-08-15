@@ -1,6 +1,6 @@
 #pragma once
 
-#include "VulkanImage.h"
+#include <include/VulkanImage.h>
 
 // TODO: add more config if needed
 struct SamplerConfig {

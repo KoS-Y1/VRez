@@ -1,11 +1,10 @@
 add_library(MyVulkan MyVulkan/include/VulkanState.h MyVulkan/src/VulkanState.cpp MyVulkan/include/VulkanUtil.h MyVulkan/src/VulkanUtil.cpp
         MyVulkan/include/VulkanImage.h MyVulkan/src/VulkanImage.cpp MyVulkan/include/VulkanPipeline.h MyVulkan/src/VulkanPipeline.cpp
         MyVulkan/include/VulkanComputePipeline.h MyVulkan/src/VulkanComputePipeline.cpp MyVulkan/include/VulkanGraphicsPipeline.h
-        MyVulkan/src/VulkanGraphicsPipeline.cpp MyVulkan/include/VulkanBuffer.h MyVulkan/src/VulkanBuffer.cpp MyVulkan/include/VulkanMesh.h
-        MyVulkan/src/VulkanMesh.cpp MyVulkan/include/VertexFormats.h MyVulkan/src/VertexFormats.cpp MyVulkan/include/VulkanTexture.h MyVulkan/src/VulkanTexture.cpp
-        MyVulkan/include/VulkanPrefab.h MyVulkan/src/VulkanPrefab.cpp MyVulkan/include/VulkanObject.h MyVulkan/src/VulkanObject.cpp)
+        MyVulkan/src/VulkanGraphicsPipeline.cpp MyVulkan/include/VulkanBuffer.h MyVulkan/src/VulkanBuffer.cpp MyVulkan/include/VertexFormats.h
+        MyVulkan/src/VertexFormats.cpp )
 target_include_directories(MyVulkan PUBLIC MyVulkan)
-target_link_libraries(MyVulkan PUBLIC Vulkan::Vulkan Debug Util SDL3::SDL3 ShaderCompiler glm imgui UI Camera Light AssetManager Window ThreadPool)
+target_link_libraries(MyVulkan PUBLIC Vulkan::Vulkan Debug Util SDL3::SDL3 ShaderCompiler glm imgui UI Camera Light Resource Window ThreadPool)
 
 add_library(Window Window/include/Window.h Window/src/Window.cpp)
 target_include_directories(Window PUBLIC Window)
@@ -30,7 +29,11 @@ add_library(ThreadPool ThreadPool/include/ThreadPool.h ThreadPool/src/ThreadPool
 target_include_directories(ThreadPool PUBLIC ThreadPool)
 target_link_libraries(ThreadPool PUBLIC Util Debug)
 
-add_library(AssetManager AssetManager/include/ResourceManager.h AssetManager/include/TextureManager.h
-        AssetManager/src/TextureManager.cpp AssetManager/include/MeshManager.h AssetManager/src/MeshManager.cpp)
-target_include_directories(AssetManager PUBLIC AssetManager)
-target_link_libraries(AssetManager PUBLIC ThreadPool FileSystem MyVulkan Util SDL3::SDL3)
+add_library(Resource Resource/include/ResourceManager.h Resource/include/TextureManager.h
+        Resource/src/TextureManager.cpp Resource/include/MeshManager.h Resource/src/MeshManager.cpp
+        Resource/include/VulkanTexture.h Resource/src/VulkanTexture.cpp  Resource/include/VulkanMesh.h
+        Resource/src/VulkanMesh.cpp Resource/include/VulkanPrefab.h Resource/src/VulkanPrefab.cpp
+        Resource/include/VulkanObject.h Resource/src/VulkanObject.cpp Resource/include/VulkanMaterial.h
+        Resource/src/VulkanMaterial.cpp)
+target_include_directories(Resource PUBLIC Resource)
+target_link_libraries(Resource PUBLIC ThreadPool FileSystem MyVulkan Util SDL3::SDL3 glm)

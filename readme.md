@@ -99,3 +99,8 @@ for each module
 ## Improve/Refactor
 + Vulkan state should have a public function to destroy/free vulkan object, so that other class(e.g. VulkanImage) won't need to have a VkDevice variable that helps itself destroy vkImage(also a TODO) 
 + I'm not gonna implement it here, but there can be an abstract base Resource class using templates. Texture, mesh, etc. shoulde be derived from Resource class.
+
+## Misc TODO(I'm too lazy to have different sections)
++ Deferred rendering
++ Forword rendering for transparent object
++ CSM

@@ -15,12 +15,15 @@ public:
         virtual Resource *Load(const Key &key) {
             auto pair = m_cache.find(key);
 
-            DEBUG_ASSERT_LOG(pair != m_cache.end(), (key + "does not exist").c_str());
+            DEBUG_ASSERT_LOG(pair != m_cache.end(), (key + " does not exist").c_str());
 
             return &(pair->second);
         }
 
 protected:
+    std::map<Key, Resource> m_cache;
+    std::mutex              m_cacheMutex;
+
     template<class... Args>
     void Preload(const Key &key, Args &&...args) {
         Resource resource = static_cast<Derived *>(this)->CreateResource(key, std::forward<Args>(args)...);
@@ -41,7 +44,4 @@ protected:
     ResourceManager()  = default;
     ~ResourceManager() = default;
 
-private:
-    std::map<Key, Resource> m_cache;
-    std::mutex              m_cacheMutex;
 };

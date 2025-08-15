@@ -10,10 +10,7 @@ std::vector<VertexPNTT> file_system::LoadMesh(const std::string &file) {
     tinyobj::ObjReader reader;
 
     if (!reader.ParseFromFile(file)) {
-        if (!reader.Error().empty()) {
-            SDL_Log("Error parsing obj file: %s", reader.Error().c_str());
-            exit(EXIT_FAILURE);
-        }
+        DEBUG_ASSERT_LOG(reader.Error().empty(), ("Error parsing obj file: " + reader.Error()).c_str());
     }
 
     if (!reader.Warning().empty()) {

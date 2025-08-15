@@ -1,15 +1,14 @@
 #include "include/FileSystem.h"
 
-#include <fstream>
-#include <filesystem>
+#include <Debug.h>
+
 #include <SDL3/SDL_log.h>
+#include <filesystem>
+#include <fstream>
 
 std::string file_system::Read(const std::string &path) {
     std::ifstream file(path, std::ios::binary | std::ios::ate);
-    if (!file.is_open()) {
-        SDL_Log("Failed to open file %s", path.c_str());
-        exit(EXIT_FAILURE);
-    }
+    DEBUG_ASSERT_LOG(file.is_open(), ("Failed to open file " + path).c_str());
 
     size_t      fileSize = file.tellg();
     std::string buf(fileSize, '\0');

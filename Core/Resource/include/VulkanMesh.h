@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include "VulkanBuffer.h"
+#include <include/VulkanBuffer.h>
 
 class VulkanMesh {
 public:

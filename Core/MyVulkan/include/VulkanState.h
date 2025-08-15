@@ -12,13 +12,14 @@
 #include <Debug.h>
 #include <Singleton.h>
 #include <include/UI.h>
+#include <include/VulkanMesh.h>
+#include <include/VulkanPrefab.h>
+#include <include/VulkanTexture.h>
 
 #include "VulkanComputePipeline.h"
 #include "VulkanGraphicsPipeline.h"
 #include "VulkanImage.h"
-#include "VulkanMesh.h"
-#include "VulkanPrefab.h"
-#include "VulkanTexture.h"
+
 
 #define MIN_SWAPCHAIN_IMG_COUNT 2
 #define MAX_SWAPCHAIN_IMG_COUNT 16
@@ -81,11 +82,13 @@ public:
 
     void Destroy();
 
-    [[nodiscard]] VkPhysicalDevice const &GetPhysicalDevice() const { return m_physicalDevice; };
+    [[nodiscard]] const VkPhysicalDevice  &GetPhysicalDevice() const { return m_physicalDevice; };
 
-    [[nodiscard]] VkDevice const &GetDevice() const { return m_device; };
+    [[nodiscard]] const VkDevice  &GetDevice() const { return m_device; };
 
-    [[nodiscard]] VkInstance const &GetVkInstance() const { return m_instance; };
+    [[nodiscard]] const VkInstance  &GetVkInstance() const { return m_instance; };
+
+    [[nondiscard]] const VkDescriptorPool &GetDescriptorPool() const { return m_descriptorPool;}
 
     void WaitIdle();
 
@@ -145,11 +148,6 @@ private:
 
     std::vector<VulkanPrefab> m_meshInstances;
 
-    VulkanTexture m_albedoTexture;
-    VulkanTexture m_normalMap;
-    VulkanTexture m_ormTexture;
-    VulkanTexture m_emissiveTexture;
-
     VkSampleCountFlagBits m_sampleCount = VK_SAMPLE_COUNT_1_BIT;
 
     Skybox m_skybox;
@@ -189,7 +187,6 @@ private:
 
     void CreatePipelines();
 
-    void CreateTextures();
 
     void CreateSkybox();
 

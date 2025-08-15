@@ -12,22 +12,22 @@ layout (location = 4) in vec2 vTexcoord;
 
 layout (location = 0) out vec4 outColor;
 
-layout (set = 1, binding = 0) uniform sampler2D uBaseTexture;
-layout (set = 1, binding = 1) uniform sampler2D uNormalMap;
-layout (set = 1, binding = 2) uniform sampler2D uORMTexture;
-layout (set = 1, binding = 3) uniform sampler2D uEmissiveTexture;
+layout (set = 1, binding = 0) uniform sampler2D uAlbedo;
+layout (set = 1, binding = 1) uniform sampler2D uNormal;
+layout (set = 1, binding = 2) uniform sampler2D uORM;
+layout (set = 1, binding = 3) uniform sampler2D uEmissive;
 
 void main()
 {
     int i = 0;
 
-    vec3 albedo = texture(uBaseTexture, vTexcoord).xyz;
+    vec3 albedo = texture(uAlbedo, vTexcoord).xyz;
     vec3 Lo = vec3(0.0f);
 
-    vec3 tNormal = texture(uNormalMap, vTexcoord).xyz * 2.0 - 1.0;
+    vec3 tNormal = texture(uNormal, vTexcoord).xyz * 2.0 - 1.0;
     vec3 normal = normalize(vTBN * tNormal);
 
-    vec3 orm = texture(uORMTexture, vTexcoord).xyz;
+    vec3 orm = texture(uORM, vTexcoord).xyz;
     float ao = orm.r;
     float roughness = orm.g;
     float metallic = orm.b;
@@ -43,7 +43,7 @@ void main()
         uLights[i].range, uLights[i].type, normal, viewDir, vWorldPosition, albedo, roughness, metallic);
     }
 
-    vec3 emissive = texture(uEmissiveTexture, vTexcoord).rgb;
+    vec3 emissive = texture(uEmissive, vTexcoord).rgb;
 
     vec3 N = normal;
     vec3 V = normalize(uViewPosition - vWorldPosition);

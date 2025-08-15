@@ -90,10 +90,7 @@ void VulkanState::Destroy() {
 
     m_skybox.Destroy();
 
-    m_albedoTexture.Destroy();
-    m_normalMap.Destroy();
-    m_ormTexture.Destroy();
-    m_emissiveTexture.Destroy();
+
     MeshManager::GetInstance().Destroy();
     TextureManager::GetInstance().Destroy();
 
@@ -587,29 +584,6 @@ void VulkanState::CreatePipelines() {
     m_skyboxPipeline                  = std::make_unique<VulkanGraphicsPipeline>(skyboxPaths, skyboxConfig);
 }
 
-void VulkanState::CreateTextures() {
-    // Base texture for instance that does not have an input color texture
-    SamplerConfig samplerConfig;
-    glm::vec4     color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-    VulkanTexture texture(1u, 1u, VK_FORMAT_R32G32B32A32_SFLOAT, 4 * sizeof(float), &color, samplerConfig);
-    m_albedoTexture = std::move(texture);
-
-    // A default flat normal map
-    glm::vec4     normal = glm::vec4(0.5f, 0.5f, 1.0f, 1.0f);
-    VulkanTexture tempNormal(1u, 1u, VK_FORMAT_R32G32B32A32_SFLOAT, 4 * sizeof(float), &normal, samplerConfig);
-    m_normalMap = std::move(tempNormal);
-
-    // A default orm map
-    glm::vec4     orm = glm::vec4(0.2f, 1.0f, 0.1f, 1.0f);
-    VulkanTexture ormTexture(1u, 1u, VK_FORMAT_R32G32_SFLOAT, 4 * sizeof(float), &orm, samplerConfig);
-    m_ormTexture = std::move(ormTexture);
-
-    // A default emissive map
-    glm::vec4     emissive = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-    VulkanTexture emissiveTexture(1u, 1u, VK_FORMAT_R32G32_SFLOAT, 4 * sizeof(float), &emissive, samplerConfig);
-    m_emissiveTexture = std::move(emissiveTexture);
-}
-
 void VulkanState::CreateSkybox() {
     std::vector<VertexP> vertices{
         VertexP(glm::vec3(-1.0f, 1.0f, 1.0f)),
@@ -630,10 +604,10 @@ void VulkanState::CreateSkybox() {
 
     m_skybox.mesh = VulkanMesh("skybox", vertices.size(), sizeof(VertexP), vertices.data());
 
-    std::string skyboxPath     = "../Assets/Models/Skybox/Skybox.png";
-    std::string specularPath   = "../Assets/Models/Skybox/specular.png";
-    std::string irradiancePath = "../Assets/Models/Skybox/irradiance.png";
-    std::string brdfPath       = "../Assets/Models/Skybox/brdf_lut.png";
+    std::string skyboxPath     = "../Assets/Skybox/Skybox.png";
+    std::string specularPath   = "../Assets/Skybox/specular.png";
+    std::string irradiancePath = "../Assets/Skybox/irradiance.png";
+    std::string brdfPath       = "../Assets/Skybox/brdf_lut.png";
 
     m_skybox.skybox     = TextureManager::GetInstance().Load(skyboxPath);
     m_skybox.specular   = TextureManager::GetInstance().Load(specularPath);
@@ -647,8 +621,6 @@ void VulkanState::CreateRenderObjects() {
 
     // Camera
     Camera::GetInstance().Init();
-
-    CreateTextures();
 
     CreateSkybox();
 
@@ -948,10 +920,10 @@ void VulkanState::LoadMeshes() {
 
         DEBUG_ASSERT(m_graphicsPipelines[0] != nullptr);
 
-        const VulkanTexture *baseTexture = &m_albedoTexture;
-        const VulkanTexture *normalMap   = &m_normalMap;
-        const VulkanTexture *orm         = &m_ormTexture;
-        const VulkanTexture *emissive    = &m_emissiveTexture;
+        const VulkanTexture *baseTexture = TextureManager::GetInstance().Load("albedo");
+        const VulkanTexture *normalMap   = TextureManager::GetInstance().Load("normal");
+        const VulkanTexture *orm         = TextureManager::GetInstance().Load("orm");
+        const VulkanTexture *emissive    = TextureManager::GetInstance().Load("emissive");
         if (texturePaths[i] != "") {
             baseTexture = TextureManager::GetInstance().Load(texturePaths[i]);
         }
@@ -975,7 +947,6 @@ void VulkanState::LoadMeshes() {
             m_skybox.specular,
             m_skybox.irradiance,
             m_graphicsPipelines[0],
-            m_descriptorPool,
             locations[index]
         );
 

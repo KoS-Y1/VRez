@@ -31,8 +31,7 @@ public:
         const VulkanTexture                    *brdfTexture,
         const VulkanTexture                    *skyboxSpecular,
         const VulkanTexture                    *skyboxIrradiance,
-        std::shared_ptr<VulkanGraphicsPipeline> pipeline,
-        VkDescriptorPool                        descriptorPool
+        std::shared_ptr<VulkanGraphicsPipeline> pipeline
     );
 
     VulkanPrefab(
@@ -45,7 +44,6 @@ public:
         const VulkanTexture                    *skyboxSpecular,
         const VulkanTexture                    *skyboxIrradiance,
         std::shared_ptr<VulkanGraphicsPipeline> pipeline,
-        VkDescriptorPool                        descriptorPool,
         glm::vec3                               location
     );
 
@@ -59,7 +57,6 @@ public:
         const VulkanTexture                    *skyboxSpecular,
         const VulkanTexture                    *skyboxIrradiance,
         std::shared_ptr<VulkanGraphicsPipeline> pipeline,
-        VkDescriptorPool                        descriptorPool,
         glm::vec3                               location,
         glm::vec3                               pitchYawRoll,
         glm::vec3                               scale
@@ -75,7 +72,6 @@ public:
         const VulkanTexture                    *skyboxSpecular,
         const VulkanTexture                    *skyboxIrradiance,
         std::shared_ptr<VulkanGraphicsPipeline> pipeline,
-        VkDescriptorPool                        descriptorPool,
         glm::vec3                               location,
         glm::quat                               rotation,
         glm::vec3                               scale
@@ -148,7 +144,6 @@ private:
 
     std::shared_ptr<VulkanGraphicsPipeline> m_pipeline;
 
-    VkDescriptorPool             m_descriptorPool = VK_NULL_HANDLE;
     std::vector<VkDescriptorSet> m_descriptorSets;
 
     void UpdateTransformation();
