@@ -3,22 +3,24 @@
 #include <map>
 #include <mutex>
 #include <utility>
+#include <string>
 
 #include <Debug.h>
 
-template<class Derived, class Key, class Resource>
+using Key = std::string;
+
+template<class Derived, class Resource>
 class ResourceManager {
+public:
+        virtual Resource *Load(const Key &key) {
+            auto pair = m_cache.find(key);
+
+            DEBUG_ASSERT_LOG(pair != m_cache.end(), (key + "does not exist").c_str());
+
+            return &(pair->second);
+        }
+
 protected:
-
-    template<class... Args>
-    Resource *Load(const Key &key, Args &&...args) {
-        auto pair = m_cache.find(key);
-
-        DEBUG_ASSERT(pair != m_cache.end());
-
-        return &pair->second;
-    }
-
     template<class... Args>
     void Preload(const Key &key, Args &&...args) {
         Resource resource = static_cast<Derived *>(this)->CreateResource(key, std::forward<Args>(args)...);
@@ -41,5 +43,5 @@ protected:
 
 private:
     std::map<Key, Resource> m_cache;
-    std::mutex m_cacheMutex;
+    std::mutex              m_cacheMutex;
 };

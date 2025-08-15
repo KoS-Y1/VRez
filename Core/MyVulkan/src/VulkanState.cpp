@@ -9,16 +9,16 @@
 #include <imgui_impl_vulkan.h>
 #include <include/VulkanUtil.h>
 
-#include <include/Window.h>
 #include <include/Camera.h>
 #include <include/LightManager.h>
-#include <include/MeshInstance.h>
 #include <include/MeshManager.h>
 #include <include/TextureManager.h>
+#include <include/ThreadPool.h>
+#include <include/VertexFormats.h>
 #include <include/VulkanComputePipeline.h>
 #include <include/VulkanGraphicsPipeline.h>
-#include <include/VertexFormats.h>
-#include <include/ThreadPool.h>
+#include <include/VulkanPrefab.h>
+#include <include/Window.h>
 
 void VulkanState::Init() {
     m_window = Window::GetInstance().GetSDLWindow();
@@ -635,10 +635,10 @@ void VulkanState::CreateSkybox() {
     std::string irradiancePath = "../Assets/Models/Skybox/irradiance.png";
     std::string brdfPath       = "../Assets/Models/Skybox/brdf_lut.png";
 
-    m_skybox.skybox     = TextureManager::GetInstance().LoadTexture(skyboxPath, {});
-    m_skybox.specular   = TextureManager::GetInstance().LoadTexture(specularPath, {});
-    m_skybox.irradiance = TextureManager::GetInstance().LoadTexture(irradiancePath, {});
-    m_skybox.brdf       = TextureManager::GetInstance().LoadTexture(brdfPath, {});
+    m_skybox.skybox     = TextureManager::GetInstance().Load(skyboxPath);
+    m_skybox.specular   = TextureManager::GetInstance().Load(specularPath);
+    m_skybox.irradiance = TextureManager::GetInstance().Load(irradiancePath);
+    m_skybox.brdf       = TextureManager::GetInstance().Load(brdfPath);
 };
 
 void VulkanState::CreateRenderObjects() {
@@ -953,20 +953,20 @@ void VulkanState::LoadMeshes() {
         const VulkanTexture *orm         = &m_ormTexture;
         const VulkanTexture *emissive    = &m_emissiveTexture;
         if (texturePaths[i] != "") {
-            baseTexture = TextureManager::GetInstance().LoadTexture(texturePaths[i], samplerConfigs[i]);
+            baseTexture = TextureManager::GetInstance().Load(texturePaths[i]);
         }
         if (normalMapPaths[i] != "") {
-            normalMap = TextureManager::GetInstance().LoadTexture(normalMapPaths[i], samplerConfigs[i]);
+            normalMap = TextureManager::GetInstance().Load(normalMapPaths[i]);
         }
         if (ormPaths[i] != "") {
-            orm = TextureManager::GetInstance().LoadTexture(ormPaths[i], samplerConfigs[i]);
+            orm = TextureManager::GetInstance().Load(ormPaths[i]);
         }
         if (emissivePaths[i] != "") {
-            emissive = TextureManager::GetInstance().LoadTexture(emissivePaths[i], samplerConfigs[i]);
+            emissive = TextureManager::GetInstance().Load(emissivePaths[i]);
         }
 
         m_meshInstances.emplace_back(
-            MeshManager::GetInstance().LoadMesh(meshPaths[index]),
+            MeshManager::GetInstance().Load(meshPaths[index]),
             baseTexture,
             normalMap,
             orm,

@@ -7,3 +7,6 @@
 [submodule "External/glm"]
 	path = External/glm
 	url = https://github.com/KoS-Y1/glm.git
+[submodule "External/simdjson"]
+	path = External/simdjson
+	url = https://github.com/simdjson/simdjson.git

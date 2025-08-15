@@ -13,12 +13,12 @@
 #include <Singleton.h>
 #include <include/UI.h>
 
+#include "VulkanComputePipeline.h"
+#include "VulkanGraphicsPipeline.h"
 #include "VulkanImage.h"
 #include "VulkanMesh.h"
+#include "VulkanPrefab.h"
 #include "VulkanTexture.h"
-#include "MeshInstance.h"
-#include "VulkanGraphicsPipeline.h"
-#include "VulkanComputePipeline.h"
 
 #define MIN_SWAPCHAIN_IMG_COUNT 2
 #define MAX_SWAPCHAIN_IMG_COUNT 16
@@ -143,7 +143,7 @@ private:
     std::vector<std::shared_ptr<VulkanGraphicsPipeline>> m_graphicsPipelines;
     std::unique_ptr<VulkanGraphicsPipeline>              m_skyboxPipeline;
 
-    std::vector<MeshInstance> m_meshInstances;
+    std::vector<VulkanPrefab> m_meshInstances;
 
     VulkanTexture m_albedoTexture;
     VulkanTexture m_normalMap;

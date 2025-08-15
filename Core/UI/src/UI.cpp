@@ -5,8 +5,8 @@
 #include "imgui_impl_vulkan.h"
 #include "include/VulkanState.h"
 
-#include <include/MeshInstance.h>
 #include <include/VulkanImage.h>
+#include <include/VulkanPrefab.h>
 
 #include <include/Window.h>
 #include <include/Camera.h>
@@ -53,7 +53,7 @@ UI::UI(VkQueue queue, VkDescriptorPool descriptorPool) {
     ImGui_ImplVulkan_CreateFontsTexture();
 }
 
-void UI::TransformationWindow(MeshInstance &instance, bool &uniformScale, size_t id) {
+void UI::TransformationWindow(VulkanPrefab &instance, bool &uniformScale, size_t id) {
     float step = 0.1f;
 
     float angleStep = 1.0f;

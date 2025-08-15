@@ -3,7 +3,7 @@
 #include <vulkan/vulkan.h>
 
 enum class LightType : uint32_t;
-class MeshInstance;
+class VulkanPrefab;
 
 class UI {
 public:
@@ -13,7 +13,7 @@ public:
 
     ~UI() = default;
 
-    void TransformationWindow(MeshInstance &instance, bool &uniformScale, size_t id);
+    void TransformationWindow(VulkanPrefab &instance, bool &uniformScale, size_t id);
     void CameraWindow();
     void LightsWindow();
 

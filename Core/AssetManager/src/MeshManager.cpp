@@ -6,9 +6,9 @@
 
 #include <include/FileSystem.h>
 #include <include/MeshLoader.h>
+#include <include/ThreadPool.h>
 #include <include/VertexFormats.h>
 #include <include/VulkanState.h>
-#include <include/ThreadPool.h>
 
 VulkanMesh MeshManager::CreateResource(const std::string &key) {
     SDL_Log("Loading mesh from file %s", key.c_str());
@@ -17,16 +17,9 @@ VulkanMesh MeshManager::CreateResource(const std::string &key) {
 }
 
 void MeshManager::Init() {
-    std::vector<std::string> keys
-    {
-        "../Assets/Models/Chessboard/Chessboard.obj",
-        "../Assets/Models/Castle/Castle.obj",
-        "../Assets/Models/BoomBox/BoomBox.obj",
-    };
+    std::vector<std::string> keys = file_system::GetFilesWithExtension("../Assets/Models", ".obj");
 
-    for (const auto &key : keys) {
-        ThreadPool::GetInstance().Enqueue([this, key]() {
-            Preload(key);
-        });
+    for (const auto &key: keys) {
+        ThreadPool::GetInstance().Enqueue([this, key]() { Preload(key); });
     }
 }

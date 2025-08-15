@@ -12,7 +12,6 @@ inline void Assert(const char *expression, bool condition, const char *file, int
     }
 }
 
-#define DEBUG_ASSERT(expression) Assert(#expression, (expression), __FILE__, __LINE__)
 
 inline void VkAssert(const char *expression, VkResult result, const char *file, int line) {
     if (result != VK_SUCCESS) {
@@ -20,5 +19,17 @@ inline void VkAssert(const char *expression, VkResult result, const char *file, 
         exit(EXIT_FAILURE);
     }
 }
+
+inline void AssertLog(const char *expression, bool condition, const char *log, const char *file, int line) {
+    if (!condition) {
+        SDL_Log("Assertion failed: %s, %s(%d)", expression, file, line);
+        SDL_Log(SDL_GetError());
+        SDL_Log("%s", log);
+
+        exit(EXIT_FAILURE);
+    }
+}
+#define DEBUG_ASSERT(expression) Assert(#expression, (expression), __FILE__, __LINE__)
+#define DEBUG_ASSERT_LOG(expression, log) AssertLog(#expression, (expression), (log), __FILE__, __LINE__)
 
 #define DEBUG_VK_ASSERT(expression) VkAssert(#expression, (expression), __FILE__, __LINE__)

@@ -3,7 +3,7 @@ add_library(MyVulkan MyVulkan/include/VulkanState.h MyVulkan/src/VulkanState.cpp
         MyVulkan/include/VulkanComputePipeline.h MyVulkan/src/VulkanComputePipeline.cpp MyVulkan/include/VulkanGraphicsPipeline.h
         MyVulkan/src/VulkanGraphicsPipeline.cpp MyVulkan/include/VulkanBuffer.h MyVulkan/src/VulkanBuffer.cpp MyVulkan/include/VulkanMesh.h
         MyVulkan/src/VulkanMesh.cpp MyVulkan/include/VertexFormats.h MyVulkan/src/VertexFormats.cpp MyVulkan/include/VulkanTexture.h MyVulkan/src/VulkanTexture.cpp
-        MyVulkan/include/MeshInstance.h MyVulkan/src/MeshInstance.cpp)
+        MyVulkan/include/VulkanPrefab.h MyVulkan/src/VulkanPrefab.cpp MyVulkan/include/VulkanObject.h MyVulkan/src/VulkanObject.cpp)
 target_include_directories(MyVulkan PUBLIC MyVulkan)
 target_link_libraries(MyVulkan PUBLIC Vulkan::Vulkan Debug Util SDL3::SDL3 ShaderCompiler glm imgui UI Camera Light AssetManager Window ThreadPool)
 

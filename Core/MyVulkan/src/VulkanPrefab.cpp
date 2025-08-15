@@ -1,4 +1,4 @@
-#include "include/MeshInstance.h"
+#include "include/VulkanPrefab.h"
 
 #include <glm/gtx/euler_angles.hpp>
 
@@ -7,7 +7,7 @@
 #include <include/VulkanUtil.h>
 #include <include/VulkanState.h>
 
-MeshInstance::MeshInstance(
+VulkanPrefab::VulkanPrefab(
     const VulkanMesh                       *mesh,
     const VulkanTexture                    *baseTexture,
     const VulkanTexture                    *normalMap,
@@ -37,7 +37,7 @@ MeshInstance::MeshInstance(
     Reset();
 }
 
-MeshInstance::MeshInstance(
+VulkanPrefab::VulkanPrefab(
     const VulkanMesh                       *mesh,
     const VulkanTexture                    *baseTexture,
     const VulkanTexture                    *normalMap,
@@ -68,7 +68,7 @@ MeshInstance::MeshInstance(
     Reset();
 }
 
-MeshInstance::MeshInstance(
+VulkanPrefab::VulkanPrefab(
     const VulkanMesh                       *mesh,
     const VulkanTexture                    *baseTexture,
     const VulkanTexture                    *normalMap,
@@ -105,7 +105,7 @@ MeshInstance::MeshInstance(
     UpdateTransformation();
 }
 
-MeshInstance::MeshInstance(
+VulkanPrefab::VulkanPrefab(
     const VulkanMesh                       *mesh,
     const VulkanTexture                    *baseTexture,
     const VulkanTexture                    *normalMap,
@@ -141,7 +141,7 @@ MeshInstance::MeshInstance(
     UpdateTransformation();
 }
 
-void MeshInstance::Destroy() {
+void VulkanPrefab::Destroy() {
     if (!m_descriptorSets.empty()) {
         vkFreeDescriptorSets(VulkanState::GetInstance().GetDevice(), m_descriptorPool, m_descriptorSets.size(), m_descriptorSets.data());
     }
@@ -159,7 +159,7 @@ void MeshInstance::Destroy() {
     m_descriptorPool = VK_NULL_HANDLE;
 }
 
-void MeshInstance::Swap(MeshInstance &other) noexcept {
+void VulkanPrefab::Swap(VulkanPrefab &other) noexcept {
     m_transformation   = other.m_transformation;
     m_location         = other.m_location;
     m_scale            = other.m_scale;
@@ -181,29 +181,29 @@ void MeshInstance::Swap(MeshInstance &other) noexcept {
     std::swap(m_descriptorSets, other.m_descriptorSets);
 }
 
-void MeshInstance::SetLocation(glm::vec3 location) {
+void VulkanPrefab::SetLocation(glm::vec3 location) {
     m_location = location;
     UpdateTransformation();
 }
 
-void MeshInstance::SetScale(glm::vec3 scale) {
+void VulkanPrefab::SetScale(glm::vec3 scale) {
     m_scale = scale;
     UpdateTransformation();
 }
 
-void MeshInstance::SetRotation(glm::quat rotation) {
+void VulkanPrefab::SetRotation(glm::quat rotation) {
     m_rotation     = rotation;
     m_pitchYawRoll = glm::eulerAngles(m_rotation);
     UpdateTransformation();
 }
 
-void MeshInstance::SetRotation(glm::vec3 pitchYawRoll) {
+void VulkanPrefab::SetRotation(glm::vec3 pitchYawRoll) {
     m_pitchYawRoll = pitchYawRoll;
     m_rotation     = glm::quat_cast(glm::yawPitchRoll(m_pitchYawRoll.y, m_pitchYawRoll.x, m_pitchYawRoll.z));
     UpdateTransformation();
 }
 
-void MeshInstance::Reset() {
+void VulkanPrefab::Reset() {
     m_transformation = glm::mat4(1.0f);
     glm::vec3 skew;
     glm::vec4 perspective;
@@ -214,11 +214,11 @@ void MeshInstance::Reset() {
     UpdateTransformation();
 }
 
-void MeshInstance::UpdateTransformation() {
+void VulkanPrefab::UpdateTransformation() {
     m_transformation = glm::translate(glm::mat4(1.0f), m_location) * glm::mat4_cast(m_rotation) * glm::scale(glm::mat4(1.0f), m_scale);
 }
 
-void MeshInstance::CreateDescriptorSets() {
+void VulkanPrefab::CreateDescriptorSets() {
     // The first set of a pipeline is always the uniform camera and light, which are handled in the VulkanState class
     for (size_t i = 1; i < m_pipeline->GetDescriptorSetLayouts().size(); i++) {
         VkDescriptorSet set = CreateDescriptorSet(m_pipeline->GetDescriptorSetLayouts()[i]);
@@ -229,7 +229,7 @@ void MeshInstance::CreateDescriptorSets() {
     UpdateIBLDescriptorSet();
 }
 
-VkDescriptorSet MeshInstance::CreateDescriptorSet(const VkDescriptorSetLayout &layout) {
+VkDescriptorSet VulkanPrefab::CreateDescriptorSet(const VkDescriptorSetLayout &layout) {
     VkDescriptorSet set = VK_NULL_HANDLE;
 
     VkDescriptorSetAllocateInfo infoSet{
@@ -245,7 +245,7 @@ VkDescriptorSet MeshInstance::CreateDescriptorSet(const VkDescriptorSetLayout &l
     return set;
 }
 
-void MeshInstance::UpdatePBRDescriptorSet() {
+void VulkanPrefab::UpdatePBRDescriptorSet() {
     std::vector<VkDescriptorImageInfo> infoImage{
         {.sampler = m_baseTexture->GetSampler(),         .imageView = m_baseTexture->GetImageView(), .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL},
         {.sampler = m_normalMap->GetSampler(),           .imageView = m_normalMap->GetImageView(),   .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL},
@@ -271,7 +271,7 @@ void MeshInstance::UpdatePBRDescriptorSet() {
     vkUpdateDescriptorSets(VulkanState::GetInstance().GetDevice(), 1, &writeSet, 0, nullptr);
 }
 
-void MeshInstance::UpdateIBLDescriptorSet() {
+void VulkanPrefab::UpdateIBLDescriptorSet() {
     std::vector<VkDescriptorImageInfo> infoImage{
         {.sampler = m_brdfTexture->GetSampler(),          .imageView = m_brdfTexture->GetImageView(), .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL},
         {.sampler     = m_skyboxIrradiance->GetSampler(),
@@ -298,7 +298,7 @@ void MeshInstance::UpdateIBLDescriptorSet() {
     vkUpdateDescriptorSets(VulkanState::GetInstance().GetDevice(), 1, &writeSet, 0, nullptr);
 }
 
-void MeshInstance::BindAndDraw(VkCommandBuffer cmdBuf) const {
+void VulkanPrefab::BindAndDraw(VkCommandBuffer cmdBuf) const {
     const VkDeviceSize offset = 0;
 
     if (!m_descriptorSets.empty()) {

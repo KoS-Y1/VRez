@@ -16,13 +16,13 @@
 class VulkanTexture;
 class VulkanGraphicsPipeline;
 
-class MeshInstance {
+class VulkanPrefab {
 public:
-    MeshInstance() = default;
+    VulkanPrefab() = default;
 
-    ~MeshInstance() { Destroy(); }
+    ~VulkanPrefab() { Destroy(); }
 
-    MeshInstance(
+    VulkanPrefab(
         const VulkanMesh                       *mesh,
         const VulkanTexture                    *baseTexture,
         const VulkanTexture                    *normalMap,
@@ -35,7 +35,7 @@ public:
         VkDescriptorPool                        descriptorPool
     );
 
-    MeshInstance(
+    VulkanPrefab(
         const VulkanMesh                       *mesh,
         const VulkanTexture                    *baseTexture,
         const VulkanTexture                    *normalMap,
@@ -49,7 +49,7 @@ public:
         glm::vec3                               location
     );
 
-    MeshInstance(
+    VulkanPrefab(
         const VulkanMesh                       *mesh,
         const VulkanTexture                    *baseTexture,
         const VulkanTexture                    *normalMap,
@@ -65,7 +65,7 @@ public:
         glm::vec3                               scale
     );
 
-    MeshInstance(
+    VulkanPrefab(
         const VulkanMesh                       *mesh,
         const VulkanTexture                    *baseTexture,
         const VulkanTexture                    *normalMap,
@@ -82,13 +82,13 @@ public:
     );
 
 
-    MeshInstance(const MeshInstance &) = delete;
+    VulkanPrefab(const VulkanPrefab &) = delete;
 
-    MeshInstance &operator=(const MeshInstance &) = delete;
+    VulkanPrefab &operator=(const VulkanPrefab &) = delete;
 
-    MeshInstance(MeshInstance &&other) { Swap(other); }
+    VulkanPrefab(VulkanPrefab &&other) { Swap(other); }
 
-    MeshInstance &operator=(MeshInstance &&other) noexcept {
+    VulkanPrefab &operator=(VulkanPrefab &&other) noexcept {
         if (this != &other) {
             Destroy();
             Swap(other);
@@ -98,7 +98,7 @@ public:
 
     void Destroy();
 
-    void Swap(MeshInstance &other) noexcept;
+    void Swap(VulkanPrefab &other) noexcept;
 
     void SetLocation(glm::vec3 location);
 
