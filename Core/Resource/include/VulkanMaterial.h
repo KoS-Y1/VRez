@@ -17,7 +17,7 @@ public:
         , m_normal(normal)
         , m_orm(orm)
         , m_emissive(emissive) {
-        CreateDescriptorSets(layout);
+        CreateDescriptorSet(layout);
     }
 
     VulkanMaterial() = delete;
@@ -41,5 +41,5 @@ private:
 
     VkDescriptorSet m_descriptorSet = VK_NULL_HANDLE;
 
-    void CreateDescriptorSets(const VkDescriptorSetLayout layout);
+    void CreateDescriptorSet(const VkDescriptorSetLayout layout);
 };

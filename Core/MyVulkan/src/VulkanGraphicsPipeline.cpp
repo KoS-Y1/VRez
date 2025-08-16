@@ -6,16 +6,14 @@
 #include <include/ShaderCompiler.h>
 
 VulkanGraphicsPipeline::VulkanGraphicsPipeline( const std::vector<std::string> &paths, const GraphicsPipelineConfig &config) {
-    m_config = config;
-
     ShaderCompiler shaderCompiler(paths);
     CreateDescriptorSetLayout(shaderCompiler.GetDescriptorSetLayoutInfos());
     m_pushConstantRanges = shaderCompiler.GetPushConstantRanges();
     CreateLayout();
-    CreatePipeline(shaderCompiler);
+    CreatePipeline(shaderCompiler, config);
 }
 
-void VulkanGraphicsPipeline::CreatePipeline(const ShaderCompiler &shaderCompiler) {
+void VulkanGraphicsPipeline::CreatePipeline(const ShaderCompiler &shaderCompiler, const GraphicsPipelineConfig &config) {
     // Create all shader modules first
     CreateShaderModules(shaderCompiler);
 
@@ -27,10 +25,10 @@ void VulkanGraphicsPipeline::CreatePipeline(const ShaderCompiler &shaderCompiler
         .sType                   = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO,
         .pNext                   = nullptr,
         .viewMask                = 0,
-        .colorAttachmentCount    = static_cast<uint32_t>(m_config.colorFormats.size()),
-        .pColorAttachmentFormats = m_config.colorFormats.data(),
-        .depthAttachmentFormat   = m_config.depthFormat,
-        .stencilAttachmentFormat = m_config.stencilFormat,
+        .colorAttachmentCount    = static_cast<uint32_t>(config.colorFormats.size()),
+        .pColorAttachmentFormats = config.colorFormats.data(),
+        .depthAttachmentFormat   = config.depthFormat,
+        .stencilAttachmentFormat = config.stencilFormat,
     };
 
 
@@ -38,7 +36,7 @@ void VulkanGraphicsPipeline::CreatePipeline(const ShaderCompiler &shaderCompiler
         .sType                  = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
         .pNext                  = nullptr,
         .flags                  = 0,
-        .topology               = m_config.topology,
+        .topology               = config.topology,
         .primitiveRestartEnable = VK_FALSE
     };
 
@@ -60,9 +58,9 @@ void VulkanGraphicsPipeline::CreatePipeline(const ShaderCompiler &shaderCompiler
         .flags                   = 0,
         .depthClampEnable        = VK_FALSE,
         .rasterizerDiscardEnable = VK_FALSE,
-        .polygonMode             = m_config.polygonMode,
-        .cullMode                = m_config.cullMode,
-        .frontFace               = m_config.frontFace,
+        .polygonMode             = config.polygonMode,
+        .cullMode                = config.cullMode,
+        .frontFace               = config.frontFace,
         .depthBiasEnable         = VK_FALSE,
         .depthBiasConstantFactor = 0.0f,
         .depthBiasClamp          = 0.0f,
@@ -74,7 +72,7 @@ void VulkanGraphicsPipeline::CreatePipeline(const ShaderCompiler &shaderCompiler
         .sType                 = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
         .pNext                 = nullptr,
         .flags                 = 0,
-        .rasterizationSamples  = m_config.rasterizationSamples,
+        .rasterizationSamples  = config.rasterizationSamples,
         .sampleShadingEnable   = VK_TRUE,
         .minSampleShading      = 0.5f,
         .pSampleMask           = nullptr,
@@ -86,9 +84,9 @@ void VulkanGraphicsPipeline::CreatePipeline(const ShaderCompiler &shaderCompiler
         .sType                 = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
         .pNext                 = nullptr,
         .flags                 = 0,
-        .depthTestEnable       = m_config.depthTestEnable,
-        .depthWriteEnable      = m_config.depthWriteEnable,
-        .depthCompareOp        = m_config.depthCompareOp,
+        .depthTestEnable       = config.depthTestEnable,
+        .depthWriteEnable      = config.depthWriteEnable,
+        .depthCompareOp        = config.depthCompareOp,
         .depthBoundsTestEnable = VK_FALSE,
         .stencilTestEnable     = VK_FALSE,
         .front                 = {},
@@ -136,7 +134,7 @@ void VulkanGraphicsPipeline::CreatePipeline(const ShaderCompiler &shaderCompiler
         .flags               = 0,
         .stageCount          = static_cast<uint32_t>(shaderStages.size()),
         .pStages             = shaderStages.data(),
-        .pVertexInputState   = m_config.infoVertex,
+        .pVertexInputState   = config.infoVertex,
         .pInputAssemblyState = &infoInputAssembly,
         .pTessellationState  = nullptr,
         .pViewportState      = &infoViewport,

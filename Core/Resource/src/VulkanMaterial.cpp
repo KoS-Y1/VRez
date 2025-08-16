@@ -19,7 +19,7 @@ void VulkanMaterial::Bind(VkCommandBuffer cmdBuf, VkPipelineLayout layout, uint3
     vkCmdBindDescriptorSets(cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, firstSet, 1, &m_descriptorSet, 0, nullptr);
 }
 
-void VulkanMaterial::CreateDescriptorSets(const VkDescriptorSetLayout layout) {
+void VulkanMaterial::CreateDescriptorSet(const VkDescriptorSetLayout layout) {
     VkDescriptorSetAllocateInfo infoSet{
         .sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
         .pNext              = nullptr,

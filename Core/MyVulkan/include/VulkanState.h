@@ -3,18 +3,17 @@
 #include <deque>
 #include <functional>
 #include <memory>
-#include <vector>
-#include <string>
 #include <mutex>
+#include <string>
+#include <vector>
 
 #include <glm/glm.hpp>
 
 #include <Debug.h>
 #include <Singleton.h>
 #include <include/UI.h>
-#include <include/VulkanMesh.h>
 #include <include/VulkanPrefab.h>
-#include <include/VulkanTexture.h>
+#include <include/VulkanSkybox.h>
 
 #include "VulkanComputePipeline.h"
 #include "VulkanGraphicsPipeline.h"
@@ -25,20 +24,6 @@
 #define MAX_SWAPCHAIN_IMG_COUNT 16
 
 #define POINT_ONE_SECOND 100000000u
-
-
-struct Skybox {
-    const VulkanTexture *skybox;
-    const VulkanTexture *specular;
-    const VulkanTexture *irradiance;
-    const VulkanTexture *brdf;
-    VulkanMesh           mesh;
-
-    void Destroy() {
-        skybox = nullptr;
-        mesh.Destroy();
-    }
-};
 
 struct VulkanSwapchain {
     VkSwapchainKHR swapchain                       = VK_NULL_HANDLE;
@@ -76,19 +61,19 @@ struct UIQueue {
     std::vector<bool> instanceUniformScales;
 };
 
-class VulkanState : public Singleton<VulkanState>{
+class VulkanState : public Singleton<VulkanState> {
 public:
     void Init();
 
     void Destroy();
 
-    [[nodiscard]] const VkPhysicalDevice  &GetPhysicalDevice() const { return m_physicalDevice; };
+    [[nodiscard]] const VkPhysicalDevice &GetPhysicalDevice() const { return m_physicalDevice; };
 
-    [[nodiscard]] const VkDevice  &GetDevice() const { return m_device; };
+    [[nodiscard]] const VkDevice &GetDevice() const { return m_device; };
 
-    [[nodiscard]] const VkInstance  &GetVkInstance() const { return m_instance; };
+    [[nodiscard]] const VkInstance &GetVkInstance() const { return m_instance; };
 
-    [[nondiscard]] const VkDescriptorPool &GetDescriptorPool() const { return m_descriptorPool;}
+    [[nodiscard]] const VkDescriptorPool &GetDescriptorPool() const { return m_descriptorPool; }
 
     void WaitIdle();
 
@@ -134,9 +119,7 @@ private:
     VkDescriptorPool m_descriptorPool      = VK_NULL_HANDLE;
     VkDescriptorPool m_imguiDescriptorPool = VK_NULL_HANDLE;
 
-    VkDescriptorSet m_uniformDescriptorSet     = VK_NULL_HANDLE;
-    VkDescriptorSet m_uniformViewDescriptorSet = VK_NULL_HANDLE;
-    VkDescriptorSet m_skyboxDescriptorSet      = VK_NULL_HANDLE;
+    VkDescriptorSet m_uniformDescriptorSet = VK_NULL_HANDLE;
 
     VulkanImage m_drawImage;
     VulkanImage m_depthImage;
@@ -144,13 +127,14 @@ private:
 
     std::vector<std::shared_ptr<VulkanComputePipeline>>  m_computePipelines;
     std::vector<std::shared_ptr<VulkanGraphicsPipeline>> m_graphicsPipelines;
-    std::unique_ptr<VulkanGraphicsPipeline>              m_skyboxPipeline;
+    VulkanGraphicsPipeline                               m_skyboxPipeline;
 
     std::vector<VulkanPrefab> m_meshInstances;
 
+    VulkanSkybox m_skybox;
+
     VkSampleCountFlagBits m_sampleCount = VK_SAMPLE_COUNT_1_BIT;
 
-    Skybox m_skybox;
 
     DeletionQueue m_deletionQueue;
     UIQueue       m_uiQueue;
@@ -187,7 +171,6 @@ private:
 
     void CreatePipelines();
 
-
     void CreateSkybox();
 
     void CreateRenderObjects();
@@ -207,8 +190,6 @@ private:
     void QueuePresent(VkSemaphore waitSemaphore, uint32_t imageIndex);
 
     void Draw();
-
-    void DrawSkybox();
 
     void DrawGeometry();
 

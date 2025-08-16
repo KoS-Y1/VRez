@@ -30,12 +30,10 @@ struct GraphicsPipelineConfig {
 
 class VulkanGraphicsPipeline : public VulkanPipeline {
 public:
-    VulkanGraphicsPipeline() = delete;
+    VulkanGraphicsPipeline() = default;
 
     VulkanGraphicsPipeline(const std::vector<std::string> &paths, const GraphicsPipelineConfig &config);
 
 private:
-    GraphicsPipelineConfig m_config;
-
-    void CreatePipeline(const ShaderCompiler &shaderCompiler);
+    void CreatePipeline(const ShaderCompiler &shaderCompiler, const GraphicsPipelineConfig &config);
 };

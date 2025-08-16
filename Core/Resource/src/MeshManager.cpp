@@ -3,6 +3,7 @@
 #include <vector>
 
 #include <SDL3/SDL.h>
+#include <glm/glm.hpp>
 
 #include <include/FileSystem.h>
 #include <include/MeshLoader.h>
@@ -21,5 +22,35 @@ void MeshManager::Init() {
 
     for (const auto &key: keys) {
         ThreadPool::GetInstance().Enqueue([this, key]() { Preload(key); });
+    }
+
+    ThreadPool::GetInstance().Enqueue([this]() {
+        CreateSkyboxMesh();
+    });
+}
+
+void MeshManager::CreateSkyboxMesh() {
+    std::vector<VertexP> vertices{
+        VertexP(glm::vec3(-1.0f, 1.0f, 1.0f)),
+        VertexP(glm::vec3(1.0f, 1.0f, 1.0f)),
+        VertexP(glm::vec3(-1.0f, -1.0f, 1.0f)),
+        VertexP(glm::vec3(1.0f, -1.0f, 1.0f)),
+        VertexP(glm::vec3(1.0f, -1.0f, -1.0f)),
+        VertexP(glm::vec3(1.0f, 1.0f, 1.0f)),
+        VertexP(glm::vec3(1.0f, 1.0f, -1.0f)),
+        VertexP(glm::vec3(-1.0f, 1.0f, 1.0f)),
+        VertexP(glm::vec3(-1.0f, 1.0f, -1.0f)),
+        VertexP(glm::vec3(-1.0f, -1.0f, 1.0f)),
+        VertexP(glm::vec3(-1.0f, -1.0f, -1.0f)),
+        VertexP(glm::vec3(1.0f, -1.0f, -1.0f)),
+        VertexP(glm::vec3(-1.0f, 1.0f, -1.0f)),
+        VertexP(glm::vec3(1.0f, 1.0f, -1.)),
+    };
+
+    VulkanMesh mesh = VulkanMesh("skybox", vertices.size(), sizeof(VertexP), vertices.data());
+
+    {
+        std::scoped_lock<std::mutex> lk(m_cacheMutex);
+        m_cache.emplace("skybox", std::move(mesh));
     }
 }

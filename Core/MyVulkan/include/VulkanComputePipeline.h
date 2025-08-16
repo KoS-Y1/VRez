@@ -5,7 +5,7 @@
 
 class VulkanComputePipeline : public VulkanPipeline {
 public:
-    VulkanComputePipeline() = delete;
+    VulkanComputePipeline() = default;
 
     VulkanComputePipeline(const std::vector<std::string> &paths);
 

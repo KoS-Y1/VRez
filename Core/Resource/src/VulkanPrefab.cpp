@@ -6,6 +6,7 @@
 #include <include/VulkanMesh.h>
 #include <include/VulkanState.h>
 #include <include/VulkanUtil.h>
+#include <include/VulkanTexture.h>
 
 VulkanPrefab::VulkanPrefab(
     const VulkanMesh                       *mesh,

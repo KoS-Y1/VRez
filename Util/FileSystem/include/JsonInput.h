@@ -1,12 +1,14 @@
 #pragma once
 #include <string>
 
-// TODO: adjust it for deferred rendering
+namespace file_system {
 struct MaterialConfig {
     std::string albedo;
     std::string normal;
     std::string orm;
     std::string emissive;
+
+    explicit MaterialConfig(const std::string &jsonFile);
 };
 
 struct SkyboxConfig {
@@ -14,9 +16,14 @@ struct SkyboxConfig {
     std::string specular;
     std::string irradiance;
     std::string brdf;
+
+    explicit SkyboxConfig(const std::string &jsonFile);
 };
 
 struct ObjectConfig {
-    std::string material;
     std::string mesh;
+    std::string material;
+
+    explicit ObjectConfig(const std::string &jsonFile);
 };
+} // namespace file_system

@@ -13,7 +13,6 @@
 #include <include/LightManager.h>
 #include <include/MeshManager.h>
 #include <include/TextureManager.h>
-#include <include/ThreadPool.h>
 #include <include/VertexFormats.h>
 #include <include/VulkanComputePipeline.h>
 #include <include/VulkanGraphicsPipeline.h>
@@ -31,7 +30,7 @@ void VulkanState::Init() {
     CreateCommandPool();
     CreateCommandBuffer();
     CreateSurface(Window::GetInstance().GetSDLWindow());
-    CreateSwapchain(Window::GetInstance().GetWidth(),  Window::GetInstance().GetHeight());
+    CreateSwapchain(Window::GetInstance().GetWidth(), Window::GetInstance().GetHeight());
 
     m_renderFence      = CreateFence(VK_FENCE_CREATE_SIGNALED_BIT);
     m_immediateFence   = CreateFence(0);
@@ -59,8 +58,6 @@ void VulkanState::Destroy() {
     WaitIdle();
 
     vkFreeDescriptorSets(m_device, m_descriptorPool, 1, &m_uniformDescriptorSet);
-    vkFreeDescriptorSets(m_device, m_descriptorPool, 1, &m_uniformViewDescriptorSet);
-    vkFreeDescriptorSets(m_device, m_descriptorPool, 1, &m_skyboxDescriptorSet);
 
     LightManager::GetInstance().Destroy();
     Camera::GetInstance().Destroy();
@@ -73,7 +70,7 @@ void VulkanState::Destroy() {
         m_graphicsPipelines[i]->Destroy();
     }
 
-    m_skyboxPipeline->Destroy();
+    m_skyboxPipeline.Destroy();
 
     m_drawImage.Destroy();
     m_depthImage.Destroy();
@@ -89,7 +86,6 @@ void VulkanState::Destroy() {
     m_meshInstances.clear();
 
     m_skybox.Destroy();
-
 
     MeshManager::GetInstance().Destroy();
     TextureManager::GetInstance().Destroy();
@@ -581,53 +577,25 @@ void VulkanState::CreatePipelines() {
     skyboxConfig.depthCompareOp       = VK_COMPARE_OP_LESS_OR_EQUAL;
     skyboxConfig.rasterizationSamples = m_sampleCount;
     skyboxConfig.cullMode             = VK_CULL_MODE_NONE;
-    m_skyboxPipeline                  = std::make_unique<VulkanGraphicsPipeline>(skyboxPaths, skyboxConfig);
+
+    VulkanGraphicsPipeline skyboxPipeline(skyboxPaths, skyboxConfig);
+    m_skyboxPipeline = std::move(skyboxPipeline);
 }
 
 void VulkanState::CreateSkybox() {
-    std::vector<VertexP> vertices{
-        VertexP(glm::vec3(-1.0f, 1.0f, 1.0f)),
-        VertexP(glm::vec3(1.0f, 1.0f, 1.0f)),
-        VertexP(glm::vec3(-1.0f, -1.0f, 1.0f)),
-        VertexP(glm::vec3(1.0f, -1.0f, 1.0f)),
-        VertexP(glm::vec3(1.0f, -1.0f, -1.0f)),
-        VertexP(glm::vec3(1.0f, 1.0f, 1.0f)),
-        VertexP(glm::vec3(1.0f, 1.0f, -1.0f)),
-        VertexP(glm::vec3(-1.0f, 1.0f, 1.0f)),
-        VertexP(glm::vec3(-1.0f, 1.0f, -1.0f)),
-        VertexP(glm::vec3(-1.0f, -1.0f, 1.0f)),
-        VertexP(glm::vec3(-1.0f, -1.0f, -1.0f)),
-        VertexP(glm::vec3(1.0f, -1.0f, -1.0f)),
-        VertexP(glm::vec3(-1.0f, 1.0f, -1.0f)),
-        VertexP(glm::vec3(1.0f, 1.0f, -1.)),
-    };
-
-    m_skybox.mesh = VulkanMesh("skybox", vertices.size(), sizeof(VertexP), vertices.data());
-
-    std::string skyboxPath     = "../Assets/Skybox/Skybox.png";
-    std::string specularPath   = "../Assets/Skybox/specular.png";
-    std::string irradiancePath = "../Assets/Skybox/irradiance.png";
-    std::string brdfPath       = "../Assets/Skybox/brdf_lut.png";
-
-    m_skybox.skybox     = TextureManager::GetInstance().Load(skyboxPath);
-    m_skybox.specular   = TextureManager::GetInstance().Load(specularPath);
-    m_skybox.irradiance = TextureManager::GetInstance().Load(irradiancePath);
-    m_skybox.brdf       = TextureManager::GetInstance().Load(brdfPath);
+    VulkanSkybox skybox("../Assets/Skybox/skybox.json", m_skyboxPipeline.GetDescriptorSetLayouts());
+    m_skybox = std::move(skybox);
 };
 
 void VulkanState::CreateRenderObjects() {
-    // Lights
     LightManager::GetInstance().Init(m_physicalDevice, m_device);
 
-    // Camera
     Camera::GetInstance().Init();
 
     CreateSkybox();
 
     // Descriptor sets
-    m_uniformDescriptorSet     = CreateDescriptorSet(m_graphicsPipelines[0]->GetDescriptorSetLayouts()[0]);
-    m_uniformViewDescriptorSet = CreateDescriptorSet(m_skyboxPipeline->GetDescriptorSetLayouts()[0]);
-    m_skyboxDescriptorSet      = CreateDescriptorSet(m_skyboxPipeline->GetDescriptorSetLayouts()[1]);
+    m_uniformDescriptorSet = CreateDescriptorSet(m_graphicsPipelines[0]->GetDescriptorSetLayouts()[0]);
 
     OneTimeUpdateDescriptorSets();
 
@@ -723,43 +691,7 @@ void VulkanState::OneTimeUpdateDescriptorSets() {
         .pTexelBufferView = nullptr,
     };
 
-    VkWriteDescriptorSet writeSetView{
-        .sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-        .pNext            = nullptr,
-        .dstSet           = m_uniformViewDescriptorSet,
-        .dstBinding       = 0,
-        .dstArrayElement  = 0,
-        .descriptorCount  = 1,
-        .descriptorType   = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-        .pImageInfo       = nullptr,
-        .pBufferInfo      = infoBuffers.data(),
-        .pTexelBufferView = nullptr,
-    };
-
-    std::vector<VkDescriptorImageInfo> imageInfo{
-        {
-         .sampler     = m_skybox.skybox->GetSampler(),
-         .imageView   = m_skybox.skybox->GetImageView(),
-         .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-         }
-    };
-
-    VkWriteDescriptorSet writeSetSkybox{
-        .sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-        .pNext            = nullptr,
-        .dstSet           = m_skyboxDescriptorSet,
-        .dstBinding       = 0,
-        .dstArrayElement  = 0,
-        .descriptorCount  = static_cast<uint32_t>(imageInfo.size()),
-        .descriptorType   = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-        .pImageInfo       = imageInfo.data(),
-        .pBufferInfo      = nullptr,
-        .pTexelBufferView = nullptr,
-    };
-
     vkUpdateDescriptorSets(m_device, 1, &writeSet, 0, nullptr);
-    vkUpdateDescriptorSets(m_device, 1, &writeSetView, 0, nullptr);
-    vkUpdateDescriptorSets(m_device, 1, &writeSetSkybox, 0, nullptr);
 }
 
 void VulkanState::DrawImgui(VkImageView view) {
@@ -839,22 +771,11 @@ void VulkanState::Draw() {
     vkCmdSetViewport(m_cmdBuf, 0, 1, &viewport);
     vkCmdSetScissor(m_cmdBuf, 0, 1, &renderAreas);
 
-    DrawSkybox();
+    m_skybox.BindAndDraw(m_cmdBuf, m_skyboxPipeline);
 
     DrawGeometry();
 
     vkCmdEndRendering(m_cmdBuf);
-}
-
-void VulkanState::DrawSkybox() {
-    vkCmdBindPipeline(m_cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, m_skyboxPipeline->GetPipeline());
-
-    vkCmdBindDescriptorSets(m_cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, m_skyboxPipeline->GetLayout(), 0, 1, &m_uniformViewDescriptorSet, 0, nullptr);
-    vkCmdBindDescriptorSets(m_cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, m_skyboxPipeline->GetLayout(), 1, 1, &m_skyboxDescriptorSet, 0, nullptr);
-
-    const VkDeviceSize offset = 0;
-    vkCmdBindVertexBuffers(m_cmdBuf, 0, 1, &m_skybox.mesh.GetVertexBuffer(), &offset);
-    vkCmdDraw(m_cmdBuf, m_skybox.mesh.GetVertexCount(), 1, 0, 0);
 }
 
 void VulkanState::DrawGeometry() {
@@ -943,9 +864,9 @@ void VulkanState::LoadMeshes() {
             normalMap,
             orm,
             emissive,
-            m_skybox.brdf,
-            m_skybox.specular,
-            m_skybox.irradiance,
+            m_skybox.GetBRDF(),
+            m_skybox.GetSpecular(),
+            m_skybox.GetIrradiance(),
             m_graphicsPipelines[0],
             locations[index]
         );

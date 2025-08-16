@@ -12,7 +12,7 @@ using Key = std::string;
 template<class Derived, class Resource>
 class ResourceManager {
 public:
-        virtual Resource *Load(const Key &key) {
+    Resource *Load(const Key &key) {
             auto pair = m_cache.find(key);
 
             DEBUG_ASSERT_LOG(pair != m_cache.end(), (key + " does not exist").c_str());

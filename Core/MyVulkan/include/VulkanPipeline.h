@@ -22,11 +22,20 @@ public:
 
     VulkanPipeline(const VulkanPipeline &) = delete;
 
-    VulkanPipeline(VulkanPipeline &&) = delete;
-
     VulkanPipeline &operator=(const VulkanPipeline &) = delete;
 
-    VulkanPipeline &operator=(VulkanPipeline &&) = delete;
+    VulkanPipeline(VulkanPipeline &&other) { Swap(other); }
+
+    VulkanPipeline &operator=(VulkanPipeline &&other) {
+        if (this != &other) {
+            Destroy();
+            Swap(other);
+        }
+
+        return *this;
+    }
+
+    void Swap(VulkanPipeline &other);
 
     void Destroy();
 

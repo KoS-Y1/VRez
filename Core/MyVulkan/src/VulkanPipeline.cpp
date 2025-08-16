@@ -6,6 +6,15 @@
 #include <include/VulkanUtil.h>
 #include <include/VulkanState.h>
 
+void VulkanPipeline::Swap(VulkanPipeline &other) {
+    std::swap(m_layout, other.m_layout);
+    std::swap(m_pipeline, other.m_pipeline);
+    std::swap(m_shaderModules, other.m_shaderModules);
+    std::swap(m_descriptorSetLayouts, other.m_descriptorSetLayouts);
+    std::swap(m_pushConstantRanges, other.m_pushConstantRanges);
+}
+
+
 void VulkanPipeline::Destroy() {
     if (m_pipeline != VK_NULL_HANDLE) {
         for (auto &shaderModule: m_shaderModules) {
