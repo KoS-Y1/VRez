@@ -5,7 +5,6 @@
 #include <Debug.h>
 
 #include <include/VulkanState.h>
-#include <include/ShaderCompiler.h>
 
 void VulkanComputePipeline::CreatePipeline() {
     VkComputePipelineCreateInfo infoCompute{

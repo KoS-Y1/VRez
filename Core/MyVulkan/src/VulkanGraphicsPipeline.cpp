@@ -3,7 +3,6 @@
 #include <Debug.h>
 
 #include <include/VulkanState.h>
-#include <include/ShaderCompiler.h>
 
 
 void VulkanGraphicsPipeline::CreatePipeline(const GraphicsPipelineOption &option) {

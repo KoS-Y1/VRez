@@ -16,9 +16,11 @@
 #include <include/VulkanSkybox.h>
 
 #include "VulkanImage.h"
+#include "VulkanGraphicsPipeline.h"
+#include "VulkanComputePipeline.h"
 
-class VulkanGraphicsPipeline;
-class VulkanComputePipeline;
+// class VulkanGraphicsPipeline;
+// class VulkanComputePipeline;
 
 #define MIN_SWAPCHAIN_IMG_COUNT 2
 #define MAX_SWAPCHAIN_IMG_COUNT 16
