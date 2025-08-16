@@ -7,19 +7,6 @@
 #include <include/VulkanState.h>
 #include <include/ShaderCompiler.h>
 
-VulkanComputePipeline::VulkanComputePipeline(const std::vector<std::string> &paths) {
-
-    if (paths.size() > 1) {
-        SDL_Log("Warning: passing more than one shaders to computer shader! Program is ignoring the rest!");
-    }
-
-    ShaderCompiler shaderCompiler(paths);
-    CreateDescriptorSetLayout(shaderCompiler.GetDescriptorSetLayoutInfos());
-    m_pushConstantRanges = shaderCompiler.GetPushConstantRanges();
-    CreateLayout();
-    CreatePipeline(shaderCompiler);
-}
-
 void VulkanComputePipeline::CreatePipeline(const ShaderCompiler &shaderCompiler) {
     CreateShaderModules(shaderCompiler);
 

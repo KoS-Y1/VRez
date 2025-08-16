@@ -3,6 +3,15 @@
 #include <include/VulkanState.h>
 #include <include/VulkanTexture.h>
 
+void VulkanMaterial::Swap(VulkanMaterial &other) noexcept {
+    std::swap(m_albedo, other.m_albedo);
+    std::swap(m_normal, other.m_normal);
+    std::swap(m_orm, other.m_orm);
+    std::swap(m_emissive, other.m_emissive);
+    std::swap(m_descriptorSet, other.m_descriptorSet);
+}
+
+
 void VulkanMaterial::Destroy() {
     if (m_descriptorSet != VK_NULL_HANDLE) {
         vkFreeDescriptorSets(VulkanState::GetInstance().GetDevice(), VulkanState::GetInstance().GetDescriptorPool(), 1, &m_descriptorSet);

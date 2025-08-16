@@ -22,8 +22,9 @@ protected:
 
     VulkanMesh CreateResource(const std::string &key);
 
-    void CreateSkyboxMesh();
 
 private:
+    void CreateSkyboxMesh();
+
     friend class ResourceManager<MeshManager, VulkanMesh>;
 };

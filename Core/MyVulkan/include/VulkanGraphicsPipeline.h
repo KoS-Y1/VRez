@@ -5,7 +5,7 @@
 
 #include <string>
 
-struct GraphicsPipelineConfig {
+struct GraphicsPipelineOption {
     // TODO: add more options in the future if needed
     VkPrimitiveTopology topology    = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
     VkPolygonMode       polygonMode = VK_POLYGON_MODE_FILL;
@@ -32,8 +32,14 @@ class VulkanGraphicsPipeline : public VulkanPipeline {
 public:
     VulkanGraphicsPipeline() = default;
 
-    VulkanGraphicsPipeline(const std::vector<std::string> &paths, const GraphicsPipelineConfig &config);
+    VulkanGraphicsPipeline(const std::vector<std::string> &paths, const GraphicsPipelineOption &option)
+        : VulkanPipeline(paths) {
+        CreatePipeline(option);
+    }
+
+protected:
+    void CreatePipeline(const GraphicsPipelineOption &option);
 
 private:
-    void CreatePipeline(const ShaderCompiler &shaderCompiler, const GraphicsPipelineConfig &config);
+    friend class VulkanPipeline;
 };

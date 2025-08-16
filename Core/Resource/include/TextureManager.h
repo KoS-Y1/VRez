@@ -25,8 +25,8 @@ protected:
 
     VulkanTexture CreateResource(const std::string &key, const SamplerConfig &config);
 
-    void CreateDefaultTexture(const std::string &key, const SamplerConfig &config, glm::vec4 color, VkFormat format);
 
 private:
+    void CreateDefaultTexture(const std::string &key, const SamplerConfig &config, glm::vec4 color, VkFormat format);
     friend class ResourceManager<TextureManager, VulkanTexture>;
 };

@@ -70,7 +70,7 @@ void VulkanState::Destroy() {
         m_graphicsPipelines[i]->Destroy();
     }
 
-    m_skyboxPipeline.Destroy();
+    m_skyboxPipeline->Destroy();
 
     m_drawImage.Destroy();
     m_depthImage.Destroy();
@@ -546,44 +546,43 @@ void VulkanState::Present() {
 }
 
 void VulkanState::CreatePipelines() {
-    std::vector<std::pair<std::vector<std::string>, PipelineType>> shaderSources{
-        {{"../Assets/Shaders/BasicShader/basic.vert", "../Assets/Shaders/BasicShader/basic.frag"}, PipelineType::Graphics}
+    std::vector<std::vector<std::string>> shaderSources{
+        {{"../Assets/Shaders/BasicShader/basic.vert", "../Assets/Shaders/BasicShader/basic.frag"}}
     };
 
-    GraphicsPipelineConfig graphicsConfig;
-    graphicsConfig.infoVertex           = VertexPNTT::GetVertexInputStateCreateInfo();
-    graphicsConfig.colorFormats         = std::vector<VkFormat>{COLOR_IMG_FORMAT};
-    graphicsConfig.depthTestEnable      = VK_TRUE;
-    graphicsConfig.depthWriteEnable     = VK_TRUE;
-    graphicsConfig.depthFormat          = DEPTH_IMG_FORMAT;
-    graphicsConfig.depthCompareOp       = VK_COMPARE_OP_LESS_OR_EQUAL;
-    graphicsConfig.rasterizationSamples = m_sampleCount;
+    GraphicsPipelineOption graphicsOption;
+    graphicsOption.infoVertex           = VertexPNTT::GetVertexInputStateCreateInfo();
+    graphicsOption.colorFormats         = std::vector<VkFormat>{COLOR_IMG_FORMAT};
+    graphicsOption.depthTestEnable      = VK_TRUE;
+    graphicsOption.depthWriteEnable     = VK_TRUE;
+    graphicsOption.depthFormat          = DEPTH_IMG_FORMAT;
+    graphicsOption.depthCompareOp       = VK_COMPARE_OP_LESS_OR_EQUAL;
+    graphicsOption.rasterizationSamples = m_sampleCount;
 
     for (const auto &source: shaderSources) {
-        m_graphicsPipelines.emplace_back(std::make_shared<VulkanGraphicsPipeline>(source.first, graphicsConfig));
+        m_graphicsPipelines.emplace_back(std::make_shared<VulkanGraphicsPipeline>(source, graphicsOption));
     }
 
     std::vector<std::string> skyboxPaths{
         "../Assets/Shaders/Skybox/Skybox.vert",
         "../Assets/Shaders/Skybox/Skybox.frag",
     };
-    GraphicsPipelineConfig skyboxConfig;
-    skyboxConfig.infoVertex           = VertexP::GetVertexInputStateCreateInfo();
-    skyboxConfig.colorFormats         = std::vector<VkFormat>{COLOR_IMG_FORMAT};
-    skyboxConfig.topology             = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
-    skyboxConfig.depthTestEnable      = VK_TRUE;
-    skyboxConfig.depthWriteEnable     = VK_TRUE;
-    skyboxConfig.depthFormat          = DEPTH_IMG_FORMAT;
-    skyboxConfig.depthCompareOp       = VK_COMPARE_OP_LESS_OR_EQUAL;
-    skyboxConfig.rasterizationSamples = m_sampleCount;
-    skyboxConfig.cullMode             = VK_CULL_MODE_NONE;
+    GraphicsPipelineOption skyboxOption;
+    skyboxOption.infoVertex           = VertexP::GetVertexInputStateCreateInfo();
+    skyboxOption.colorFormats         = std::vector<VkFormat>{COLOR_IMG_FORMAT};
+    skyboxOption.topology             = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
+    skyboxOption.depthTestEnable      = VK_TRUE;
+    skyboxOption.depthWriteEnable     = VK_TRUE;
+    skyboxOption.depthFormat          = DEPTH_IMG_FORMAT;
+    skyboxOption.depthCompareOp       = VK_COMPARE_OP_LESS_OR_EQUAL;
+    skyboxOption.rasterizationSamples = m_sampleCount;
+    skyboxOption.cullMode             = VK_CULL_MODE_NONE;
 
-    VulkanGraphicsPipeline skyboxPipeline(skyboxPaths, skyboxConfig);
-    m_skyboxPipeline = std::move(skyboxPipeline);
+    m_skyboxPipeline = std::make_unique<VulkanGraphicsPipeline>(skyboxPaths, skyboxOption);
 }
 
 void VulkanState::CreateSkybox() {
-    VulkanSkybox skybox("../Assets/Skybox/skybox.json", m_skyboxPipeline.GetDescriptorSetLayouts());
+    VulkanSkybox skybox("../Assets/Skybox/skybox.json", m_skyboxPipeline->GetDescriptorSetLayouts());
     m_skybox = std::move(skybox);
 };
 
@@ -771,7 +770,7 @@ void VulkanState::Draw() {
     vkCmdSetViewport(m_cmdBuf, 0, 1, &viewport);
     vkCmdSetScissor(m_cmdBuf, 0, 1, &renderAreas);
 
-    m_skybox.BindAndDraw(m_cmdBuf, m_skyboxPipeline);
+    m_skybox.BindAndDraw(m_cmdBuf, m_skyboxPipeline.get());
 
     DrawGeometry();
 

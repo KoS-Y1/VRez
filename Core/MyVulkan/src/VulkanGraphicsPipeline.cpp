@@ -5,17 +5,8 @@
 #include <include/VulkanState.h>
 #include <include/ShaderCompiler.h>
 
-VulkanGraphicsPipeline::VulkanGraphicsPipeline( const std::vector<std::string> &paths, const GraphicsPipelineConfig &config) {
-    ShaderCompiler shaderCompiler(paths);
-    CreateDescriptorSetLayout(shaderCompiler.GetDescriptorSetLayoutInfos());
-    m_pushConstantRanges = shaderCompiler.GetPushConstantRanges();
-    CreateLayout();
-    CreatePipeline(shaderCompiler, config);
-}
 
-void VulkanGraphicsPipeline::CreatePipeline(const ShaderCompiler &shaderCompiler, const GraphicsPipelineConfig &config) {
-    // Create all shader modules first
-    CreateShaderModules(shaderCompiler);
+void VulkanGraphicsPipeline::CreatePipeline(const GraphicsPipelineOption &option) {
 
     // Create all shader stages with the created shader modules
     std::vector<VkPipelineShaderStageCreateInfo> shaderStages = CreateShaderStages();
@@ -25,10 +16,10 @@ void VulkanGraphicsPipeline::CreatePipeline(const ShaderCompiler &shaderCompiler
         .sType                   = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO,
         .pNext                   = nullptr,
         .viewMask                = 0,
-        .colorAttachmentCount    = static_cast<uint32_t>(config.colorFormats.size()),
-        .pColorAttachmentFormats = config.colorFormats.data(),
-        .depthAttachmentFormat   = config.depthFormat,
-        .stencilAttachmentFormat = config.stencilFormat,
+        .colorAttachmentCount    = static_cast<uint32_t>(option.colorFormats.size()),
+        .pColorAttachmentFormats = option.colorFormats.data(),
+        .depthAttachmentFormat   = option.depthFormat,
+        .stencilAttachmentFormat = option.stencilFormat,
     };
 
 
@@ -36,7 +27,7 @@ void VulkanGraphicsPipeline::CreatePipeline(const ShaderCompiler &shaderCompiler
         .sType                  = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
         .pNext                  = nullptr,
         .flags                  = 0,
-        .topology               = config.topology,
+        .topology               = option.topology,
         .primitiveRestartEnable = VK_FALSE
     };
 
@@ -58,9 +49,9 @@ void VulkanGraphicsPipeline::CreatePipeline(const ShaderCompiler &shaderCompiler
         .flags                   = 0,
         .depthClampEnable        = VK_FALSE,
         .rasterizerDiscardEnable = VK_FALSE,
-        .polygonMode             = config.polygonMode,
-        .cullMode                = config.cullMode,
-        .frontFace               = config.frontFace,
+        .polygonMode             = option.polygonMode,
+        .cullMode                = option.cullMode,
+        .frontFace               = option.frontFace,
         .depthBiasEnable         = VK_FALSE,
         .depthBiasConstantFactor = 0.0f,
         .depthBiasClamp          = 0.0f,
@@ -72,7 +63,7 @@ void VulkanGraphicsPipeline::CreatePipeline(const ShaderCompiler &shaderCompiler
         .sType                 = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
         .pNext                 = nullptr,
         .flags                 = 0,
-        .rasterizationSamples  = config.rasterizationSamples,
+        .rasterizationSamples  = option.rasterizationSamples,
         .sampleShadingEnable   = VK_TRUE,
         .minSampleShading      = 0.5f,
         .pSampleMask           = nullptr,
@@ -84,9 +75,9 @@ void VulkanGraphicsPipeline::CreatePipeline(const ShaderCompiler &shaderCompiler
         .sType                 = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
         .pNext                 = nullptr,
         .flags                 = 0,
-        .depthTestEnable       = config.depthTestEnable,
-        .depthWriteEnable      = config.depthWriteEnable,
-        .depthCompareOp        = config.depthCompareOp,
+        .depthTestEnable       = option.depthTestEnable,
+        .depthWriteEnable      = option.depthWriteEnable,
+        .depthCompareOp        = option.depthCompareOp,
         .depthBoundsTestEnable = VK_FALSE,
         .stencilTestEnable     = VK_FALSE,
         .front                 = {},
@@ -134,7 +125,7 @@ void VulkanGraphicsPipeline::CreatePipeline(const ShaderCompiler &shaderCompiler
         .flags               = 0,
         .stageCount          = static_cast<uint32_t>(shaderStages.size()),
         .pStages             = shaderStages.data(),
-        .pVertexInputState   = config.infoVertex,
+        .pVertexInputState   = option.infoVertex,
         .pInputAssemblyState = &infoInputAssembly,
         .pTessellationState  = nullptr,
         .pViewportState      = &infoViewport,

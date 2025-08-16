@@ -15,10 +15,10 @@
 #include <include/VulkanPrefab.h>
 #include <include/VulkanSkybox.h>
 
-#include "VulkanComputePipeline.h"
-#include "VulkanGraphicsPipeline.h"
 #include "VulkanImage.h"
 
+class VulkanGraphicsPipeline;
+class VulkanComputePipeline;
 
 #define MIN_SWAPCHAIN_IMG_COUNT 2
 #define MAX_SWAPCHAIN_IMG_COUNT 16
@@ -127,7 +127,7 @@ private:
 
     std::vector<std::shared_ptr<VulkanComputePipeline>>  m_computePipelines;
     std::vector<std::shared_ptr<VulkanGraphicsPipeline>> m_graphicsPipelines;
-    VulkanGraphicsPipeline                               m_skyboxPipeline;
+    std::unique_ptr<VulkanGraphicsPipeline>              m_skyboxPipeline;
 
     std::vector<VulkanPrefab> m_meshInstances;
 

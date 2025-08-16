@@ -7,8 +7,14 @@ class VulkanComputePipeline : public VulkanPipeline {
 public:
     VulkanComputePipeline() = default;
 
-    VulkanComputePipeline(const std::vector<std::string> &paths);
+    VulkanComputePipeline(const std::vector<std::string> &paths)
+        : VulkanPipeline(paths) {
+        CreatePipeline();
+    }
+
+protected:
+    void CreatePipeline();
 
 private:
-    void CreatePipeline(const ShaderCompiler &shaderCompiler);
+    friend class VulkanPipeline;
 };

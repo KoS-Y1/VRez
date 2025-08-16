@@ -25,9 +25,20 @@ public:
     ~VulkanMaterial() { Destroy(); }
 
     VulkanMaterial(const VulkanMaterial &)            = delete;
-    VulkanMaterial(VulkanMaterial &&)                 = delete;
     VulkanMaterial &operator=(const VulkanMaterial &) = delete;
-    VulkanMaterial &operator=(VulkanMaterial &&)      = delete;
+
+    VulkanMaterial(VulkanMaterial &&other) { Swap(other); }
+
+    VulkanMaterial &operator=(VulkanMaterial &&other) {
+        if (this != &other) {
+            Destroy();
+            Swap(other);
+        }
+
+        return *this;
+    }
+
+    void Swap(VulkanMaterial &other) noexcept;
 
     void Destroy();
 

@@ -6,6 +6,7 @@
 #include <include/VulkanMesh.h>
 #include <include/VulkanState.h>
 #include <include/VulkanTexture.h>
+#include <include/VulkanGraphicsPipeline.h>
 #include <include/Camera.h>
 
 VulkanSkybox::VulkanSkybox(const std::string &jsonFile, std::vector<VkDescriptorSetLayout> layouts) {
@@ -19,15 +20,15 @@ VulkanSkybox::VulkanSkybox(const std::string &jsonFile, std::vector<VkDescriptor
     m_mesh = MeshManager::GetInstance().Load("skybox");
 
     DEBUG_ASSERT(layouts.size() >= 2);
-    m_cameraDescriptorSet  = CreateDescriptorSet(layouts[0]);
-    m_textureDescriptorSet = CreateDescriptorSet(layouts[1]);
+    m_cameraSet  = CreateDescriptorSet(layouts[0]);
+    m_textureSet = CreateDescriptorSet(layouts[1]);
 
     OneTimeUpdateDescriptorSets();
 }
 
 void VulkanSkybox::Swap(VulkanSkybox &other) noexcept {
-    std::swap(m_cameraDescriptorSet, other.m_cameraDescriptorSet);
-    std::swap(m_textureDescriptorSet, other.m_textureDescriptorSet);
+    std::swap(m_cameraSet, other.m_cameraSet);
+    std::swap(m_textureSet, other.m_textureSet);
     std::swap(m_mesh, other.m_mesh);
     std::swap(m_emissive, other.m_emissive);
     std::swap(m_specular, other.m_specular);
@@ -36,24 +37,24 @@ void VulkanSkybox::Swap(VulkanSkybox &other) noexcept {
 }
 
 void VulkanSkybox::Destroy() {
-    if (m_cameraDescriptorSet != VK_NULL_HANDLE) {
-        vkFreeDescriptorSets(VulkanState::GetInstance().GetDevice(), VulkanState::GetInstance().GetDescriptorPool(), 1, &m_cameraDescriptorSet);
-        vkFreeDescriptorSets(VulkanState::GetInstance().GetDevice(), VulkanState::GetInstance().GetDescriptorPool(), 1, &m_textureDescriptorSet);
+    if (m_cameraSet != VK_NULL_HANDLE) {
+        vkFreeDescriptorSets(VulkanState::GetInstance().GetDevice(), VulkanState::GetInstance().GetDescriptorPool(), 1, &m_cameraSet);
+        vkFreeDescriptorSets(VulkanState::GetInstance().GetDevice(), VulkanState::GetInstance().GetDescriptorPool(), 1, &m_textureSet);
     }
 
-    m_cameraDescriptorSet  = VK_NULL_HANDLE;
-    m_textureDescriptorSet = VK_NULL_HANDLE;
+    m_cameraSet  = VK_NULL_HANDLE;
+    m_textureSet = VK_NULL_HANDLE;
     m_emissive             = nullptr;
     m_specular             = nullptr;
     m_irradiance           = nullptr;
     m_brdf                 = nullptr;
 }
 
-void VulkanSkybox::BindAndDraw(VkCommandBuffer cmdBuf, const VulkanGraphicsPipeline &pipeline) {
-    vkCmdBindPipeline(cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.GetPipeline());
+void VulkanSkybox::BindAndDraw(VkCommandBuffer cmdBuf, const VulkanGraphicsPipeline *pipeline) {
+    vkCmdBindPipeline(cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->GetPipeline());
 
-    vkCmdBindDescriptorSets(cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.GetLayout(), 0, 1, &m_cameraDescriptorSet, 0, nullptr);
-    vkCmdBindDescriptorSets(cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.GetLayout(), 1, 1, &m_textureDescriptorSet, 0, nullptr);
+    vkCmdBindDescriptorSets(cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->GetLayout(), 0, 1, &m_cameraSet, 0, nullptr);
+    vkCmdBindDescriptorSets(cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->GetLayout(), 1, 1, &m_textureSet, 0, nullptr);
 
     const VkDeviceSize offset = 0;
     vkCmdBindVertexBuffers(cmdBuf, 0, 1, &m_mesh->GetVertexBuffer(), &offset);
@@ -92,7 +93,7 @@ void VulkanSkybox::OneTimeUpdateDescriptorSets() {
     VkWriteDescriptorSet writeSetBuffer{
         .sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
         .pNext            = nullptr,
-        .dstSet           = m_cameraDescriptorSet,
+        .dstSet           = m_cameraSet,
         .dstBinding       = 0,
         .dstArrayElement  = 0,
         .descriptorCount  = 1,
@@ -105,7 +106,7 @@ void VulkanSkybox::OneTimeUpdateDescriptorSets() {
     VkWriteDescriptorSet writeSetImage{
         .sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
         .pNext            = nullptr,
-        .dstSet           = m_textureDescriptorSet,
+        .dstSet           = m_textureSet,
         .dstBinding       = 0,
         .dstArrayElement  = 0,
         .descriptorCount  = 1,

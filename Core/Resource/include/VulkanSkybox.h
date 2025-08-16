@@ -35,7 +35,7 @@ public:
 
     void Swap(VulkanSkybox &other) noexcept;
 
-    void BindAndDraw(VkCommandBuffer cmdBuf, const VulkanGraphicsPipeline &pipeline);
+    void BindAndDraw(VkCommandBuffer cmdBuf, const VulkanGraphicsPipeline *skybox);
 
     // TODO: may not need these when implementing deferred rendering
     [[nodiscard]] VulkanTexture *GetSpecular() { return m_specular; }
@@ -51,10 +51,10 @@ private:
     VulkanTexture *m_irradiance = nullptr;
     VulkanTexture *m_brdf       = nullptr;
 
-    VkDescriptorSet m_cameraDescriptorSet  = VK_NULL_HANDLE;
-    VkDescriptorSet m_textureDescriptorSet = VK_NULL_HANDLE;
+    VkDescriptorSet m_cameraSet  = VK_NULL_HANDLE;
+    VkDescriptorSet m_textureSet = VK_NULL_HANDLE;
 
     VkDescriptorSet CreateDescriptorSet(VkDescriptorSetLayout layout);
     void            OneTimeUpdateDescriptorSets();
-    // TODO: ibl stuff for all other objects
+
 };
