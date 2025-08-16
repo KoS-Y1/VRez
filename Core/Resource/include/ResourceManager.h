@@ -7,17 +7,33 @@
 
 #include <Debug.h>
 
-using Key = std::string;
+// Help Load() only returns pointer to the underlying resource
+template<class T>
+struct Pointee {
+    using Pointer = T*;
 
+    static Pointer ptr(T& t) { return &t; }
+};
+
+template<class T>
+struct Pointee<std::unique_ptr<T>> {
+    using Pointer = T*;
+
+    static Pointer ptr(std::unique_ptr<T>& t) { return t.get(); }
+};
+
+using Key = std::string;
 template<class Derived, class Resource>
 class ResourceManager {
 public:
-    Resource *Load(const Key &key) {
+    using Ptr = Pointee<Resource>::Pointer;
+
+    Ptr Load(const Key &key) {
             auto pair = m_cache.find(key);
 
             DEBUG_ASSERT_LOG(pair != m_cache.end(), (key + " does not exist").c_str());
 
-            return &(pair->second);
+            return Pointee<Resource>::ptr(pair->second);
         }
 
 protected:
@@ -34,10 +50,6 @@ protected:
     }
 
     void DestroyAll() {
-        for (auto &[key, value]: m_cache) {
-            value.Destroy();
-        }
-
         m_cache.clear();
     }
 

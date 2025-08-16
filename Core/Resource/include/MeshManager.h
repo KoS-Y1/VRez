@@ -3,7 +3,7 @@
 #include <string>
 
 #include <Singleton.h>
-#include <include/ResourceManager.h>
+#include "ResourceManager.h"
 #include <include/VulkanMesh.h>
 
 class VulkanState;
@@ -21,7 +21,6 @@ protected:
     ~MeshManager() = default;
 
     VulkanMesh CreateResource(const std::string &key);
-
 
 private:
     void CreateSkyboxMesh();

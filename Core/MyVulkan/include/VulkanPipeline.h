@@ -11,7 +11,7 @@ class VulkanPipeline {
 public:
     VulkanPipeline() = default;
 
-    ~VulkanPipeline() { Destroy(); };
+    virtual ~VulkanPipeline() { Destroy(); };
 
 
     VulkanPipeline(const std::vector<std::string> &paths);

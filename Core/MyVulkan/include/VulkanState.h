@@ -16,11 +16,6 @@
 #include <include/VulkanSkybox.h>
 
 #include "VulkanImage.h"
-#include "VulkanGraphicsPipeline.h"
-#include "VulkanComputePipeline.h"
-
-// class VulkanGraphicsPipeline;
-// class VulkanComputePipeline;
 
 #define MIN_SWAPCHAIN_IMG_COUNT 2
 #define MAX_SWAPCHAIN_IMG_COUNT 16
@@ -77,6 +72,8 @@ public:
 
     [[nodiscard]] const VkDescriptorPool &GetDescriptorPool() const { return m_descriptorPool; }
 
+    [[nodiscard]] VkSampleCountFlagBits GetSampleCount() const { return m_sampleCount; };
+
     void WaitIdle();
 
     void Present();
@@ -127,11 +124,6 @@ private:
     VulkanImage m_depthImage;
     VulkanImage m_msaaColorImage;
 
-    // std::vector<std::shared_ptr<VulkanComputePipeline>>  m_computePipelines;
-    // std::vector<std::shared_ptr<VulkanGraphicsPipeline>> m_graphicsPipelines;
-    std::shared_ptr<VulkanGraphicsPipeline> m_graphicsPipeline;
-    std::unique_ptr<VulkanGraphicsPipeline>              m_skyboxPipeline;
-
     std::vector<VulkanPrefab> m_meshInstances;
 
     VulkanSkybox m_skybox;
@@ -170,8 +162,6 @@ private:
     void CreateDescriptorPool();
 
     VkDescriptorSet CreateDescriptorSet(VkDescriptorSetLayout layout);
-
-    void CreatePipelines();
 
     void CreateSkybox();
 

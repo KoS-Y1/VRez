@@ -5,7 +5,7 @@
 #include <glm/glm.hpp>
 
 #include <Singleton.h>
-#include <include/ResourceManager.h>
+#include "ResourceManager.h"
 #include <include/VulkanTexture.h>
 
 class VulkanTexture;

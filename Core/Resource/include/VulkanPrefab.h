@@ -23,58 +23,58 @@ public:
     ~VulkanPrefab() { Destroy(); }
 
     VulkanPrefab(
-        const VulkanMesh                       *mesh,
-        const VulkanTexture                    *baseTexture,
-        const VulkanTexture                    *normalMap,
-        const VulkanTexture                    *ormTexture,
-        const VulkanTexture                    *emissiveTexture,
-        const VulkanTexture                    *brdfTexture,
-        const VulkanTexture                    *skyboxSpecular,
-        const VulkanTexture                    *skyboxIrradiance,
-        std::shared_ptr<VulkanGraphicsPipeline> pipeline
+        const VulkanMesh       *mesh,
+        const VulkanTexture    *baseTexture,
+        const VulkanTexture    *normalMap,
+        const VulkanTexture    *ormTexture,
+        const VulkanTexture    *emissiveTexture,
+        const VulkanTexture    *brdfTexture,
+        const VulkanTexture    *skyboxSpecular,
+        const VulkanTexture    *skyboxIrradiance,
+        VulkanGraphicsPipeline *pipeline
     );
 
     VulkanPrefab(
-        const VulkanMesh                       *mesh,
-        const VulkanTexture                    *baseTexture,
-        const VulkanTexture                    *normalMap,
-        const VulkanTexture                    *ormTexture,
-        const VulkanTexture                    *emissiveTexture,
-        const VulkanTexture                    *brdfTexture,
-        const VulkanTexture                    *skyboxSpecular,
-        const VulkanTexture                    *skyboxIrradiance,
-        std::shared_ptr<VulkanGraphicsPipeline> pipeline,
-        glm::vec3                               location
+        const VulkanMesh       *mesh,
+        const VulkanTexture    *baseTexture,
+        const VulkanTexture    *normalMap,
+        const VulkanTexture    *ormTexture,
+        const VulkanTexture    *emissiveTexture,
+        const VulkanTexture    *brdfTexture,
+        const VulkanTexture    *skyboxSpecular,
+        const VulkanTexture    *skyboxIrradiance,
+        VulkanGraphicsPipeline *pipeline,
+        glm::vec3               location
     );
 
     VulkanPrefab(
-        const VulkanMesh                       *mesh,
-        const VulkanTexture                    *baseTexture,
-        const VulkanTexture                    *normalMap,
-        const VulkanTexture                    *ormTexture,
-        const VulkanTexture                    *emissiveTexture,
-        const VulkanTexture                    *brdfTexture,
-        const VulkanTexture                    *skyboxSpecular,
-        const VulkanTexture                    *skyboxIrradiance,
-        std::shared_ptr<VulkanGraphicsPipeline> pipeline,
-        glm::vec3                               location,
-        glm::vec3                               pitchYawRoll,
-        glm::vec3                               scale
+        const VulkanMesh       *mesh,
+        const VulkanTexture    *baseTexture,
+        const VulkanTexture    *normalMap,
+        const VulkanTexture    *ormTexture,
+        const VulkanTexture    *emissiveTexture,
+        const VulkanTexture    *brdfTexture,
+        const VulkanTexture    *skyboxSpecular,
+        const VulkanTexture    *skyboxIrradiance,
+        VulkanGraphicsPipeline *pipeline,
+        glm::vec3               location,
+        glm::vec3               pitchYawRoll,
+        glm::vec3               scale
     );
 
     VulkanPrefab(
-        const VulkanMesh                       *mesh,
-        const VulkanTexture                    *baseTexture,
-        const VulkanTexture                    *normalMap,
-        const VulkanTexture                    *ormTexture,
-        const VulkanTexture                    *emissiveTexture,
-        const VulkanTexture                    *brdfTexture,
-        const VulkanTexture                    *skyboxSpecular,
-        const VulkanTexture                    *skyboxIrradiance,
-        std::shared_ptr<VulkanGraphicsPipeline> pipeline,
-        glm::vec3                               location,
-        glm::quat                               rotation,
-        glm::vec3                               scale
+        const VulkanMesh       *mesh,
+        const VulkanTexture    *baseTexture,
+        const VulkanTexture    *normalMap,
+        const VulkanTexture    *ormTexture,
+        const VulkanTexture    *emissiveTexture,
+        const VulkanTexture    *brdfTexture,
+        const VulkanTexture    *skyboxSpecular,
+        const VulkanTexture    *skyboxIrradiance,
+        VulkanGraphicsPipeline *pipeline,
+        glm::vec3               location,
+        glm::quat               rotation,
+        glm::vec3               scale
     );
 
 
@@ -106,7 +106,7 @@ public:
 
     void Reset();
 
-    void BindAndDraw(VkCommandBuffer cmdBuf) const;
+    void BindAndDraw(VkCommandBuffer cmdBuf, VkPipelineLayout pipeline) const;
 
     [[nodiscard]] const std::string GetName() const { return m_mesh->GetName(); }
 
@@ -142,13 +142,13 @@ private:
 
     glm::vec3 m_originalLocation = glm::vec3(0.0f);
 
-    std::shared_ptr<VulkanGraphicsPipeline> m_pipeline;
+    // VulkanGraphicsPipeline* m_pipeline;
 
     std::vector<VkDescriptorSet> m_descriptorSets;
 
     void UpdateTransformation();
 
-    void CreateDescriptorSets();
+    void CreateDescriptorSets(VulkanGraphicsPipeline *pipeline);
 
     VkDescriptorSet CreateDescriptorSet(const VkDescriptorSetLayout &layout);
 

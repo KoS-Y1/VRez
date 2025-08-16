@@ -5,19 +5,19 @@
 #include <include/VulkanGraphicsPipeline.h>
 #include <include/VulkanMesh.h>
 #include <include/VulkanState.h>
-#include <include/VulkanUtil.h>
 #include <include/VulkanTexture.h>
+#include <include/VulkanUtil.h>
 
 VulkanPrefab::VulkanPrefab(
-    const VulkanMesh                       *mesh,
-    const VulkanTexture                    *baseTexture,
-    const VulkanTexture                    *normalMap,
-    const VulkanTexture                    *ormTexture,
-    const VulkanTexture                    *emissiveTexture,
-    const VulkanTexture                    *brdfTexture,
-    const VulkanTexture                    *skyboxSpecular,
-    const VulkanTexture                    *skyboxIrradiance,
-    std::shared_ptr<VulkanGraphicsPipeline> pipeline
+    const VulkanMesh       *mesh,
+    const VulkanTexture    *baseTexture,
+    const VulkanTexture    *normalMap,
+    const VulkanTexture    *ormTexture,
+    const VulkanTexture    *emissiveTexture,
+    const VulkanTexture    *brdfTexture,
+    const VulkanTexture    *skyboxSpecular,
+    const VulkanTexture    *skyboxIrradiance,
+    VulkanGraphicsPipeline *pipeline
 ) {
     m_mesh            = mesh;
     m_baseTexture     = baseTexture;
@@ -29,24 +29,23 @@ VulkanPrefab::VulkanPrefab(
     m_skyboxSpecular   = skyboxSpecular;
     m_skyboxIrradiance = skyboxIrradiance;
 
-    m_pipeline = pipeline;
-    CreateDescriptorSets();
+    CreateDescriptorSets(pipeline);
 
     m_originalLocation = glm::vec3(0.f);
     Reset();
 }
 
 VulkanPrefab::VulkanPrefab(
-    const VulkanMesh                       *mesh,
-    const VulkanTexture                    *baseTexture,
-    const VulkanTexture                    *normalMap,
-    const VulkanTexture                    *ormTexture,
-    const VulkanTexture                    *emissiveTexture,
-    const VulkanTexture                    *brdfTexture,
-    const VulkanTexture                    *skyboxSpecular,
-    const VulkanTexture                    *skyboxIrradiance,
-    std::shared_ptr<VulkanGraphicsPipeline> pipeline,
-    glm::vec3                               location
+    const VulkanMesh       *mesh,
+    const VulkanTexture    *baseTexture,
+    const VulkanTexture    *normalMap,
+    const VulkanTexture    *ormTexture,
+    const VulkanTexture    *emissiveTexture,
+    const VulkanTexture    *brdfTexture,
+    const VulkanTexture    *skyboxSpecular,
+    const VulkanTexture    *skyboxIrradiance,
+    VulkanGraphicsPipeline *pipeline,
+    glm::vec3               location
 ) {
     m_mesh            = mesh;
     m_baseTexture     = baseTexture;
@@ -58,26 +57,25 @@ VulkanPrefab::VulkanPrefab(
     m_skyboxSpecular   = skyboxSpecular;
     m_skyboxIrradiance = skyboxIrradiance;
 
-    m_pipeline = pipeline;
-    CreateDescriptorSets();
+    CreateDescriptorSets(pipeline);
 
     m_originalLocation = location;
     Reset();
 }
 
 VulkanPrefab::VulkanPrefab(
-    const VulkanMesh                       *mesh,
-    const VulkanTexture                    *baseTexture,
-    const VulkanTexture                    *normalMap,
-    const VulkanTexture                    *ormTexture,
-    const VulkanTexture                    *emissiveTexture,
-    const VulkanTexture                    *brdfTexture,
-    const VulkanTexture                    *skyboxSpecular,
-    const VulkanTexture                    *skyboxIrradiance,
-    std::shared_ptr<VulkanGraphicsPipeline> pipeline,
-    glm::vec3                               location,
-    glm::quat                               rotation,
-    glm::vec3                               scale
+    const VulkanMesh       *mesh,
+    const VulkanTexture    *baseTexture,
+    const VulkanTexture    *normalMap,
+    const VulkanTexture    *ormTexture,
+    const VulkanTexture    *emissiveTexture,
+    const VulkanTexture    *brdfTexture,
+    const VulkanTexture    *skyboxSpecular,
+    const VulkanTexture    *skyboxIrradiance,
+    VulkanGraphicsPipeline *pipeline,
+    glm::vec3               location,
+    glm::quat               rotation,
+    glm::vec3               scale
 ) {
     m_mesh            = mesh;
     m_baseTexture     = baseTexture;
@@ -89,8 +87,7 @@ VulkanPrefab::VulkanPrefab(
     m_skyboxSpecular   = skyboxSpecular;
     m_skyboxIrradiance = skyboxIrradiance;
 
-    m_pipeline = pipeline;
-    CreateDescriptorSets();
+    CreateDescriptorSets(pipeline);
 
     m_originalLocation = location;
     m_location         = m_originalLocation;
@@ -101,18 +98,18 @@ VulkanPrefab::VulkanPrefab(
 }
 
 VulkanPrefab::VulkanPrefab(
-    const VulkanMesh                       *mesh,
-    const VulkanTexture                    *baseTexture,
-    const VulkanTexture                    *normalMap,
-    const VulkanTexture                    *ormTexture,
-    const VulkanTexture                    *emissiveTexture,
-    const VulkanTexture                    *brdfTexture,
-    const VulkanTexture                    *skyboxSpecular,
-    const VulkanTexture                    *skyboxIrradiance,
-    std::shared_ptr<VulkanGraphicsPipeline> pipeline,
-    glm::vec3                               location,
-    glm::vec3                               pitchYawRoll,
-    glm::vec3                               scale
+    const VulkanMesh       *mesh,
+    const VulkanTexture    *baseTexture,
+    const VulkanTexture    *normalMap,
+    const VulkanTexture    *ormTexture,
+    const VulkanTexture    *emissiveTexture,
+    const VulkanTexture    *brdfTexture,
+    const VulkanTexture    *skyboxSpecular,
+    const VulkanTexture    *skyboxIrradiance,
+    VulkanGraphicsPipeline *pipeline,
+    glm::vec3               location,
+    glm::vec3               pitchYawRoll,
+    glm::vec3               scale
 ) {
     m_mesh            = mesh;
     m_baseTexture     = baseTexture;
@@ -124,8 +121,7 @@ VulkanPrefab::VulkanPrefab(
     m_skyboxSpecular   = skyboxSpecular;
     m_skyboxIrradiance = skyboxIrradiance;
 
-    m_pipeline = pipeline;
-    CreateDescriptorSets();
+    CreateDescriptorSets(pipeline);
 
     m_originalLocation = location;
     m_location         = m_originalLocation;
@@ -163,7 +159,6 @@ void VulkanPrefab::Swap(VulkanPrefab &other) noexcept {
     m_pitchYawRoll     = other.m_pitchYawRoll;
     m_originalLocation = other.m_originalLocation;
     std::swap(m_mesh, other.m_mesh);
-    std::swap(m_pipeline, other.m_pipeline);
     std::swap(m_baseTexture, other.m_baseTexture);
     std::swap(m_normalMap, other.m_normalMap);
     std::swap(m_ormTexture, other.m_ormTexture);
@@ -213,10 +208,10 @@ void VulkanPrefab::UpdateTransformation() {
     m_transformation = glm::translate(glm::mat4(1.0f), m_location) * glm::mat4_cast(m_rotation) * glm::scale(glm::mat4(1.0f), m_scale);
 }
 
-void VulkanPrefab::CreateDescriptorSets() {
+void VulkanPrefab::CreateDescriptorSets(VulkanGraphicsPipeline *pipeline) {
     // The first set of a pipeline is always the uniform camera and light, which are handled in the VulkanState class
-    for (size_t i = 1; i < m_pipeline->GetDescriptorSetLayouts().size(); i++) {
-        VkDescriptorSet set = CreateDescriptorSet(m_pipeline->GetDescriptorSetLayouts()[i]);
+    for (size_t i = 1; i < pipeline->GetDescriptorSetLayouts().size(); i++) {
+        VkDescriptorSet set = CreateDescriptorSet(pipeline->GetDescriptorSetLayouts()[i]);
         m_descriptorSets.push_back(set);
     }
 
@@ -293,22 +288,13 @@ void VulkanPrefab::UpdateIBLDescriptorSet() {
     vkUpdateDescriptorSets(VulkanState::GetInstance().GetDevice(), 1, &writeSet, 0, nullptr);
 }
 
-void VulkanPrefab::BindAndDraw(VkCommandBuffer cmdBuf) const {
+void VulkanPrefab::BindAndDraw(VkCommandBuffer cmdBuf, VkPipelineLayout pipeline) const {
     const VkDeviceSize offset = 0;
 
     if (!m_descriptorSets.empty()) {
-        vkCmdBindDescriptorSets(
-            cmdBuf,
-            VK_PIPELINE_BIND_POINT_GRAPHICS,
-            m_pipeline->GetLayout(),
-            1,
-            m_descriptorSets.size(),
-            m_descriptorSets.data(),
-            0,
-            nullptr
-        );
+        vkCmdBindDescriptorSets(cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline, 1, m_descriptorSets.size(), m_descriptorSets.data(), 0, nullptr);
     }
     vkCmdBindVertexBuffers(cmdBuf, 0, 1, &m_mesh->GetVertexBuffer(), &offset);
-    vkCmdPushConstants(cmdBuf, m_pipeline->GetLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(m_transformation), &m_transformation);
+    vkCmdPushConstants(cmdBuf, pipeline, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(m_transformation), &m_transformation);
     vkCmdDraw(cmdBuf, m_mesh->GetVertexCount(), 1, 0, 0);
 }

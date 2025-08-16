@@ -12,9 +12,9 @@
 #include <include/Camera.h>
 #include <include/LightManager.h>
 #include <include/MeshManager.h>
+#include <include/PipelineManager.h>
 #include <include/TextureManager.h>
 #include <include/VertexFormats.h>
-#include <include/VulkanComputePipeline.h>
 #include <include/VulkanGraphicsPipeline.h>
 #include <include/VulkanPrefab.h>
 #include <include/Window.h>
@@ -38,11 +38,12 @@ void VulkanState::Init() {
     m_presentSemaphore = CreateSemaphore();
 
     CreateDescriptorPool();
-    CreatePipelines();
 
+    PipelineManager::GetInstance().Init();
     MeshManager::GetInstance().Init();
     TextureManager::GetInstance().Init();
-    // Wait for all meshes and textures are loaded
+
+    // Wait for all meshes and textures to be loaded
     ThreadPool::GetInstance().WaitIdle();
 
     CreateRenderObjects();
@@ -62,10 +63,6 @@ void VulkanState::Destroy() {
     LightManager::GetInstance().Destroy();
     Camera::GetInstance().Destroy();
 
-    m_graphicsPipeline->Destroy();
-
-    m_skyboxPipeline->Destroy();
-
     m_drawImage.Destroy();
     m_depthImage.Destroy();
     m_msaaColorImage.Destroy();
@@ -74,13 +71,11 @@ void VulkanState::Destroy() {
         vkDestroyImageView(m_device, m_swapchain.views[i], nullptr);
     }
 
-    for (auto &mesh: m_meshInstances) {
-        mesh.Destroy();
-    }
     m_meshInstances.clear();
 
     m_skybox.Destroy();
 
+    PipelineManager::GetInstance().Destroy();
     MeshManager::GetInstance().Destroy();
     TextureManager::GetInstance().Destroy();
 
@@ -539,44 +534,8 @@ void VulkanState::Present() {
     QueuePresent(m_renderSemaphore, imageIndex);
 }
 
-void VulkanState::CreatePipelines() {
-    std::vector<std::string> shaderSources{"../Assets/Shaders/BasicShader/basic.vert", "../Assets/Shaders/BasicShader/basic.frag"};
-
-    GraphicsPipelineOption graphicsOption;
-    graphicsOption.infoVertex           = VertexPNTT::GetVertexInputStateCreateInfo();
-    graphicsOption.colorFormats         = std::vector<VkFormat>{COLOR_IMG_FORMAT};
-    graphicsOption.depthTestEnable      = VK_TRUE;
-    graphicsOption.depthWriteEnable     = VK_TRUE;
-    graphicsOption.depthFormat          = DEPTH_IMG_FORMAT;
-    graphicsOption.depthCompareOp       = VK_COMPARE_OP_LESS_OR_EQUAL;
-    graphicsOption.rasterizationSamples = m_sampleCount;
-
-    // for (const auto &source: shaderSources) {
-    //     m_graphicsPipelines.emplace_back(std::make_shared<VulkanGraphicsPipeline>(source, graphicsOption));
-    // }
-
-    m_graphicsPipeline = std::make_shared<VulkanGraphicsPipeline>(shaderSources, graphicsOption);
-
-    std::vector<std::string> skyboxPaths{
-        "../Assets/Shaders/Skybox/Skybox.vert",
-        "../Assets/Shaders/Skybox/Skybox.frag",
-    };
-    GraphicsPipelineOption skyboxOption;
-    skyboxOption.infoVertex           = VertexP::GetVertexInputStateCreateInfo();
-    skyboxOption.colorFormats         = std::vector<VkFormat>{COLOR_IMG_FORMAT};
-    skyboxOption.topology             = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
-    skyboxOption.depthTestEnable      = VK_TRUE;
-    skyboxOption.depthWriteEnable     = VK_TRUE;
-    skyboxOption.depthFormat          = DEPTH_IMG_FORMAT;
-    skyboxOption.depthCompareOp       = VK_COMPARE_OP_LESS_OR_EQUAL;
-    skyboxOption.rasterizationSamples = m_sampleCount;
-    skyboxOption.cullMode             = VK_CULL_MODE_NONE;
-
-    m_skyboxPipeline = std::make_unique<VulkanGraphicsPipeline>(skyboxPaths, skyboxOption);
-}
-
 void VulkanState::CreateSkybox() {
-    VulkanSkybox skybox("../Assets/Skybox/skybox.json", m_skyboxPipeline->GetDescriptorSetLayouts());
+    VulkanSkybox skybox("../Assets/Skybox/skybox.json", PipelineManager::GetInstance().Load("skybox_gfx")->GetDescriptorSetLayouts());
     m_skybox = std::move(skybox);
 };
 
@@ -588,7 +547,7 @@ void VulkanState::CreateRenderObjects() {
     CreateSkybox();
 
     // Descriptor sets
-    m_uniformDescriptorSet = CreateDescriptorSet(m_graphicsPipeline->GetDescriptorSetLayouts()[0]);
+    m_uniformDescriptorSet = CreateDescriptorSet(PipelineManager::GetInstance().Load("basic_gfx")->GetDescriptorSetLayouts()[0]);
 
     OneTimeUpdateDescriptorSets();
 
@@ -764,7 +723,7 @@ void VulkanState::Draw() {
     vkCmdSetViewport(m_cmdBuf, 0, 1, &viewport);
     vkCmdSetScissor(m_cmdBuf, 0, 1, &renderAreas);
 
-    m_skybox.BindAndDraw(m_cmdBuf, m_skyboxPipeline.get());
+    m_skybox.BindAndDraw(m_cmdBuf, dynamic_cast<VulkanGraphicsPipeline *>(PipelineManager::GetInstance().Load("skybox_gfx")));
 
     DrawGeometry();
 
@@ -772,12 +731,12 @@ void VulkanState::Draw() {
 }
 
 void VulkanState::DrawGeometry() {
-    vkCmdBindPipeline(m_cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, m_graphicsPipeline->GetPipeline());
+    vkCmdBindPipeline(m_cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, PipelineManager::GetInstance().Load("basic_gfx")->GetPipeline());
 
     vkCmdBindDescriptorSets(
         m_cmdBuf,
         VK_PIPELINE_BIND_POINT_GRAPHICS,
-        m_graphicsPipeline->GetLayout(),
+        PipelineManager::GetInstance().Load("basic_gfx")->GetLayout(),
         0,
         1,
         &m_uniformDescriptorSet,
@@ -786,7 +745,7 @@ void VulkanState::DrawGeometry() {
     );
 
     for (const auto &instance: m_meshInstances) {
-        instance.BindAndDraw(m_cmdBuf);
+        instance.BindAndDraw(m_cmdBuf, PipelineManager::GetInstance().Load("basic_gfx")->GetLayout());
     }
 }
 
@@ -832,7 +791,7 @@ void VulkanState::LoadMeshes() {
     for (size_t i = 0; i < meshPaths.size(); i++) {
         size_t index = i;
 
-        DEBUG_ASSERT(m_graphicsPipeline != nullptr);
+        DEBUG_ASSERT(PipelineManager::GetInstance().Load("basic_gfx") != nullptr);
 
         const VulkanTexture *baseTexture = TextureManager::GetInstance().Load("albedo");
         const VulkanTexture *normalMap   = TextureManager::GetInstance().Load("normal");
@@ -860,7 +819,7 @@ void VulkanState::LoadMeshes() {
             m_skybox.GetBRDF(),
             m_skybox.GetSpecular(),
             m_skybox.GetIrradiance(),
-            m_graphicsPipeline,
+            dynamic_cast<VulkanGraphicsPipeline*>(PipelineManager::GetInstance().Load("basic_gfx")),
             locations[index]
         );
 

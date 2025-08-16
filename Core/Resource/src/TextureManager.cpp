@@ -1,5 +1,7 @@
 #include "include/TextureManager.h"
 
+#include "include/FileSystem.h"
+
 #include <SDL3/SDL.h>
 
 #include <include/TextureLoader.h>
@@ -17,24 +19,14 @@ VulkanTexture TextureManager::CreateResource(const std::string &key, const Sampl
 }
 
 void TextureManager::Init() {
-    std::vector<std::string> keys{
-        "../Assets/Skybox/Skybox.png",
-        "../Assets/Skybox/specular.png",
-        "../Assets/Skybox/irradiance.png",
-        "../Assets/Skybox/brdf_lut.png",
-        "../Assets/Models/Chessboard/chessboard_base_color.jpg",
-        "../Assets/Models/Castle/castle_white_base_color.jpg",
-        "../Assets/Models/BoomBox/BoomBox_baseColor.png",
-        "../Assets/Models/Chessboard/chessboard_normal.jpg",
-        "../Assets/Models/Castle/Castle_normal.jpg",
-        "../Assets/Models/BoomBox/BoomBox_normal.png",
-        "../Assets/Models/Chessboard/Chessboard_ORM.jpg",
-        "../Assets/Models/Castle/Castle_ORM.jpg",
-        "../Assets/Models/BoomBox/BoomBox_occlusionRoughnessMetallic.png",
-        "../Assets/Models/BoomBox/BoomBox_emissive.png",
-    };
+    std::vector<std::string> pngKeys = file_system::GetFilesWithExtension("../Assets", ".png");
+    std::vector<std::string> jpgKeys = file_system::GetFilesWithExtension("../Assets", ".jpg");
+
     SamplerConfig config;
-    for (const auto &key: keys) {
+    for (const auto &key: pngKeys) {
+        ThreadPool::GetInstance().Enqueue([this, key, config]() { Preload(key, config); });
+    }
+    for (const auto &key: jpgKeys) {
         ThreadPool::GetInstance().Enqueue([this, key, config]() { Preload(key, config); });
     }
 

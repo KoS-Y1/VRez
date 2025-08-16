@@ -20,8 +20,8 @@ struct GraphicsPipelineOption {
     // Depth stencil
     VkBool32    depthTestEnable  = VK_FALSE;
     VkBool32    depthWriteEnable = VK_FALSE;
-    VkCompareOp depthCompareOp   = VK_COMPARE_OP_ALWAYS;
-    VkFormat    depthFormat      = VK_FORMAT_UNDEFINED;
+    VkCompareOp depthCompareOp   = VK_COMPARE_OP_LESS_OR_EQUAL;
+    VkFormat    depthFormat      = VK_FORMAT_D32_SFLOAT;
     VkFormat    stencilFormat    = VK_FORMAT_UNDEFINED;
 
     // MSAA
