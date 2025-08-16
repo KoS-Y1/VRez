@@ -127,8 +127,9 @@ private:
     VulkanImage m_depthImage;
     VulkanImage m_msaaColorImage;
 
-    std::vector<std::shared_ptr<VulkanComputePipeline>>  m_computePipelines;
-    std::vector<std::shared_ptr<VulkanGraphicsPipeline>> m_graphicsPipelines;
+    // std::vector<std::shared_ptr<VulkanComputePipeline>>  m_computePipelines;
+    // std::vector<std::shared_ptr<VulkanGraphicsPipeline>> m_graphicsPipelines;
+    std::shared_ptr<VulkanGraphicsPipeline> m_graphicsPipeline;
     std::unique_ptr<VulkanGraphicsPipeline>              m_skyboxPipeline;
 
     std::vector<VulkanPrefab> m_meshInstances;
@@ -136,7 +137,6 @@ private:
     VulkanSkybox m_skybox;
 
     VkSampleCountFlagBits m_sampleCount = VK_SAMPLE_COUNT_1_BIT;
-
 
     DeletionQueue m_deletionQueue;
     UIQueue       m_uiQueue;

@@ -62,13 +62,7 @@ void VulkanState::Destroy() {
     LightManager::GetInstance().Destroy();
     Camera::GetInstance().Destroy();
 
-    for (size_t i = 0; i < m_computePipelines.size(); ++i) {
-        m_computePipelines[i]->Destroy();
-    }
-
-    for (size_t i = 0; i < m_graphicsPipelines.size(); ++i) {
-        m_graphicsPipelines[i]->Destroy();
-    }
+    m_graphicsPipeline->Destroy();
 
     m_skyboxPipeline->Destroy();
 
@@ -546,9 +540,7 @@ void VulkanState::Present() {
 }
 
 void VulkanState::CreatePipelines() {
-    std::vector<std::vector<std::string>> shaderSources{
-        {{"../Assets/Shaders/BasicShader/basic.vert", "../Assets/Shaders/BasicShader/basic.frag"}}
-    };
+    std::vector<std::string> shaderSources{"../Assets/Shaders/BasicShader/basic.vert", "../Assets/Shaders/BasicShader/basic.frag"};
 
     GraphicsPipelineOption graphicsOption;
     graphicsOption.infoVertex           = VertexPNTT::GetVertexInputStateCreateInfo();
@@ -559,9 +551,11 @@ void VulkanState::CreatePipelines() {
     graphicsOption.depthCompareOp       = VK_COMPARE_OP_LESS_OR_EQUAL;
     graphicsOption.rasterizationSamples = m_sampleCount;
 
-    for (const auto &source: shaderSources) {
-        m_graphicsPipelines.emplace_back(std::make_shared<VulkanGraphicsPipeline>(source, graphicsOption));
-    }
+    // for (const auto &source: shaderSources) {
+    //     m_graphicsPipelines.emplace_back(std::make_shared<VulkanGraphicsPipeline>(source, graphicsOption));
+    // }
+
+    m_graphicsPipeline = std::make_shared<VulkanGraphicsPipeline>(shaderSources, graphicsOption);
 
     std::vector<std::string> skyboxPaths{
         "../Assets/Shaders/Skybox/Skybox.vert",
@@ -594,7 +588,7 @@ void VulkanState::CreateRenderObjects() {
     CreateSkybox();
 
     // Descriptor sets
-    m_uniformDescriptorSet = CreateDescriptorSet(m_graphicsPipelines[0]->GetDescriptorSetLayouts()[0]);
+    m_uniformDescriptorSet = CreateDescriptorSet(m_graphicsPipeline->GetDescriptorSetLayouts()[0]);
 
     OneTimeUpdateDescriptorSets();
 
@@ -778,12 +772,12 @@ void VulkanState::Draw() {
 }
 
 void VulkanState::DrawGeometry() {
-    vkCmdBindPipeline(m_cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, m_graphicsPipelines[0]->GetPipeline());
+    vkCmdBindPipeline(m_cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, m_graphicsPipeline->GetPipeline());
 
     vkCmdBindDescriptorSets(
         m_cmdBuf,
         VK_PIPELINE_BIND_POINT_GRAPHICS,
-        m_graphicsPipelines[0]->GetLayout(),
+        m_graphicsPipeline->GetLayout(),
         0,
         1,
         &m_uniformDescriptorSet,
@@ -838,7 +832,7 @@ void VulkanState::LoadMeshes() {
     for (size_t i = 0; i < meshPaths.size(); i++) {
         size_t index = i;
 
-        DEBUG_ASSERT(m_graphicsPipelines[0] != nullptr);
+        DEBUG_ASSERT(m_graphicsPipeline != nullptr);
 
         const VulkanTexture *baseTexture = TextureManager::GetInstance().Load("albedo");
         const VulkanTexture *normalMap   = TextureManager::GetInstance().Load("normal");
@@ -866,7 +860,7 @@ void VulkanState::LoadMeshes() {
             m_skybox.GetBRDF(),
             m_skybox.GetSpecular(),
             m_skybox.GetIrradiance(),
-            m_graphicsPipelines[0],
+            m_graphicsPipeline,
             locations[index]
         );
 
