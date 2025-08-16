@@ -7,9 +7,7 @@
 #include <include/VulkanState.h>
 #include <include/ShaderCompiler.h>
 
-void VulkanComputePipeline::CreatePipeline(const ShaderCompiler &shaderCompiler) {
-    CreateShaderModules(shaderCompiler);
-
+void VulkanComputePipeline::CreatePipeline() {
     VkComputePipelineCreateInfo infoCompute{
         .sType              = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO,
         .pNext              = nullptr,

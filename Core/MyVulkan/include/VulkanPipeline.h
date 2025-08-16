@@ -19,6 +19,7 @@ public:
         ShaderCompiler shaderCompiler(paths);
         CreateDescriptorSetLayout(shaderCompiler.GetDescriptorSetLayoutInfos());
         m_pushConstantRanges = shaderCompiler.GetPushConstantRanges();
+        CreateLayout();
         CreateShaderModules(shaderCompiler);
     }
 
