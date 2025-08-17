@@ -21,7 +21,7 @@ UI::UI(VkQueue queue, VkDescriptorPool descriptorPool) {
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
 
-    VkFormat colorFormat = COLOR_IMG_FORMAT;
+    VkFormat colorFormat = VK_FORMAT_R16G16B16A16_SFLOAT;
 
     VkPipelineRenderingCreateInfoKHR infoRendering{
         .sType                   = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR,

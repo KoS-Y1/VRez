@@ -1,4 +1,4 @@
-add_library(Util INTERFACE Singleton.h)
+add_library(Util INTERFACE Singleton.h Pointee.h)
 target_include_directories(Util INTERFACE ./)
 
 add_library(Debug INTERFACE Debug/Debug.h)

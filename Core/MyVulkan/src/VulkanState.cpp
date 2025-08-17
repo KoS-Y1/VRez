@@ -238,7 +238,7 @@ void VulkanState::CreateSwapchain(uint32_t width, uint32_t height) {
         .flags            = 0,
         .surface          = m_surface,
         .minImageCount    = MIN_SWAPCHAIN_IMG_COUNT,
-        .imageFormat      = COLOR_IMG_FORMAT,
+        .imageFormat      = VK_FORMAT_R16G16B16A16_SFLOAT,
         .imageColorSpace  = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR,
         .imageExtent      = {width, height},
         .imageArrayLayers = 1,
@@ -266,7 +266,7 @@ void VulkanState::CreateSwapchain(uint32_t width, uint32_t height) {
             .pNext    = nullptr,
             .flags    = 0,
             .viewType = VK_IMAGE_VIEW_TYPE_2D,
-            .format   = COLOR_IMG_FORMAT,
+            .format   = VK_FORMAT_R16G16B16A16_SFLOAT,
             .components =
                 {VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY},
             .subresourceRange = vk_util::GetSubresourceRange(VK_IMAGE_ASPECT_COLOR_BIT)
@@ -280,7 +280,7 @@ void VulkanState::CreateSwapchain(uint32_t width, uint32_t height) {
 
     // Init drawImage that swapchain images copy from
     VulkanImage drawImg(
-        COLOR_IMG_FORMAT,
+        VK_FORMAT_R16G16B16A16_SFLOAT,
         VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
         {m_width, m_height, 1},
         VK_IMAGE_ASPECT_COLOR_BIT
@@ -290,7 +290,7 @@ void VulkanState::CreateSwapchain(uint32_t width, uint32_t height) {
 
     // Init depth image for depth testing
     VulkanImage depthImg(
-        DEPTH_IMG_FORMAT,
+        VK_FORMAT_D32_SFLOAT,
         VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
         {m_width, m_height, 1},
         VK_IMAGE_ASPECT_DEPTH_BIT,
@@ -300,7 +300,7 @@ void VulkanState::CreateSwapchain(uint32_t width, uint32_t height) {
 
     // Init msaa images for anti aliasing
     VulkanImage msaaColorImage(
-        COLOR_IMG_FORMAT,
+        VK_FORMAT_R16G16B16A16_SFLOAT,
         VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT,
         {m_width, m_height, 1},
         VK_IMAGE_ASPECT_COLOR_BIT,
@@ -819,7 +819,7 @@ void VulkanState::LoadMeshes() {
             m_skybox.GetBRDF(),
             m_skybox.GetSpecular(),
             m_skybox.GetIrradiance(),
-            dynamic_cast<VulkanGraphicsPipeline*>(PipelineManager::GetInstance().Load("basic_gfx")),
+            dynamic_cast<VulkanGraphicsPipeline *>(PipelineManager::GetInstance().Load("basic_gfx")),
             locations[index]
         );
 

@@ -294,7 +294,6 @@ void VulkanPrefab::BindAndDraw(VkCommandBuffer cmdBuf, VkPipelineLayout pipeline
     if (!m_descriptorSets.empty()) {
         vkCmdBindDescriptorSets(cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline, 1, m_descriptorSets.size(), m_descriptorSets.data(), 0, nullptr);
     }
-    vkCmdBindVertexBuffers(cmdBuf, 0, 1, &m_mesh->GetVertexBuffer(), &offset);
     vkCmdPushConstants(cmdBuf, pipeline, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(m_transformation), &m_transformation);
-    vkCmdDraw(cmdBuf, m_mesh->GetVertexCount(), 1, 0, 0);
+    m_mesh->BindAndDraw(cmdBuf);
 }

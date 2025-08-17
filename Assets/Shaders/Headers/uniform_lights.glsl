@@ -1,6 +1,8 @@
 #ifndef UNIFORM_LIGHTS_GLSL
 #define UNIFORM_LIGHTS_GLSL
 
+#include <util.glsl>
+
 const int MAX_LIGHTS = 16;
 
 struct Light
@@ -15,7 +17,7 @@ struct Light
     float intensity;
 };
 
-layout(std140, set = 0, binding = 1) uniform Lights
+layout(std140, set = UNIFORM_SET, binding = 1) uniform Lights
 {
     int uLightCount;
     int uPadding0;

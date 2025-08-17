@@ -7,7 +7,7 @@
 class VulkanMaterial;
 class VulkanMesh;
 class VulkanTexture;
-class VulkanPipeline;
+class VulkanGraphicsPipeline;
 
 class VulkanObject {
 public:
@@ -15,9 +15,7 @@ public:
 
     ~VulkanObject() { Destroy(); }
 
-    // TODO: ibl stuff should be in deferred rendering
-    VulkanObject(VulkanMesh *mesh, VulkanMaterial *material);
-
+    VulkanObject(const VulkanMesh *mesh, const VulkanMaterial *material);
 
     VulkanObject(const VulkanObject &)            = delete;
     VulkanObject &operator=(const VulkanObject &) = delete;
@@ -36,16 +34,10 @@ public:
     void Swap(VulkanObject &other) noexcept;
     void Destroy();
 
-    void BindAndDraw(VkCommandBuffer cmdBuf);
+    void BindAndDraw(VkCommandBuffer cmdBuf, VkPipelineLayout layout) const;
 
 private:
     const VulkanMesh     *m_mesh     = nullptr;
     const VulkanMaterial *m_material = nullptr;
 
-    // TODO: ibl stuff should be in deferred rendering
-    const VulkanTexture *m_specular   = nullptr;
-    const VulkanTexture *m_irradiance = nullptr;
-    const VulkanTexture *m_brdf       = nullptr;
-    VkDescriptorSet      m_iblSet     = VK_NULL_HANDLE;
-    void                 CreateDescriptorSet();
 };

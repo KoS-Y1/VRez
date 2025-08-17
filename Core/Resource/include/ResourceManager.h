@@ -6,21 +6,7 @@
 #include <string>
 
 #include <Debug.h>
-
-// Help Load() only returns pointer to the underlying resource
-template<class T>
-struct Pointee {
-    using Pointer = T*;
-
-    static Pointer ptr(T& t) { return &t; }
-};
-
-template<class T>
-struct Pointee<std::unique_ptr<T>> {
-    using Pointer = T*;
-
-    static Pointer ptr(std::unique_ptr<T>& t) { return t.get(); }
-};
+#include <Pointee.h>
 
 using Key = std::string;
 template<class Derived, class Resource>

@@ -1,16 +1,13 @@
 #include "include/VulkanObject.h"
 
-#include <any>
+#include "include/VulkanMesh.h"
 
-VulkanObject::VulkanObject(VulkanMesh *mesh, VulkanMaterial *material) {
+#include <include/DescriptorSets.h>
+#include <include/VulkanMaterial.h>
+
+VulkanObject::VulkanObject(const VulkanMesh *mesh, const VulkanMaterial *material) {
     m_mesh = mesh;
     m_material = material;
-
-    // TODO: ibl stuff should be in deferred rendering
-    m_specular   = TextureManager::GetInstance().Load("../Assets/Skybox/specular.png");
-    m_irradiance = TextureManager::GetInstance().Load("../Assets/Skybox/irradiance.png");
-    m_brdf       = TextureManager::GetInstance().Load("../Assets/Skybox/brdf_lut.png");
-    CreateDescriptorSet();
 }
 
 void VulkanObject::Swap(VulkanObject &other) noexcept {
@@ -23,6 +20,7 @@ void VulkanObject::Destroy() {
     m_material = nullptr;
 }
 
-void VulkanObject::BindAndDraw(VkCommandBuffer cmdBuf) {
-
+void VulkanObject::BindAndDraw(VkCommandBuffer cmdBuf, VkPipelineLayout layout) const {
+    m_material->Bind(cmdBuf, layout, TEXTURE_SET);
+    m_mesh->BindAndDraw(cmdBuf);
 }

@@ -9,6 +9,7 @@ file_system::MaterialConfig::MaterialConfig(const std::string &jsonFile) {
     normal   = json.GetString("normal", "normal");
     orm      = json.GetString("orm", "orm");
     emissive = json.GetString("emissive", "emissive");
+    pipeline = json.GetString("pipeline");
 }
 
 file_system::SkyboxConfig::SkyboxConfig(const std::string &jsonFile) {

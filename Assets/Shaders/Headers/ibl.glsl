@@ -4,9 +4,9 @@
 #include <pbr.glsl>
 #include <util.glsl>
 
-layout (set = 2, binding = 0) uniform sampler2D uBrdfLut;
-layout (set = 2, binding = 1) uniform sampler2D uIrradiance;
-layout (set = 2, binding = 2) uniform sampler2D uSpecular;
+layout (set = IBL_SET, binding = 0) uniform sampler2D uBrdfLut;
+layout (set = IBL_SET, binding = 1) uniform sampler2D uIrradiance;
+layout (set = IBL_SET, binding = 2) uniform sampler2D uSpecular;
 
 const float MAX_REFLECTION_LOD = 6.0;
 

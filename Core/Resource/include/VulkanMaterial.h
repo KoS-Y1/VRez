@@ -1,23 +1,27 @@
 #pragma once
 
+
 #include <vulkan/vulkan.h>
+
+#include "DescriptorSets.h"
+#include <include/VulkanGraphicsPipeline.h>
 
 class VulkanTexture;
 
 class VulkanMaterial {
 public:
     VulkanMaterial(
-        const VulkanTexture        *albedo,
-        const VulkanTexture        *normal,
-        const VulkanTexture        *orm,
-        const VulkanTexture        *emissive,
-        const VkDescriptorSetLayout layout
+        const VulkanTexture          *albedo,
+        const VulkanTexture          *normal,
+        const VulkanTexture          *orm,
+        const VulkanTexture          *emissive,
+        const VulkanGraphicsPipeline *pipeline
     )
         : m_albedo(albedo)
         , m_normal(normal)
         , m_orm(orm)
         , m_emissive(emissive) {
-        CreateDescriptorSet(layout);
+        CreateDescriptorSet(pipeline->GetDescriptorSetLayouts()[TEXTURE_SET]);
     }
 
     VulkanMaterial() = delete;
@@ -42,7 +46,7 @@ public:
 
     void Destroy();
 
-    void Bind(VkCommandBuffer cmdBuf, VkPipelineLayout layout, uint32_t firstSet);
+    void Bind(VkCommandBuffer cmdBuf, VkPipelineLayout layout, uint32_t firstSet) const;
 
 private:
     const VulkanTexture *m_albedo   = nullptr;

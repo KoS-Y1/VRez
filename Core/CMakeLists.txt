@@ -34,7 +34,9 @@ add_library(Resource Resource/include/ResourceManager.h Resource/include/Texture
         Resource/include/VulkanTexture.h Resource/src/VulkanTexture.cpp  Resource/include/VulkanMesh.h
         Resource/src/VulkanMesh.cpp Resource/include/VulkanPrefab.h Resource/src/VulkanPrefab.cpp
         Resource/include/VulkanObject.h Resource/src/VulkanObject.cpp Resource/include/VulkanMaterial.h
-        Resource/src/VulkanMaterial.cpp Resource/include/ResourceRegistry.h Resource/include/VulkanSkybox.h
-        Resource/src/VulkanSkybox.cpp Resource/include/PipelineManager.h Resource/src/PipelineManager.cpp)
+        Resource/src/VulkanMaterial.cpp Resource/include/VulkanSkybox.h Resource/src/VulkanSkybox.cpp
+        Resource/include/PipelineManager.h Resource/src/PipelineManager.cpp Resource/include/MaterialRegistry.h
+        Resource/src/MaterialRegistry.cpp Resource/include/ObjectRegistry.h Resource/src/ObjectRegistry.cpp
+        Resource/include/DescriptorSets.h)
 target_include_directories(Resource PUBLIC Resource)
 target_link_libraries(Resource PUBLIC ThreadPool FileSystem MyVulkan Util SDL3::SDL3 glm Camera)

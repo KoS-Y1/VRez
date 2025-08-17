@@ -4,7 +4,7 @@
 
 layout (location = 0) in vec3 vWorldPosition;
 
-layout (set = 1, binding = 0) uniform sampler2D emissive;
+layout (set = TEXTURE_SET, binding = 0) uniform sampler2D emissive;
 
 layout (location = 0) out vec4 outColor;
 

@@ -30,9 +30,7 @@ public:
 
     void Destroy();
 
-    [[nodiscard]] const VkBuffer &GetVertexBuffer() const { return m_vertexBuffer.GetBuffer(); }
-
-    [[nodiscard]] const size_t GetVertexCount() const { return m_vertexCount; }
+    void BindAndDraw(VkCommandBuffer cmdBuf) const;
 
     [[nodiscard]] const std::string GetName() const { return m_name; }
 

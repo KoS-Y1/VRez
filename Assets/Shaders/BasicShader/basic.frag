@@ -12,10 +12,10 @@ layout (location = 4) in vec2 vTexcoord;
 
 layout (location = 0) out vec4 outColor;
 
-layout (set = 1, binding = 0) uniform sampler2D uAlbedo;
-layout (set = 1, binding = 1) uniform sampler2D uNormal;
-layout (set = 1, binding = 2) uniform sampler2D uORM;
-layout (set = 1, binding = 3) uniform sampler2D uEmissive;
+layout (set = TEXTURE_SET, binding = 0) uniform sampler2D uAlbedo;
+layout (set = TEXTURE_SET, binding = 1) uniform sampler2D uNormal;
+layout (set = TEXTURE_SET, binding = 2) uniform sampler2D uORM;
+layout (set = TEXTURE_SET, binding = 3) uniform sampler2D uEmissive;
 
 void main()
 {

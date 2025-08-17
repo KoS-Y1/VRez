@@ -4,5 +4,5 @@
 namespace file_system {
 std::string Read(const std::string &path);
 std::string GetFileName(const std::string &path);
-std::vector<std::string> GetFilesWithExtension(const std::string &rootDir, const std::string &suffix);
+std::vector<std::string> GetFilesWithExtension(const std::string &rootDir, const std::string &extension);
 } // namespace file_system

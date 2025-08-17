@@ -2,9 +2,6 @@
 
 #include <vulkan/vulkan.h>
 
-#define COLOR_IMG_FORMAT VK_FORMAT_R16G16B16A16_SFLOAT
-#define DEPTH_IMG_FORMAT VK_FORMAT_D32_SFLOAT
-
 class VulkanImage {
 public:
     VulkanImage() = default;

@@ -7,6 +7,7 @@ struct MaterialConfig {
     std::string normal;
     std::string orm;
     std::string emissive;
+    std::string pipeline;
 
     explicit MaterialConfig(const std::string &jsonFile);
 };

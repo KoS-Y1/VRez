@@ -1,6 +1,10 @@
 #ifndef UTIL_GLSL
 #define UTIL_GLSL
 
+const int UNIFORM_SET = 0;
+const int TEXTURE_SET = 1;
+const int IBL_SET = 2;
+
 const float INF = 1.0 / 0.0;
 const float LN2 = 0.6931471805599453;
 // From https://learnopengl.com/PBR/IBL/Specular-IBL

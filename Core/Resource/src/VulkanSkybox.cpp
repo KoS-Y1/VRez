@@ -1,13 +1,15 @@
 #include "include/VulkanSkybox.h"
 
+#include <include/Camera.h>
 #include <include/JsonInput.h>
 #include <include/MeshManager.h>
+#include <include/PipelineManager.h>
 #include <include/TextureManager.h>
+#include <include/VulkanGraphicsPipeline.h>
 #include <include/VulkanMesh.h>
 #include <include/VulkanState.h>
 #include <include/VulkanTexture.h>
-#include <include/VulkanGraphicsPipeline.h>
-#include <include/Camera.h>
+#include <include/DescriptorSets.h>
 
 VulkanSkybox::VulkanSkybox(const std::string &jsonFile, std::vector<VkDescriptorSetLayout> layouts) {
     file_system::SkyboxConfig config = file_system::SkyboxConfig(jsonFile);
@@ -22,6 +24,12 @@ VulkanSkybox::VulkanSkybox(const std::string &jsonFile, std::vector<VkDescriptor
     DEBUG_ASSERT(layouts.size() >= 2);
     m_cameraSet  = CreateDescriptorSet(layouts[0]);
     m_textureSet = CreateDescriptorSet(layouts[1]);
+
+    // Note that ibl texture set is always at set 2
+    m_iblSet     = CreateDescriptorSet(
+        dynamic_cast<VulkanGraphicsPipeline *>(PipelineManager::GetInstance().Load("basic_gfx"))->GetDescriptorSetLayouts()[IBL_SET]
+    );
+
 
     OneTimeUpdateDescriptorSets();
 }
@@ -40,14 +48,16 @@ void VulkanSkybox::Destroy() {
     if (m_cameraSet != VK_NULL_HANDLE) {
         vkFreeDescriptorSets(VulkanState::GetInstance().GetDevice(), VulkanState::GetInstance().GetDescriptorPool(), 1, &m_cameraSet);
         vkFreeDescriptorSets(VulkanState::GetInstance().GetDevice(), VulkanState::GetInstance().GetDescriptorPool(), 1, &m_textureSet);
+        vkFreeDescriptorSets(VulkanState::GetInstance().GetDevice(), VulkanState::GetInstance().GetDescriptorPool(), 1, &m_iblSet);
     }
 
     m_cameraSet  = VK_NULL_HANDLE;
     m_textureSet = VK_NULL_HANDLE;
-    m_emissive             = nullptr;
-    m_specular             = nullptr;
-    m_irradiance           = nullptr;
-    m_brdf                 = nullptr;
+    m_iblSet     = VK_NULL_HANDLE;
+    m_emissive   = nullptr;
+    m_specular   = nullptr;
+    m_irradiance = nullptr;
+    m_brdf       = nullptr;
 }
 
 void VulkanSkybox::BindAndDraw(VkCommandBuffer cmdBuf, const VulkanGraphicsPipeline *pipeline) {
@@ -56,9 +66,7 @@ void VulkanSkybox::BindAndDraw(VkCommandBuffer cmdBuf, const VulkanGraphicsPipel
     vkCmdBindDescriptorSets(cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->GetLayout(), 0, 1, &m_cameraSet, 0, nullptr);
     vkCmdBindDescriptorSets(cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->GetLayout(), 1, 1, &m_textureSet, 0, nullptr);
 
-    const VkDeviceSize offset = 0;
-    vkCmdBindVertexBuffers(cmdBuf, 0, 1, &m_mesh->GetVertexBuffer(), &offset);
-    vkCmdDraw(cmdBuf, m_mesh->GetVertexCount(), 1, 0, 0);
+    m_mesh->BindAndDraw(cmdBuf);
 }
 
 VkDescriptorSet VulkanSkybox::CreateDescriptorSet(VkDescriptorSetLayout layout) {
@@ -78,15 +86,11 @@ VkDescriptorSet VulkanSkybox::CreateDescriptorSet(VkDescriptorSetLayout layout) 
 }
 
 void VulkanSkybox::OneTimeUpdateDescriptorSets() {
-    VkDescriptorBufferInfo infoBuffer{
-        .buffer = Camera::GetInstance().GetBuffer(),
-        .offset = 0,
-        .range = VK_WHOLE_SIZE
-    };
+    VkDescriptorBufferInfo infoBuffer{.buffer = Camera::GetInstance().GetBuffer(), .offset = 0, .range = VK_WHOLE_SIZE};
 
     VkDescriptorImageInfo infoImage{
-        .sampler = m_emissive->GetSampler(),
-        .imageView = m_emissive->GetImageView(),
+        .sampler     = m_emissive->GetSampler(),
+        .imageView   = m_emissive->GetImageView(),
         .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
     };
 
@@ -118,5 +122,24 @@ void VulkanSkybox::OneTimeUpdateDescriptorSets() {
 
     vkUpdateDescriptorSets(VulkanState::GetInstance().GetDevice(), 1, &writeSetBuffer, 0, nullptr);
     vkUpdateDescriptorSets(VulkanState::GetInstance().GetDevice(), 1, &writeSetImage, 0, nullptr);
-}
 
+    std::vector<VkDescriptorImageInfo> infoIblImages{
+        {.sampler = m_brdf->GetSampler(),       .imageView = m_brdf->GetImageView(),       .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL},
+        {.sampler = m_irradiance->GetSampler(), .imageView = m_irradiance->GetImageView(), .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL},
+        {.sampler = m_specular->GetSampler(),   .imageView = m_specular->GetImageView(),   .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL}
+    };
+
+    VkWriteDescriptorSet writeSet{
+        .sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .pNext            = nullptr,
+        .dstSet           = m_iblSet,
+        .dstBinding       = 0,
+        .dstArrayElement  = 0,
+        .descriptorCount  = static_cast<uint32_t>(infoIblImages.size()),
+        .descriptorType   = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+        .pImageInfo       = infoIblImages.data(),
+        .pBufferInfo      = nullptr,
+        .pTexelBufferView = nullptr,
+    };
+    vkUpdateDescriptorSets(VulkanState::GetInstance().GetDevice(), 1, &writeSet, 0, nullptr);
+}

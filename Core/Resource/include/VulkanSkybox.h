@@ -37,24 +37,26 @@ public:
 
     void BindAndDraw(VkCommandBuffer cmdBuf, const VulkanGraphicsPipeline *skybox);
 
+    [[nodiscard]] const VkDescriptorSet &GetIBLSet(std::string pipeline) { return m_iblSet; }
+
     // TODO: may not need these when implementing deferred rendering
-    [[nodiscard]] VulkanTexture *GetSpecular() { return m_specular; }
+    [[nodiscard]] const VulkanTexture *GetSpecular() { return m_specular; }
 
-    [[nodiscard]] VulkanTexture *GetIrradiance() { return m_irradiance; }
+    [[nodiscard]] const VulkanTexture *GetIrradiance() { return m_irradiance; }
 
-    [[nodiscard]] VulkanTexture *GetBRDF() { return m_brdf; }
+    [[nodiscard]] const VulkanTexture *GetBRDF() { return m_brdf; }
 
 private:
-    VulkanMesh    *m_mesh       = nullptr;
-    VulkanTexture *m_emissive   = nullptr;
-    VulkanTexture *m_specular   = nullptr;
-    VulkanTexture *m_irradiance = nullptr;
-    VulkanTexture *m_brdf       = nullptr;
+    const VulkanMesh    *m_mesh       = nullptr;
+    const VulkanTexture *m_emissive   = nullptr;
+    const VulkanTexture *m_specular   = nullptr;
+    const VulkanTexture *m_irradiance = nullptr;
+    const VulkanTexture *m_brdf       = nullptr;
 
     VkDescriptorSet m_cameraSet  = VK_NULL_HANDLE;
     VkDescriptorSet m_textureSet = VK_NULL_HANDLE;
+    VkDescriptorSet m_iblSet     = VK_NULL_HANDLE;
 
     VkDescriptorSet CreateDescriptorSet(VkDescriptorSetLayout layout);
     void            OneTimeUpdateDescriptorSets();
-
 };

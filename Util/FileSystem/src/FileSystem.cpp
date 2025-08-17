@@ -28,7 +28,7 @@ std::string file_system::GetFileName(const std::string &path) {
     return path.substr(pos + 1);
 }
 
-std::vector<std::string> file_system::GetFilesWithExtension(const std::string &rootDir, const std::string &suffix) {
+std::vector<std::string> file_system::GetFilesWithExtension(const std::string &rootDir, const std::string &extension) {
     std::vector<std::string> files;
 
     std::filesystem::path root(rootDir);
@@ -37,7 +37,7 @@ std::vector<std::string> file_system::GetFilesWithExtension(const std::string &r
     }
 
     for (const auto& entry : std::filesystem::recursive_directory_iterator(root)) {
-        if (entry.is_regular_file() && entry.path().extension() == suffix) {
+        if (entry.is_regular_file() && entry.path().extension() == extension) {
             std::string path = entry.path().string();
             std::replace(path.begin(), path.end(), '\\', '/');
             files.push_back(path);

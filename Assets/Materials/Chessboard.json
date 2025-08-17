@@ -1,0 +1,6 @@
+{
+  "albedo": "../Assets/Models/Chessboard/chessboard_base_color.jpg",
+  "normal": "../Assets/Models/Chessboard/chessboard_normal.jpg",
+  "orm": "../Assets/Models/Chessboard/chessboard_base_color.jpg",
+  "pipeline": "Chessboard_ORM.jpg"
+}
