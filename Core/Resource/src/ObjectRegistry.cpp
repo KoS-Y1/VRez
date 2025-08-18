@@ -19,6 +19,6 @@ void ObjectRegistry::Init() {
     std::vector<std::string> keys = file_system::GetFilesWithExtension("../Assets/Models", ".json");
 
     for (const auto &key: keys) {
-        ThreadPool::GetInstance().Enqueue([this, key]() { Preload(key); });
+        Preload(key);
     }
 }

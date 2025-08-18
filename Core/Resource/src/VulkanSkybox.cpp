@@ -37,6 +37,7 @@ VulkanSkybox::VulkanSkybox(const std::string &jsonFile, std::vector<VkDescriptor
 void VulkanSkybox::Swap(VulkanSkybox &other) noexcept {
     std::swap(m_cameraSet, other.m_cameraSet);
     std::swap(m_textureSet, other.m_textureSet);
+    std::swap(m_iblSet, other.m_iblSet);
     std::swap(m_mesh, other.m_mesh);
     std::swap(m_emissive, other.m_emissive);
     std::swap(m_specular, other.m_specular);

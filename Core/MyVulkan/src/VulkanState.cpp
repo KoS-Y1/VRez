@@ -14,8 +14,10 @@
 #include <include/MeshManager.h>
 #include <include/PipelineManager.h>
 #include <include/TextureManager.h>
-#include <include/VertexFormats.h>
+#include <include/MaterialRegistry.h>
+#include <include/ObjectRegistry.h>
 #include <include/VulkanGraphicsPipeline.h>
+#include <include/DescriptorSets.h>
 #include <include/VulkanPrefab.h>
 #include <include/Window.h>
 
@@ -42,13 +44,13 @@ void VulkanState::Init() {
     PipelineManager::GetInstance().Init();
     MeshManager::GetInstance().Init();
     TextureManager::GetInstance().Init();
-
-    // Wait for all meshes and textures to be loaded
     ThreadPool::GetInstance().WaitIdle();
+    
+    MaterialRegistry::GetInstance().Init();
+    ObjectRegistry::GetInstance().Init();
 
     CreateRenderObjects();
 
-    LoadMeshes();
 }
 
 void VulkanState::Destroy() {
@@ -58,7 +60,7 @@ void VulkanState::Destroy() {
 
     WaitIdle();
 
-    vkFreeDescriptorSets(m_device, m_descriptorPool, 1, &m_uniformDescriptorSet);
+    vkFreeDescriptorSets(m_device, m_descriptorPool, 1, &m_uniformSet);
 
     LightManager::GetInstance().Destroy();
     Camera::GetInstance().Destroy();
@@ -71,9 +73,12 @@ void VulkanState::Destroy() {
         vkDestroyImageView(m_device, m_swapchain.views[i], nullptr);
     }
 
-    m_meshInstances.clear();
+    m_prefabs.clear();
 
     m_skybox.Destroy();
+
+    ObjectRegistry::GetInstance().Destroy();
+    MaterialRegistry::GetInstance().Destroy();
 
     PipelineManager::GetInstance().Destroy();
     MeshManager::GetInstance().Destroy();
@@ -547,12 +552,18 @@ void VulkanState::CreateRenderObjects() {
     CreateSkybox();
 
     // Descriptor sets
-    m_uniformDescriptorSet = CreateDescriptorSet(PipelineManager::GetInstance().Load("basic_gfx")->GetDescriptorSetLayouts()[0]);
+    m_uniformSet = CreateDescriptorSet(PipelineManager::GetInstance().Load("basic_gfx")->GetDescriptorSetLayouts()[UNIFORM_SET]);
 
     OneTimeUpdateDescriptorSets();
 
     // UI
     m_ui = std::make_unique<UI>(m_queue, m_imguiDescriptorPool);
+
+    // Prefabs
+    glm::vec3 boomboxLocation = glm::vec3(0.0f, 0.2f, 0.0f);
+    m_prefabs.emplace_back("../Assets/Models/BoomBox/BoomBox.json", boomboxLocation);
+    m_prefabs.emplace_back("../Assets/Models/Chessboard/Chessboard.json");
+    m_prefabs.emplace_back("../Assets/Models/Castle/Castle.json");
 }
 
 void VulkanState::ShowUI() {
@@ -633,7 +644,7 @@ void VulkanState::OneTimeUpdateDescriptorSets() {
     VkWriteDescriptorSet writeSet{
         .sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
         .pNext            = nullptr,
-        .dstSet           = m_uniformDescriptorSet,
+        .dstSet           = m_uniformSet,
         .dstBinding       = 0,
         .dstArrayElement  = 0,
         .descriptorCount  = static_cast<uint32_t>(infoBuffers.size()),
@@ -737,97 +748,25 @@ void VulkanState::DrawGeometry() {
         m_cmdBuf,
         VK_PIPELINE_BIND_POINT_GRAPHICS,
         PipelineManager::GetInstance().Load("basic_gfx")->GetLayout(),
-        0,
+        UNIFORM_SET,
         1,
-        &m_uniformDescriptorSet,
+        &m_uniformSet,
         0,
         nullptr
     );
 
-    for (const auto &instance: m_meshInstances) {
+    vkCmdBindDescriptorSets(
+       m_cmdBuf,
+       VK_PIPELINE_BIND_POINT_GRAPHICS,
+       PipelineManager::GetInstance().Load("basic_gfx")->GetLayout(),
+       IBL_SET,
+       1,
+       &m_skybox.GetIBLSet(),
+       0,
+       nullptr
+   );
+
+    for (const auto &instance: m_prefabs) {
         instance.BindAndDraw(m_cmdBuf, PipelineManager::GetInstance().Load("basic_gfx")->GetLayout());
-    }
-}
-
-void VulkanState::LoadMeshes() {
-    std::vector<std::string> meshPaths{
-        "../Assets/Models/Chessboard/Chessboard.obj",
-        "../Assets/Models/Castle/Castle.obj",
-        "../Assets/Models/BoomBox/BoomBox.obj",
-    };
-
-    std::vector<std::string> texturePaths{
-        "../Assets/Models/Chessboard/chessboard_base_color.jpg",
-        "../Assets/Models/Castle/castle_white_base_color.jpg",
-        "../Assets/Models/BoomBox/BoomBox_baseColor.png",
-    };
-    std::vector<std::string> normalMapPaths{
-        "../Assets/Models/Chessboard/chessboard_normal.jpg",
-        "../Assets/Models/Castle/Castle_normal.jpg",
-        "../Assets/Models/BoomBox/BoomBox_normal.png",
-    };
-    std::vector<std::string> ormPaths{
-        "../Assets/Models/Chessboard/Chessboard_ORM.jpg",
-        "../Assets/Models/Castle/Castle_ORM.jpg",
-        "../Assets/Models/BoomBox/BoomBox_occlusionRoughnessMetallic.png",
-    };
-    std::vector<std::string> emissivePaths{
-        "",
-        "",
-        "../Assets/Models/BoomBox/BoomBox_emissive.png",
-    };
-
-    std::vector<SamplerConfig> samplerConfigs{
-        {},
-        {},
-        {},
-    };
-    std::vector<glm::vec3> locations{
-        glm::vec3(0.0f, 0.0f, 0.0f),
-        glm::vec3(0.0f, 0.0f, 0.0f),
-        glm::vec3(0.0f, 0.1f, 0.0f),
-    };
-
-    for (size_t i = 0; i < meshPaths.size(); i++) {
-        size_t index = i;
-
-        DEBUG_ASSERT(PipelineManager::GetInstance().Load("basic_gfx") != nullptr);
-
-        const VulkanTexture *baseTexture = TextureManager::GetInstance().Load("albedo");
-        const VulkanTexture *normalMap   = TextureManager::GetInstance().Load("normal");
-        const VulkanTexture *orm         = TextureManager::GetInstance().Load("orm");
-        const VulkanTexture *emissive    = TextureManager::GetInstance().Load("emissive");
-        if (texturePaths[i] != "") {
-            baseTexture = TextureManager::GetInstance().Load(texturePaths[i]);
-        }
-        if (normalMapPaths[i] != "") {
-            normalMap = TextureManager::GetInstance().Load(normalMapPaths[i]);
-        }
-        if (ormPaths[i] != "") {
-            orm = TextureManager::GetInstance().Load(ormPaths[i]);
-        }
-        if (emissivePaths[i] != "") {
-            emissive = TextureManager::GetInstance().Load(emissivePaths[i]);
-        }
-
-        m_meshInstances.emplace_back(
-            MeshManager::GetInstance().Load(meshPaths[index]),
-            baseTexture,
-            normalMap,
-            orm,
-            emissive,
-            m_skybox.GetBRDF(),
-            m_skybox.GetSpecular(),
-            m_skybox.GetIrradiance(),
-            dynamic_cast<VulkanGraphicsPipeline *>(PipelineManager::GetInstance().Load("basic_gfx")),
-            locations[index]
-        );
-
-        m_uiQueue.instanceUniformScales.push_back(false);
-        m_uiQueue.PushFunction([&, index]() {
-            bool uniformScale = m_uiQueue.instanceUniformScales[index];
-            m_ui->TransformationWindow(m_meshInstances[index], uniformScale, index);
-            m_uiQueue.instanceUniformScales[index] = uniformScale;
-        });
     }
 }

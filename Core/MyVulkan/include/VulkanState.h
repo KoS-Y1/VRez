@@ -118,13 +118,13 @@ private:
     VkDescriptorPool m_descriptorPool      = VK_NULL_HANDLE;
     VkDescriptorPool m_imguiDescriptorPool = VK_NULL_HANDLE;
 
-    VkDescriptorSet m_uniformDescriptorSet = VK_NULL_HANDLE;
+    VkDescriptorSet m_uniformSet = VK_NULL_HANDLE;
 
     VulkanImage m_drawImage;
     VulkanImage m_depthImage;
     VulkanImage m_msaaColorImage;
 
-    std::vector<VulkanPrefab> m_meshInstances;
+    std::vector<VulkanPrefab> m_prefabs;
 
     VulkanSkybox m_skybox;
 
@@ -189,6 +189,4 @@ private:
 
     void DrawImgui(VkImageView view);
 
-    // Meshes
-    void LoadMeshes();
 };

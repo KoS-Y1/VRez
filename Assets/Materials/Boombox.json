@@ -1,7 +1,7 @@
 {
-  "albedo": "../Assets/Models/Boombox/BoomBox_baseColor.png",
-  "normal": "../Assets/Models/Boombox/BoomBox_normal.png",
-  "orm": "../Assets/Models/Boombox/BoomBox_occlusionRoughnessMetallic.png",
-  "emissive": "BoomBox_emissive.png",
+  "albedo": "../Assets/Models/BoomBox/BoomBox_baseColor.png",
+  "normal": "../Assets/Models/BoomBox/BoomBox_normal.png",
+  "orm": "../Assets/Models/BoomBox/BoomBox_occlusionRoughnessMetallic.png",
+  "emissive": "../Assets/Models/BoomBox/BoomBox_emissive.png",
   "pipeline": "basic_gfx"
 }

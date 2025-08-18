@@ -11,7 +11,6 @@ void VulkanMaterial::Swap(VulkanMaterial &other) noexcept {
     std::swap(m_descriptorSet, other.m_descriptorSet);
 }
 
-
 void VulkanMaterial::Destroy() {
     if (m_descriptorSet != VK_NULL_HANDLE) {
         vkFreeDescriptorSets(VulkanState::GetInstance().GetDevice(), VulkanState::GetInstance().GetDescriptorPool(), 1, &m_descriptorSet);
@@ -39,9 +38,10 @@ void VulkanMaterial::CreateDescriptorSet(const VkDescriptorSetLayout layout) {
     DEBUG_VK_ASSERT(vkAllocateDescriptorSets(VulkanState::GetInstance().GetDevice(), &infoSet, &m_descriptorSet));
 
     std::vector<VkDescriptorImageInfo> infoImage{
-        {.sampler = m_albedo->GetSampler(), .imageView = m_albedo->GetImageView(), .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL},
-        {.sampler = m_normal->GetSampler(), .imageView = m_normal->GetImageView(), .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL},
-        {.sampler = m_orm->GetSampler(),    .imageView = m_orm->GetImageView(),    .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL},
+        {.sampler = m_albedo->GetSampler(),   .imageView = m_albedo->GetImageView(),   .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL},
+        {.sampler = m_normal->GetSampler(),   .imageView = m_normal->GetImageView(),   .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL},
+        {.sampler = m_orm->GetSampler(),      .imageView = m_orm->GetImageView(),      .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL},
+        {.sampler = m_emissive->GetSampler(), .imageView = m_emissive->GetImageView(), .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL}
     };
 
     VkWriteDescriptorSet writeSet{

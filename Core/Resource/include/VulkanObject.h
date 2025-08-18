@@ -1,5 +1,8 @@
 #pragma once
 
+#include "VulkanMesh.h"
+
+
 #include <vulkan/vulkan.h>
 
 #include <include/TextureManager.h>
@@ -36,8 +39,9 @@ public:
 
     void BindAndDraw(VkCommandBuffer cmdBuf, VkPipelineLayout layout) const;
 
+    [[nodiscard]] const std::string &GetName() const { return m_mesh->GetName(); }
+
 private:
     const VulkanMesh     *m_mesh     = nullptr;
     const VulkanMaterial *m_material = nullptr;
-
 };

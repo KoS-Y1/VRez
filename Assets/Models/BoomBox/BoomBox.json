@@ -1,0 +1,4 @@
+{
+  "mesh": "../Assets/Models/BoomBox/BoomBox.obj",
+  "material": "../Assets/Materials/BoomBox.json"
+}

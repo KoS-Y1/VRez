@@ -1,0 +1,4 @@
+{
+  "mesh": "../Assets/Models/Chessboard/Chessboard.obj",
+  "material": "../Assets/Materials/Chessboard.json"
+}

@@ -32,7 +32,7 @@ public:
 
     void BindAndDraw(VkCommandBuffer cmdBuf) const;
 
-    [[nodiscard]] const std::string GetName() const { return m_name; }
+    [[nodiscard]] const std::string& GetName() const { return m_name; }
 
 private:
     VulkanBuffer m_vertexBuffer;

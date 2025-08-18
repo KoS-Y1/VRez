@@ -37,14 +37,7 @@ public:
 
     void BindAndDraw(VkCommandBuffer cmdBuf, const VulkanGraphicsPipeline *skybox);
 
-    [[nodiscard]] const VkDescriptorSet &GetIBLSet(std::string pipeline) { return m_iblSet; }
-
-    // TODO: may not need these when implementing deferred rendering
-    [[nodiscard]] const VulkanTexture *GetSpecular() { return m_specular; }
-
-    [[nodiscard]] const VulkanTexture *GetIrradiance() { return m_irradiance; }
-
-    [[nodiscard]] const VulkanTexture *GetBRDF() { return m_brdf; }
+    [[nodiscard]] const VkDescriptorSet &GetIBLSet() { return m_iblSet; }
 
 private:
     const VulkanMesh    *m_mesh       = nullptr;
