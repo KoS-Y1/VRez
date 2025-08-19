@@ -8,6 +8,7 @@
 
 #include <include/Camera.h>
 #include <include/VulkanState.h>
+#include <include/UIRenderer.h>
 
 Window::Window() {
     m_lastTime = SDL_GetTicks();
@@ -32,6 +33,8 @@ void Window::Run() {
 
     VulkanState::GetInstance().Init();
 
+    UIRenderer uiRenderer;
+
     while (m_running) {
         uint32_t  time = SDL_GetTicks();
         SDL_Event event;
@@ -51,13 +54,17 @@ void Window::Run() {
         ImGui_ImplVulkan_NewFrame();
         ImGui_ImplSDL3_NewFrame();
         ImGui::NewFrame();
-
-        VulkanState::GetInstance().ShowUI();
+        
+        uiRenderer.Present();
 
         //make imgui calculate internal draw structures
         ImGui::Render();
         VulkanState::GetInstance().Update();
+        VulkanState::GetInstance().BeginFrame();
         VulkanState::GetInstance().Present();
+        uiRenderer.Render();
+        VulkanState::GetInstance().EndFrame();
+
 
         m_lastTime = time;
     }
@@ -69,6 +76,7 @@ void Window::Run() {
     ImGui_ImplSDL3_Shutdown();
     ImGui::DestroyContext();
 
+    uiRenderer.Destroy();
     VulkanState::GetInstance().Destroy();
 }
 

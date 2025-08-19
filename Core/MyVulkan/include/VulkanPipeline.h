@@ -5,8 +5,6 @@
 
 #include <include/ShaderCompiler.h>
 
-#define MAX_DESCRIPTOR_SET_COUNT 16
-
 class VulkanPipeline {
 public:
     VulkanPipeline() = default;

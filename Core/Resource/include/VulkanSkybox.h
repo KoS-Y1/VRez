@@ -35,7 +35,7 @@ public:
 
     void Swap(VulkanSkybox &other) noexcept;
 
-    void BindAndDraw(VkCommandBuffer cmdBuf, const VulkanGraphicsPipeline *skybox);
+    void BindAndDraw(const VulkanGraphicsPipeline *skybox);
 
     [[nodiscard]] const VkDescriptorSet &GetIBLSet() { return m_iblSet; }
 

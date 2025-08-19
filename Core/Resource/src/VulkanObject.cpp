@@ -1,7 +1,7 @@
 #include "include/VulkanObject.h"
 
-#include "include/VulkanMesh.h"
-
+#include <include/VulkanMesh.h>
+#include <include/VulkanState.h>
 #include <include/DescriptorSets.h>
 #include <include/VulkanMaterial.h>
 
@@ -20,7 +20,7 @@ void VulkanObject::Destroy() {
     m_material = nullptr;
 }
 
-void VulkanObject::BindAndDraw(VkCommandBuffer cmdBuf, VkPipelineLayout layout) const {
-    m_material->Bind(cmdBuf, layout, TEXTURE_SET);
-    m_mesh->BindAndDraw(cmdBuf);
+void VulkanObject::BindAndDraw(VkPipelineLayout layout) const {
+    m_material->Bind(layout, TEXTURE_SET);
+    m_mesh->BindAndDraw();
 }

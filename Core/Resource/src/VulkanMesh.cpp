@@ -31,9 +31,9 @@ void VulkanMesh::Destroy() {
     m_vertexCount = 0;
 }
 
-void VulkanMesh::BindAndDraw(VkCommandBuffer cmdBuf) const {
+void VulkanMesh::BindAndDraw() const {
     const VkDeviceSize offset = 0;
 
-    vkCmdBindVertexBuffers(cmdBuf, 0, 1, &m_vertexBuffer.GetBuffer(), &offset);
-    vkCmdDraw(cmdBuf, m_vertexCount, 1, 0, 0);
+    vkCmdBindVertexBuffers(VulkanState::GetInstance().GetCommandBuffer(), 0, 1, &m_vertexBuffer.GetBuffer(), &offset);
+    vkCmdDraw(VulkanState::GetInstance().GetCommandBuffer(), m_vertexCount, 1, 0, 0);
 }

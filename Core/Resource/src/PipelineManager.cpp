@@ -27,7 +27,7 @@ std::unique_ptr<VulkanPipeline> PipelineManager::CreateResource(
 void PipelineManager::Init() {
     std::vector<std::pair<std::string, std::vector<std::string>>> gfxPipelines{
         {"basic_gfx",  {"../Assets/Shaders/BasicShader/basic.vert", "../Assets/Shaders/BasicShader/basic.frag"}},
-        {"skybox_gfx", {"../Assets/Shaders/Skybox/Skybox.vert", "../Assets/Shaders/Skybox/Skybox.frag"}        }
+        {"skybox_gfx", {"../Assets/Shaders/Skybox/skybox.vert", "../Assets/Shaders/Skybox/skybox.frag"}        }
     };
     std::vector<GraphicsPipelineOption> gfxOptions{
         {

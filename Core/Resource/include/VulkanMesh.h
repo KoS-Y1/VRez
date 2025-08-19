@@ -30,7 +30,7 @@ public:
 
     void Destroy();
 
-    void BindAndDraw(VkCommandBuffer cmdBuf) const;
+    void BindAndDraw() const;
 
     [[nodiscard]] const std::string& GetName() const { return m_name; }
 

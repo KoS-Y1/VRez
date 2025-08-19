@@ -61,13 +61,13 @@ void VulkanSkybox::Destroy() {
     m_brdf       = nullptr;
 }
 
-void VulkanSkybox::BindAndDraw(VkCommandBuffer cmdBuf, const VulkanGraphicsPipeline *pipeline) {
-    vkCmdBindPipeline(cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->GetPipeline());
+void VulkanSkybox::BindAndDraw(const VulkanGraphicsPipeline *pipeline) {
+    vkCmdBindPipeline(VulkanState::GetInstance().GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->GetPipeline());
 
-    vkCmdBindDescriptorSets(cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->GetLayout(), 0, 1, &m_cameraSet, 0, nullptr);
-    vkCmdBindDescriptorSets(cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->GetLayout(), 1, 1, &m_textureSet, 0, nullptr);
+    vkCmdBindDescriptorSets(VulkanState::GetInstance().GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->GetLayout(), 0, 1, &m_cameraSet, 0, nullptr);
+    vkCmdBindDescriptorSets(VulkanState::GetInstance().GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->GetLayout(), 1, 1, &m_textureSet, 0, nullptr);
 
-    m_mesh->BindAndDraw(cmdBuf);
+    m_mesh->BindAndDraw();
 }
 
 VkDescriptorSet VulkanSkybox::CreateDescriptorSet(VkDescriptorSetLayout layout) {

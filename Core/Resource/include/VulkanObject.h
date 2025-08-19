@@ -37,7 +37,7 @@ public:
     void Swap(VulkanObject &other) noexcept;
     void Destroy();
 
-    void BindAndDraw(VkCommandBuffer cmdBuf, VkPipelineLayout layout) const;
+    void BindAndDraw(VkPipelineLayout layout) const;
 
     [[nodiscard]] const std::string &GetName() const { return m_mesh->GetName(); }
 

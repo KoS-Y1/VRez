@@ -49,7 +49,7 @@ public:
 
     void Reset();
 
-    void BindAndDraw(VkCommandBuffer cmdBuf, VkPipelineLayout pipeline) const;
+    void BindAndDraw(VkPipelineLayout pipeline) const;
 
     [[nodiscard]] const std::string GetName() const { return m_object->GetName(); }
 

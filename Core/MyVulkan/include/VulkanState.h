@@ -11,7 +11,6 @@
 
 #include <Debug.h>
 #include <Singleton.h>
-#include <include/UI.h>
 #include <include/VulkanPrefab.h>
 #include <include/VulkanSkybox.h>
 
@@ -44,43 +43,21 @@ struct DeletionQueue {
     }
 };
 
-struct UIQueue {
-    std::deque<std::function<void()>> ui;
-
-    void PushFunction(std::function<void()> &&func) { ui.push_back(func); }
-
-    void Show() {
-        for (auto it = ui.begin(); it != ui.end(); ++it) {
-            (*it)();
-        }
-    }
-
-    std::vector<bool> instanceUniformScales;
-};
-
 class VulkanState : public Singleton<VulkanState> {
 public:
     void Init();
 
     void Destroy();
 
-    [[nodiscard]] const VkPhysicalDevice &GetPhysicalDevice() const { return m_physicalDevice; };
-
-    [[nodiscard]] const VkDevice &GetDevice() const { return m_device; };
-
-    [[nodiscard]] const VkInstance &GetVkInstance() const { return m_instance; };
-
-    [[nodiscard]] const VkDescriptorPool &GetDescriptorPool() const { return m_descriptorPool; }
-
-    [[nodiscard]] VkSampleCountFlagBits GetSampleCount() const { return m_sampleCount; };
-
     void WaitIdle();
 
     void Present();
 
-    void ShowUI();
-
     void Update();
+
+    void BeginFrame();
+
+    void EndFrame();
 
     template<class Func>
     void ImmediateSubmit(Func &&func) {
@@ -92,6 +69,29 @@ public:
         EndAndSubmitCommandBuffer(m_immediateCmdBuf, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, m_immediateFence, VK_NULL_HANDLE, VK_NULL_HANDLE);
         WaitAndResetFence(m_immediateFence);
     }
+
+    [[nodiscard]] const VkPhysicalDevice &GetPhysicalDevice() const { return m_physicalDevice; };
+
+    [[nodiscard]] const VkDevice &GetDevice() const { return m_device; };
+
+    [[nodiscard]] const VkInstance &GetVkInstance() const { return m_instance; };
+
+    [[nodiscard]] const VkCommandBuffer &GetCommandBuffer() const { return m_cmdBuf; };
+
+    [[nodiscard]] const VkDescriptorPool &GetDescriptorPool() const { return m_descriptorPool; }
+
+    [[nodiscard]] VkSampleCountFlagBits GetSampleCount() const { return m_sampleCount; };
+
+    [[nodiscard]] const VkQueue &GetQueue() const { return m_queue; };
+
+    [[nodiscard]] const VkImageView &GetPresentImageView() const { return m_swapchain.views[m_presentImageIndex]; }
+
+    [[nodiscard]] const VkImage &GetPresentImage() const { return m_swapchain.images[m_presentImageIndex]; }
+
+    [[nodiscard]] uint32_t GetWidth() const { return m_width; }
+
+    [[nodiscard]] uint32_t GetHeight() const { return m_height; }
+
 
 protected:
     VulkanState() = default;
@@ -105,7 +105,9 @@ private:
     VkQueue          m_queue          = VK_NULL_HANDLE;
     VkCommandPool    m_commandPool    = VK_NULL_HANDLE;
     VkSurfaceKHR     m_surface        = VK_NULL_HANDLE;
-    VulkanSwapchain  m_swapchain;
+
+    VulkanSwapchain m_swapchain;
+    uint32_t        m_presentImageIndex = 0;
 
     VkFence         m_renderFence      = VK_NULL_HANDLE;
     VkSemaphore     m_renderSemaphore  = VK_NULL_HANDLE;
@@ -131,13 +133,10 @@ private:
     VkSampleCountFlagBits m_sampleCount = VK_SAMPLE_COUNT_1_BIT;
 
     DeletionQueue m_deletionQueue;
-    UIQueue       m_uiQueue;
 
     SDL_Window *m_window = nullptr;
     uint32_t    m_width;
     uint32_t    m_height;
-
-    std::unique_ptr<UI> m_ui;
 
     std::mutex m_mutex;
 
@@ -181,12 +180,12 @@ private:
 
     void QueuePresent(VkSemaphore waitSemaphore, uint32_t imageIndex);
 
+    void AcquireNextImage();
+
     void Draw();
 
     void DrawGeometry();
 
     void OneTimeUpdateDescriptorSets();
-
-    void DrawImgui(VkImageView view);
 
 };

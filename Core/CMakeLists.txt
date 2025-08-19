@@ -2,7 +2,7 @@ add_library(MyVulkan MyVulkan/include/VulkanState.h MyVulkan/src/VulkanState.cpp
         MyVulkan/include/VulkanImage.h MyVulkan/src/VulkanImage.cpp MyVulkan/include/VulkanPipeline.h MyVulkan/src/VulkanPipeline.cpp
         MyVulkan/include/VulkanComputePipeline.h MyVulkan/src/VulkanComputePipeline.cpp MyVulkan/include/VulkanGraphicsPipeline.h
         MyVulkan/src/VulkanGraphicsPipeline.cpp MyVulkan/include/VulkanBuffer.h MyVulkan/src/VulkanBuffer.cpp MyVulkan/include/VertexFormats.h
-        MyVulkan/src/VertexFormats.cpp )
+        MyVulkan/src/VertexFormats.cpp MyVulkan/include/DescriptorSets.h)
 target_include_directories(MyVulkan PUBLIC MyVulkan)
 target_link_libraries(MyVulkan PUBLIC Vulkan::Vulkan Debug Util SDL3::SDL3 ShaderCompiler glm imgui UI Camera Light Resource Window ThreadPool)
 
@@ -14,9 +14,9 @@ add_library(ShaderCompiler ShaderCompiler/include/ShaderCompiler.h ShaderCompile
 target_include_directories(ShaderCompiler PUBLIC ShaderCompiler)
 target_link_libraries(ShaderCompiler PUBLIC glslang Vulkan::Vulkan SDL3::SDL3 FileSystem SPIRV-Reflect Debug)
 
-add_library(UI UI/include/UI.h UI/src/UI.cpp)
+add_library(UI UI/include/UI.h UI/src/UI.cpp UI/include/UIRenderer.h UI/src/UIRenderer.cpp)
 target_include_directories(UI PUBLIC UI)
-target_link_libraries(UI PUBLIC imgui Window MyVulkan glm Camera Light)
+target_link_libraries(UI PUBLIC imgui MyVulkan glm Camera Light Util Vulkan::Vulkan)
 
 add_library(Camera Camera/include/Camera.h Camera/src/Camera.cpp)
 target_include_directories(Camera PUBLIC Camera)
@@ -36,7 +36,11 @@ add_library(Resource Resource/include/ResourceManager.h Resource/include/Texture
         Resource/include/VulkanObject.h Resource/src/VulkanObject.cpp Resource/include/VulkanMaterial.h
         Resource/src/VulkanMaterial.cpp Resource/include/VulkanSkybox.h Resource/src/VulkanSkybox.cpp
         Resource/include/PipelineManager.h Resource/src/PipelineManager.cpp Resource/include/MaterialRegistry.h
-        Resource/src/MaterialRegistry.cpp Resource/include/ObjectRegistry.h Resource/src/ObjectRegistry.cpp
-        Resource/include/DescriptorSets.h)
+        Resource/src/MaterialRegistry.cpp Resource/include/ObjectRegistry.h Resource/src/ObjectRegistry.cpp)
 target_include_directories(Resource PUBLIC Resource)
-target_link_libraries(Resource PUBLIC ThreadPool FileSystem MyVulkan Util SDL3::SDL3 glm Camera)
+target_link_libraries(Resource PUBLIC ThreadPool FileSystem MyVulkan Util SDL3::SDL3 glm)
+
+add_library(GFX GFX/include/PbrRenderer.h GFX/src/PbrRenderer.cpp GFX/include/GBufferPass.h GFX/src/GBufferPass.cpp
+        GFX GFX/include/LightingPass.h GFX/src/LightingPass.cpp)
+target_include_directories(GFX PUBLIC GFX)
+target_link_libraries(GFX PUBLIC MyVulkan Resource Camera Light imgui)

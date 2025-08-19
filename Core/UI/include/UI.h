@@ -7,9 +7,12 @@ class VulkanPrefab;
 
 class UI {
 public:
-    UI() = delete;
+    UI() = default;
 
-    UI(VkQueue queue, VkDescriptorPool descriptorPool);
+    UI(const UI&) = delete;
+    UI(UI&&) = delete;
+    UI& operator=(const UI&) = delete;
+    UI& operator=(UI&&) = delete;
 
     ~UI() = default;
 

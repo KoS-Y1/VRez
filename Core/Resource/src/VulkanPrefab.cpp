@@ -3,6 +3,7 @@
 #include <glm/gtx/euler_angles.hpp>
 
 #include <include/ObjectRegistry.h>
+#include <include/VulkanState.h>
 
 VulkanPrefab::VulkanPrefab(const std::string& key, glm::vec3 location) : m_originalLocation(location) {
     m_object = ObjectRegistry::GetInstance().Load(key);
@@ -60,8 +61,8 @@ void VulkanPrefab::UpdateTransformation() {
 
 
 
-void VulkanPrefab::BindAndDraw(VkCommandBuffer cmdBuf, VkPipelineLayout pipeline) const {
-    vkCmdPushConstants(cmdBuf, pipeline, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(m_transformation), &m_transformation);
+void VulkanPrefab::BindAndDraw(VkPipelineLayout pipeline) const {
+    vkCmdPushConstants(VulkanState::GetInstance().GetCommandBuffer(), pipeline, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(m_transformation), &m_transformation);
 
-    m_object->BindAndDraw(cmdBuf, pipeline);
+    m_object->BindAndDraw(pipeline);
 }

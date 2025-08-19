@@ -23,8 +23,8 @@ void VulkanMaterial::Destroy() {
     m_emissive      = nullptr;
 }
 
-void VulkanMaterial::Bind(VkCommandBuffer cmdBuf, VkPipelineLayout layout, uint32_t firstSet) const {
-    vkCmdBindDescriptorSets(cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, firstSet, 1, &m_descriptorSet, 0, nullptr);
+void VulkanMaterial::Bind(VkPipelineLayout layout, uint32_t firstSet) const {
+    vkCmdBindDescriptorSets(VulkanState::GetInstance().GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, layout, firstSet, 1, &m_descriptorSet, 0, nullptr);
 }
 
 void VulkanMaterial::CreateDescriptorSet(const VkDescriptorSetLayout layout) {

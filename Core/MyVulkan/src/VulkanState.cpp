@@ -45,7 +45,7 @@ void VulkanState::Init() {
     MeshManager::GetInstance().Init();
     TextureManager::GetInstance().Init();
     ThreadPool::GetInstance().WaitIdle();
-    
+
     MaterialRegistry::GetInstance().Init();
     ObjectRegistry::GetInstance().Init();
 
@@ -87,6 +87,33 @@ void VulkanState::Destroy() {
     m_deletionQueue.Flush();
 
     m_device = VK_NULL_HANDLE;
+}
+
+void VulkanState::BeginFrame() {
+    // Reset fence and command buffer
+    WaitAndResetFence(m_renderFence);
+    DEBUG_VK_ASSERT(vkResetCommandBuffer(m_cmdBuf, 0));
+
+    AcquireNextImage();
+
+    BeginCommandBuffer(m_cmdBuf, 0);
+}
+
+void VulkanState::EndFrame() {
+    // Layout transition for presenting
+    vk_util::CmdImageLayoutTransition(
+        m_cmdBuf,
+        m_swapchain.images[m_presentImageIndex],
+        VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+        VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+        VK_IMAGE_ASPECT_COLOR_BIT,
+        VK_ACCESS_TRANSFER_WRITE_BIT,
+        0
+    );
+
+    EndAndSubmitCommandBuffer(m_cmdBuf, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, m_renderFence, m_presentSemaphore, m_renderSemaphore);
+
+    QueuePresent(m_renderSemaphore, m_presentImageIndex);
 }
 
 void VulkanState::CreateInstance() {
@@ -425,15 +452,6 @@ void VulkanState::WaitIdle() {
 }
 
 void VulkanState::Present() {
-    // Reset fence and command buffer
-    WaitAndResetFence(m_renderFence);
-    DEBUG_VK_ASSERT(vkResetCommandBuffer(m_cmdBuf, 0));
-
-    // Acquire next image in the swapchain for presenting
-    uint32_t imageIndex = 0;
-    DEBUG_VK_ASSERT(vkAcquireNextImageKHR(m_device, m_swapchain.swapchain, POINT_ONE_SECOND, m_presentSemaphore, nullptr, &imageIndex));
-
-    BeginCommandBuffer(m_cmdBuf, 0);
 
     // Layout transition so that we can clear image color
     vk_util::CmdImageLayoutTransition(
@@ -493,7 +511,7 @@ void VulkanState::Present() {
     );
     vk_util::CmdImageLayoutTransition(
         m_cmdBuf,
-        m_swapchain.images[imageIndex],
+        m_swapchain.images[m_presentImageIndex],
         VK_IMAGE_LAYOUT_UNDEFINED,
         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
         VK_IMAGE_ASPECT_COLOR_BIT,
@@ -505,38 +523,12 @@ void VulkanState::Present() {
     vk_util::CopyImageToImage(
         m_cmdBuf,
         m_drawImage.GetImage(),
-        m_swapchain.images[imageIndex],
+        m_swapchain.images[m_presentImageIndex],
         m_drawImage.GetExtent(),
         {m_width, m_height, 1},
         VK_IMAGE_ASPECT_COLOR_BIT
     );
 
-    // Layout transition for imgui draw
-    vk_util::CmdImageLayoutTransition(
-        m_cmdBuf,
-        m_swapchain.images[imageIndex],
-        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-        VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-        VK_IMAGE_ASPECT_COLOR_BIT,
-        VK_ACCESS_TRANSFER_WRITE_BIT,
-        VK_ACCESS_TRANSFER_WRITE_BIT
-    );
-    DrawImgui(m_swapchain.views[imageIndex]);
-
-    // Layout transition for presenting
-    vk_util::CmdImageLayoutTransition(
-        m_cmdBuf,
-        m_swapchain.images[imageIndex],
-        VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-        VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-        VK_IMAGE_ASPECT_COLOR_BIT,
-        VK_ACCESS_TRANSFER_WRITE_BIT,
-        0
-    );
-
-    EndAndSubmitCommandBuffer(m_cmdBuf, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, m_renderFence, m_presentSemaphore, m_renderSemaphore);
-
-    QueuePresent(m_renderSemaphore, imageIndex);
 }
 
 void VulkanState::CreateSkybox() {
@@ -556,20 +548,11 @@ void VulkanState::CreateRenderObjects() {
 
     OneTimeUpdateDescriptorSets();
 
-    // UI
-    m_ui = std::make_unique<UI>(m_queue, m_imguiDescriptorPool);
-
     // Prefabs
     glm::vec3 boomboxLocation = glm::vec3(0.0f, 0.2f, 0.0f);
     m_prefabs.emplace_back("../Assets/Models/BoomBox/BoomBox.json", boomboxLocation);
     m_prefabs.emplace_back("../Assets/Models/Chessboard/Chessboard.json");
     m_prefabs.emplace_back("../Assets/Models/Castle/Castle.json");
-}
-
-void VulkanState::ShowUI() {
-    m_ui->CameraWindow();
-    m_ui->LightsWindow();
-    m_uiQueue.Show();
 }
 
 void VulkanState::Update() {
@@ -657,29 +640,12 @@ void VulkanState::OneTimeUpdateDescriptorSets() {
     vkUpdateDescriptorSets(m_device, 1, &writeSet, 0, nullptr);
 }
 
-void VulkanState::DrawImgui(VkImageView view) {
-    VkRect2D renderAreas{
-        .offset = {0,       0       },
-        .extent = {m_width, m_height}
-    };
-    VkRenderingAttachmentInfo infoColorAttachment = vk_util::GetRenderingAttachmentInfo(
-        view,
-        VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-        nullptr,
-        VK_ATTACHMENT_LOAD_OP_LOAD,
-        VK_ATTACHMENT_STORE_OP_STORE,
-        VK_RESOLVE_MODE_NONE,
-        VK_NULL_HANDLE,
-        VK_IMAGE_LAYOUT_UNDEFINED
-    );
-    VkRenderingInfo infoRendering = vk_util::GetRenderingInfo(renderAreas, &infoColorAttachment, nullptr);
 
-    vkCmdBeginRendering(m_cmdBuf, &infoRendering);
-
-    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), m_cmdBuf);
-
-    vkCmdEndRendering(m_cmdBuf);
+void VulkanState::AcquireNextImage() {
+    // Acquire next image in the swapchain for presenting
+    DEBUG_VK_ASSERT(vkAcquireNextImageKHR(m_device, m_swapchain.swapchain, POINT_ONE_SECOND, m_presentSemaphore, nullptr, &m_presentImageIndex));
 }
+
 
 void VulkanState::Draw() {
     VkRect2D renderAreas{
@@ -734,7 +700,7 @@ void VulkanState::Draw() {
     vkCmdSetViewport(m_cmdBuf, 0, 1, &viewport);
     vkCmdSetScissor(m_cmdBuf, 0, 1, &renderAreas);
 
-    m_skybox.BindAndDraw(m_cmdBuf, dynamic_cast<VulkanGraphicsPipeline *>(PipelineManager::GetInstance().Load("skybox_gfx")));
+    m_skybox.BindAndDraw(dynamic_cast<VulkanGraphicsPipeline *>(PipelineManager::GetInstance().Load("skybox_gfx")));
 
     DrawGeometry();
 
@@ -767,6 +733,6 @@ void VulkanState::DrawGeometry() {
    );
 
     for (const auto &instance: m_prefabs) {
-        instance.BindAndDraw(m_cmdBuf, PipelineManager::GetInstance().Load("basic_gfx")->GetLayout());
+        instance.BindAndDraw(PipelineManager::GetInstance().Load("basic_gfx")->GetLayout());
     }
 }
