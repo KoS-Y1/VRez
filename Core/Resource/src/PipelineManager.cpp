@@ -36,6 +36,9 @@ void PipelineManager::Init() {
          .cullMode             = VK_CULL_MODE_NONE,
          .infoVertex           = VertexP::GetVertexInputStateCreateInfo(),
          .colorFormats         = {VK_FORMAT_R16G16B16A16_SFLOAT},
+         .depthTestEnable      = VK_TRUE,
+         .depthWriteEnable     = VK_TRUE,
+         .depthCompareOp       = VK_COMPARE_OP_LESS_OR_EQUAL,
          .rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
          },
         {

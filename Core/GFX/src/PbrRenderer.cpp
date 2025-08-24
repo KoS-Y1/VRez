@@ -9,12 +9,12 @@
 #include <include/VulkanState.h>
 #include <include/VulkanUtil.h>
 
-PbrRenderer::PbrRenderer() {
+PbrRenderer::PbrRenderer()
+    : m_skybox("../Assets/Skybox/Skybox.png", PipelineManager::GetInstance().Load("skybox_gfx")->GetDescriptorSetLayouts()[descriptor::TEXTURE_SET]) {
     m_brdf       = TextureManager::GetInstance().Load("../Assets/Skybox/brdf_lut.png");
     m_irradiance = TextureManager::GetInstance().Load("../Assets/Skybox/irradiance.png");
     m_specular   = TextureManager::GetInstance().Load("../Assets/Skybox/specular.png");
 
-    CreateSkybox();
     CreateImages();
     CreateBuffers();
     CreateDrawContent();
@@ -85,8 +85,6 @@ void PbrRenderer::Render() {
     );
     m_gBufferPass.PostRender();
 
-    m_config.depthAttachments.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
-
     m_lightingPass.Render(
         m_config,
         {
@@ -96,6 +94,17 @@ void PbrRenderer::Render() {
     },
         m_drawContent,
         dynamic_cast<VulkanGraphicsPipeline *>(PipelineManager::GetInstance().Load("lighting_gfx"))
+    );
+
+    m_config.depthAttachments.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+    m_config.drawAttachments.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+    m_skybox.Render(
+        m_config,
+        {
+            {m_cameraSet, descriptor::UNIFORM_SET},
+    },
+        m_drawContent,
+        dynamic_cast<VulkanGraphicsPipeline *>(PipelineManager::GetInstance().Load("skybox_gfx"))
     );
 
     vk_util::CmdImageLayoutTransition(
@@ -109,15 +118,6 @@ void PbrRenderer::Render() {
     );
 
     VulkanState::GetInstance().CopyToPresentImage(m_drawImage);
-}
-
-void PbrRenderer::CreateSkybox() {
-    // SkyboxPass skyboxPass(
-    //     "../Assets/Skybox/Skybox.png",
-    //     PipelineManager::GetInstance().Load("skybox_gfx")->GetDescriptorSetLayouts()[descriptor::TEXTURE_SET]
-    // );
-    //
-    // m_skybox = std::move(skyboxPass);
 }
 
 void PbrRenderer::CreateImages() {
@@ -211,8 +211,8 @@ void PbrRenderer::CreateRenderConfig() {
 
 void PbrRenderer::OneTimeUpdateDescriptorSets() {
     std::vector<VkDescriptorBufferInfo> infoBuffers{
-        {.buffer = m_cameraBuffer.GetBuffer(),              .offset = 0, .range = VK_WHOLE_SIZE},
-        {.buffer = m_lightBuffer.GetBuffer(), .offset = 0, .range = VK_WHOLE_SIZE}
+        {.buffer = m_cameraBuffer.GetBuffer(), .offset = 0, .range = VK_WHOLE_SIZE},
+        {.buffer = m_lightBuffer.GetBuffer(),  .offset = 0, .range = VK_WHOLE_SIZE}
     };
 
     VkWriteDescriptorSet writeSetUniform{

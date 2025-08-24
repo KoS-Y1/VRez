@@ -11,7 +11,7 @@ class VulkanTexture;
 class VulkanMesh;
 struct DrawContent;
 
-class SkyboxPass : RenderPass {
+class SkyboxPass : public RenderPass {
 public:
     SkyboxPass() = default;
 

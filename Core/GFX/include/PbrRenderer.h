@@ -52,7 +52,6 @@ private:
     VkDescriptorSet m_cameraSet = VK_NULL_HANDLE;
     VkDescriptorSet m_iblSet = VK_NULL_HANDLE;
 
-    void CreateSkybox();
     void CreateImages();
     void CreateDrawContent();
     void CreateBuffers();

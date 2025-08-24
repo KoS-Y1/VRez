@@ -5,7 +5,7 @@
 #include <include/VulkanUtil.h>
 
 void LightingPass::CreateRenderingInfo(const RenderingConfig &config) {
-    m_infoRendering = vk_util::GetRenderingInfo(config.renderArea, &config.drawAttachments, &config.depthAttachments);
+    m_infoRendering = vk_util::GetRenderingInfo(config.renderArea, &config.drawAttachments, nullptr);
 }
 
 void LightingPass::DrawCalls(const DrawContent &content, VkPipelineLayout layout) {
