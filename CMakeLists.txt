@@ -13,4 +13,4 @@ add_subdirectory(External)
 
 add_executable(VulkanRayTracer main.cpp)
 
-target_link_libraries(VulkanRayTracer Vulkan::Vulkan SDL3::SDL3 Debug MyVulkan Window UI glslang Resource)
+target_link_libraries(VulkanRayTracer Vulkan::Vulkan SDL3::SDL3 Debug Window glslang Resource)

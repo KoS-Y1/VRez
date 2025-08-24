@@ -17,26 +17,12 @@ public:
 
     SkyboxPass(const std::string &file, VkDescriptorSetLayout layout);
 
-    ~SkyboxPass() { Destroy(); }
+    ~SkyboxPass();
 
     SkyboxPass(const SkyboxPass &)            = delete;
+    SkyboxPass(SkyboxPass &&)                 = delete;
     SkyboxPass &operator=(const SkyboxPass &) = delete;
-
-    SkyboxPass(SkyboxPass &&other) { Swap(other); }
-
-    SkyboxPass &operator=(SkyboxPass &&other) {
-        if (this != &other) {
-            Destroy();
-            Swap(other);
-        }
-
-        return *this;
-    }
-
-    void Destroy();
-
-    void Swap(SkyboxPass &other) noexcept;
-
+    SkyboxPass &operator=(SkyboxPass &&)      = delete;
 
 private:
     const VulkanMesh    *m_mesh     = nullptr;

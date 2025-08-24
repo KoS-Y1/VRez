@@ -28,10 +28,6 @@ PbrRenderer::~PbrRenderer() {
     m_drawImage  = {};
     m_depthImage = {};
 
-    m_gBufferPass  = {};
-    m_lightingPass = {};
-    m_skybox       = {};
-
     m_drawContent.prefabs.clear();
     m_drawContent.screen = nullptr;
 

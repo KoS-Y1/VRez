@@ -20,13 +20,7 @@ SkyboxPass::SkyboxPass(const std::string &file, VkDescriptorSetLayout layout) {
     OneTimeUpdateDescriptorSets();
 }
 
-void SkyboxPass::Swap(SkyboxPass &other) noexcept {
-    std::swap(m_textureSet, other.m_textureSet);
-    std::swap(m_mesh, other.m_mesh);
-    std::swap(m_emissive, other.m_emissive);
-}
-
-void SkyboxPass::Destroy() {
+SkyboxPass::~SkyboxPass() {
     if (m_textureSet != VK_NULL_HANDLE) {
         vkFreeDescriptorSets(VulkanState::GetInstance().GetDevice(), VulkanState::GetInstance().GetDescriptorPool(), 1, &m_textureSet);
     }

@@ -8,7 +8,7 @@ target_link_libraries(MyVulkan PUBLIC Vulkan::Vulkan Debug Util SDL3::SDL3 Shade
 
 add_library(Window Window/include/Window.h Window/src/Window.cpp)
 target_include_directories(Window PUBLIC Window)
-target_link_libraries(Window PUBLIC SDL3::SDL3 Util Debug MyVulkan UI imgui Camera GFX Light Resource)
+target_link_libraries(Window PUBLIC SDL3::SDL3 Util Debug MyVulkan UI imgui Camera GFX Light)
 
 add_library(ShaderCompiler ShaderCompiler/include/ShaderCompiler.h ShaderCompiler/src/ShaderCompiler.cpp)
 target_include_directories(ShaderCompiler PUBLIC ShaderCompiler)

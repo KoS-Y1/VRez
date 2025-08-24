@@ -10,21 +10,9 @@ public:
     ~LightingPass() = default;
 
     LightingPass(const LightingPass &)            = delete;
+    LightingPass(LightingPass &&)                 = delete;
     LightingPass &operator=(const LightingPass &) = delete;
-
-    LightingPass(LightingPass &&other) { Swap(other); }
-
-    LightingPass &operator=(LightingPass &&other) {
-        if (this != &other) {
-            Destroy();
-            Swap(other);
-        }
-
-        return *this;
-    }
-
-    void Swap(LightingPass &other) noexcept;
-    void Destroy();
+    LightingPass &operator=(LightingPass &&)      = delete;
 
 private:
     void CreateRenderingInfo(const RenderingConfig &config) override;

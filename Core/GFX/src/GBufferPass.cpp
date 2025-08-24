@@ -11,16 +11,10 @@ GBufferPass::GBufferPass() {
     CreateGBufferSet();
 }
 
-void GBufferPass::Swap(GBufferPass &other) noexcept {
-    std::swap(m_gBufferSet, other.m_gBufferSet);
-    std::swap(m_gBufferImages, other.m_gBufferImages);
-    std::swap(m_gBufferAttachments, other.m_gBufferAttachments);
-    std::swap(m_infoRendering, other.m_infoRendering);
-}
-
-void GBufferPass::Destroy() {
+GBufferPass::~GBufferPass() {
     if (m_gBufferSet != VK_NULL_HANDLE) {
         vkFreeDescriptorSets(VulkanState::GetInstance().GetDevice(), VulkanState::GetInstance().GetDescriptorPool(), 1, &m_gBufferSet);
+        vkDestroySampler(VulkanState::GetInstance().GetDevice(), m_sampler, nullptr);
     }
     m_gBufferSet = VK_NULL_HANDLE;
     m_gBufferImages.clear();
@@ -68,8 +62,6 @@ void GBufferPass::PostRender() {
 }
 
 void GBufferPass::CreateGBufferSet() {
-    VkSampler sampler = VK_NULL_HANDLE;
-
     VkSamplerCreateInfo infoSampler = {
         .sType                   = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
         .pNext                   = nullptr,
@@ -91,14 +83,14 @@ void GBufferPass::CreateGBufferSet() {
         .unnormalizedCoordinates = VK_FALSE, // Always normalized
     };
 
-    vkCreateSampler(VulkanState::GetInstance().GetDevice(), &infoSampler, nullptr, &sampler);
+    vkCreateSampler(VulkanState::GetInstance().GetDevice(), &infoSampler, nullptr, &m_sampler);
 
     m_gBufferSet =
         vk_util::CreateDescriptorSet(PipelineManager::GetInstance().Load("lighting_gfx")->GetDescriptorSetLayouts()[descriptor::TEXTURE_SET]);
 
     std::vector<VkDescriptorImageInfo> infoImages;
     for (const auto &image: m_gBufferImages) {
-        infoImages.emplace_back(sampler, image.GetImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        infoImages.emplace_back(m_sampler, image.GetImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     }
 
     VkWriteDescriptorSet writeSet{

@@ -9,26 +9,15 @@ class GBufferPass : public RenderPass {
 public:
     GBufferPass();
 
-    ~GBufferPass() { Destroy(); }
+    ~GBufferPass();
 
     GBufferPass(const GBufferPass &)            = delete;
+    GBufferPass(GBufferPass &&)                 = delete;
     GBufferPass &operator=(const GBufferPass &) = delete;
-
-    GBufferPass(GBufferPass &&other) { Swap(other); }
-
-    GBufferPass &operator=(GBufferPass &&other) {
-        if (this != &other) {
-            Destroy();
-            Swap(other);
-        }
-
-        return *this;
-    }
+    GBufferPass &operator=(GBufferPass &&)      = delete;
 
     void PreRender();
     void PostRender();
-
-    void Swap(GBufferPass &other) noexcept;
 
     void Destroy();
 
@@ -38,11 +27,11 @@ private:
     std::vector<VulkanImage>               m_gBufferImages;
     std::vector<VkRenderingAttachmentInfo> m_gBufferAttachments;
     VkDescriptorSet                        m_gBufferSet;
+    VkSampler                              m_sampler;
 
     void CreateGBufferImages();
     void CreateGBufferSet();
 
     void CreateRenderingInfo(const RenderingConfig &config) override;
     void DrawCalls(const DrawContent &content, VkPipelineLayout layout) override;
-
 };

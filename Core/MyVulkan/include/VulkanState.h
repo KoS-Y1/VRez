@@ -43,6 +43,8 @@ struct DeletionQueue {
 
 class VulkanState : public Singleton<VulkanState> {
 public:
+    void Init();
+
     void WaitIdle();
     void BeginFrame();
     void EndFrame();
@@ -81,7 +83,7 @@ public:
 
 
 protected:
-    VulkanState();
+    VulkanState() = default;
     ~VulkanState();
 
 private:

@@ -12,7 +12,7 @@
 #include <include/Descriptor.h>
 #include <include/Window.h>
 
-VulkanState::VulkanState() {
+void VulkanState::Init() {
     m_window = Window::GetInstance().GetSDLWindow();
     m_width  = Window::GetInstance().GetWidth();
     m_height = Window::GetInstance().GetHeight();
@@ -43,8 +43,6 @@ VulkanState::~VulkanState() {
     for (size_t i = 0; i < m_swapchain.count; i++) {
         vkDestroyImageView(m_device, m_swapchain.views[i], nullptr);
     }
-
-    TextureManager::GetInstance().Destroy();
 
     m_deletionQueue.Flush();
 

@@ -8,13 +8,8 @@
 
 #include <include/Camera.h>
 #include <include/LightManager.h>
-#include <include/MaterialRegistry.h>
-#include <include/MeshManager.h>
-#include <include/ObjectRegistry.h>
 #include <include/PbrRenderer.h>
 #include <include/PipelineManager.h>
-#include <include/TextureManager.h>
-#include <include/ThreadPool.h>
 #include <include/UIRenderer.h>
 #include <include/VulkanState.h>
 
@@ -39,16 +34,6 @@ void Window::Run() {
     SDL_Log("SDL Window(%dx%d) running", WINDOW_WIDTH, WINDOW_HEIGHT);
     m_running = true;
 
-
-    // TODO: no need to init
-    PipelineManager::GetInstance().Init();
-    MeshManager::GetInstance().Init();
-    TextureManager::GetInstance().Init();
-    ThreadPool::GetInstance().WaitIdle();
-
-    MaterialRegistry::GetInstance().Init();
-    ObjectRegistry::GetInstance().Init();
-
     UIRenderer  uiRenderer;
     PbrRenderer pbrRenderer;
 
@@ -72,12 +57,12 @@ void Window::Run() {
         ImGui_ImplSDL3_NewFrame();
         ImGui::NewFrame();
 
+        uiRenderer.Present();
         ImGui::Render();
 
         VulkanState::GetInstance().BeginFrame();
 
         pbrRenderer.Render();
-
         uiRenderer.Render();
 
         VulkanState::GetInstance().EndFrame();
@@ -87,13 +72,6 @@ void Window::Run() {
     SDL_Log("SDL Window(%dx%d) quitting", WINDOW_WIDTH, WINDOW_HEIGHT);
 
     VulkanState::GetInstance().WaitIdle();
-
-    PipelineManager::GetInstance().Destroy();
-    MeshManager::GetInstance().Destroy();
-    TextureManager::GetInstance().Destroy();
-
-    MaterialRegistry::GetInstance().Destroy();
-    ObjectRegistry::GetInstance().Destroy();
 
     ImGui_ImplVulkan_Shutdown();
     ImGui_ImplSDL3_Shutdown();
