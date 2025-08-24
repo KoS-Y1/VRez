@@ -64,6 +64,8 @@ void PbrRenderer::Render() {
         VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT
     );
 
+    m_config.depthAttachments.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    m_config.drawAttachments.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     // Shadow pass...
 
     m_gBufferPass.Render(
@@ -74,6 +76,7 @@ void PbrRenderer::Render() {
         m_drawContent,
         dynamic_cast<VulkanGraphicsPipeline *>(PipelineManager::GetInstance().Load("gbuffer_gfx"))
     );
+    m_config.depthAttachments.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
 
     m_lightingPass.Render(
         m_config,
@@ -153,7 +156,7 @@ void PbrRenderer::CreateRenderConfig() {
     m_config.viewport = {
         .x        = 0.f,
         // Flip the view port
-        .y        = static_cast<float>(VulkanState::GetInstance().GetWidth()),
+        .y        = static_cast<float>(VulkanState::GetInstance().GetHeight()),
         .width    = static_cast<float>(VulkanState::GetInstance().GetWidth()),
         // Flip the view port
         .height   = -static_cast<float>(VulkanState::GetInstance().GetHeight()),
@@ -179,7 +182,7 @@ void PbrRenderer::CreateRenderConfig() {
     };
     m_config.depthAttachments = vk_util::GetRenderingAttachmentInfo(
         m_depthImage.GetImageView(),
-        VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
+        VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
         &depthClear,
         VK_ATTACHMENT_LOAD_OP_CLEAR,
         VK_ATTACHMENT_STORE_OP_STORE,

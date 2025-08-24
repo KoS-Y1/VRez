@@ -57,10 +57,10 @@ void MeshManager::CreateSkyboxMesh() {
 
 void MeshManager::CraeteScreenMesh() {
     std::vector<VertexPT2D> vertices{
-        VertexPT2D({0.0f, 0.0f}, {0.0f, 0.0f}),
-        VertexPT2D({1.0f, 0.0f}, {1.0f, 0.0f}),
-        VertexPT2D({0.0f, 1.0f}, {0.0f, 1.0f}),
-        VertexPT2D({1.0f, 1.0f}, {1.0f, 1.0f})
+        VertexPT2D({-1.0f, -1.0f}, {0.0f, 0.0f}),
+        VertexPT2D({ 1.0f, -1.0f}, {1.0f, 0.0f}),
+        VertexPT2D({-1.0f,  1.0f}, {0.0f, 1.0f}),
+        VertexPT2D({ 1.0f,  1.0f}, {1.0f, 1.0f}),
     };
 
     VulkanMesh screen("screen", vertices.size(), sizeof(VertexPT2D), vertices.data());

@@ -49,6 +49,7 @@ void PipelineManager::Init() {
          },
         {
          .topology             = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP,
+         .cullMode             = VK_CULL_MODE_NONE,
          .infoVertex           = VertexPT2D::GetVertexInputStateCreateInfo(),
          .colorFormats         = {VK_FORMAT_R16G16B16A16_SFLOAT},
          .depthTestEnable      = VK_TRUE,
