@@ -39,7 +39,6 @@ void Window::Run() {
     SDL_Log("SDL Window(%dx%d) running", WINDOW_WIDTH, WINDOW_HEIGHT);
     m_running = true;
 
-    VulkanState::GetInstance().Init();
 
     // TODO: no need to init
     PipelineManager::GetInstance().Init();
@@ -50,8 +49,7 @@ void Window::Run() {
     MaterialRegistry::GetInstance().Init();
     ObjectRegistry::GetInstance().Init();
 
-    LightManager::GetInstance().Init(VulkanState::GetInstance().GetPhysicalDevice(), VulkanState::GetInstance().GetDevice());
-    UIRenderer::GetInstance().Init();
+    UIRenderer  uiRenderer;
     PbrRenderer pbrRenderer;
 
     while (m_running) {
@@ -74,19 +72,13 @@ void Window::Run() {
         ImGui_ImplSDL3_NewFrame();
         ImGui::NewFrame();
 
-        UIRenderer::GetInstance().Present();
-
-        //make imgui calculate internal draw structures
         ImGui::Render();
-
-        LightManager::GetInstance().Update();
-        Camera::GetInstance().Update();
 
         VulkanState::GetInstance().BeginFrame();
 
         pbrRenderer.Render();
 
-        UIRenderer::GetInstance().Render();
+        uiRenderer.Render();
 
         VulkanState::GetInstance().EndFrame();
 
@@ -96,15 +88,12 @@ void Window::Run() {
 
     VulkanState::GetInstance().WaitIdle();
 
-    UIRenderer::GetInstance().Destroy();
     PipelineManager::GetInstance().Destroy();
     MeshManager::GetInstance().Destroy();
     TextureManager::GetInstance().Destroy();
 
     MaterialRegistry::GetInstance().Destroy();
     ObjectRegistry::GetInstance().Destroy();
-
-    LightManager::GetInstance().Destroy();
 
     ImGui_ImplVulkan_Shutdown();
     ImGui_ImplSDL3_Shutdown();

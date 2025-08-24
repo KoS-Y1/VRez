@@ -44,7 +44,7 @@ void SkyboxPass::DrawCalls(const DrawContent &content, VkPipelineLayout layout) 
         VulkanState::GetInstance().GetCommandBuffer(),
         VK_PIPELINE_BIND_POINT_GRAPHICS,
         layout,
-        Descriptor::TEXTURE_SET,
+        descriptor::TEXTURE_SET,
         1,
         &m_textureSet,
         0,
@@ -73,12 +73,4 @@ void SkyboxPass::OneTimeUpdateDescriptorSets() {
         .pTexelBufferView = nullptr,
     };
     vkUpdateDescriptorSets(VulkanState::GetInstance().GetDevice(), 1, &writeSetImage, 0, nullptr);
-}
-
-void SkyboxPass::PostRender() {
-
-}
-
-void SkyboxPass::PreRender() {
-
 }

@@ -94,7 +94,7 @@ void GBufferPass::CreateGBufferSet() {
     vkCreateSampler(VulkanState::GetInstance().GetDevice(), &infoSampler, nullptr, &sampler);
 
     m_gBufferSet =
-        vk_util::CreateDescriptorSet(PipelineManager::GetInstance().Load("lighting_gfx")->GetDescriptorSetLayouts()[Descriptor::TEXTURE_SET]);
+        vk_util::CreateDescriptorSet(PipelineManager::GetInstance().Load("lighting_gfx")->GetDescriptorSetLayouts()[descriptor::TEXTURE_SET]);
 
     std::vector<VkDescriptorImageInfo> infoImages;
     for (const auto &image: m_gBufferImages) {

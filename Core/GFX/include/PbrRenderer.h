@@ -45,13 +45,17 @@ private:
     VulkanTexture *m_irradiance = nullptr;
     VulkanTexture *m_specular   = nullptr;
 
-    VkDescriptorSet m_uniformSet;
-    VkDescriptorSet m_cameraSet;
-    VkDescriptorSet m_iblSet;
+    VulkanBuffer m_cameraBuffer;
+    VulkanBuffer m_lightBuffer;
+
+    VkDescriptorSet m_uniformSet = VK_NULL_HANDLE;
+    VkDescriptorSet m_cameraSet = VK_NULL_HANDLE;
+    VkDescriptorSet m_iblSet = VK_NULL_HANDLE;
 
     void CreateSkybox();
     void CreateImages();
     void CreateDrawContent();
+    void CreateBuffers();
     void CreateDescriptorSets();
     void CreateRenderConfig();
     void OneTimeUpdateDescriptorSets();

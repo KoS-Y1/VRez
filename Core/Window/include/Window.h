@@ -5,16 +5,21 @@
 
 #include <SDL3/SDL_events.h>
 
+namespace {
+constexpr int WINDOW_WIDTH  = 1600;
+constexpr int WINDOW_HEIGHT = 900;
+} // namespace
+
 enum class CameraMoveDirection : uint8_t;
 
 class Window : public Singleton<Window> {
 public:
-    static constexpr int WINDOW_WIDTH = 1600;
-    static constexpr int WINDOW_HEIGHT = 900;
     void Run();
 
     [[nodiscard]] SDL_Window *GetSDLWindow() { return m_window; }
+
     [[nodiscard]] uint32_t GetWidth() { return m_width; }
+
     [[nodiscard]] uint32_t GetHeight() { return m_height; }
 
 protected:

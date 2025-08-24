@@ -1,16 +1,11 @@
 #include "include/LightManager.h"
 
-void LightManager::Init(VkPhysicalDevice physicalDevice, VkDevice device) {
-    VulkanBuffer buffer(sizeof(LightsData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
-    m_buffer = std::move(buffer);
-}
 
-void LightManager::Destroy() {
+LightManager::~LightManager() {
     m_lights.clear();
-    m_buffer= {};
 }
 
-void LightManager::Update() {
+LightsData LightManager::Update() {
     LightsData data = {};
 
     data.lightCount = m_lights.size();
@@ -18,7 +13,7 @@ void LightManager::Update() {
         data.lights[i] = m_lights[i];
     }
 
-    m_buffer.Upload(sizeof(LightsData), &data);
+    return data;
 }
 
 void LightManager::UpdateLight(uint32_t index, Light &light) {

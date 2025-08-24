@@ -22,8 +22,6 @@ int main(void)
 
     Window::GetInstance().Run();
 
-    UIRenderer::GetInstance().Destroy();
-    VulkanState::GetInstance().Destroy();
 
     glslang::FinalizeProcess();
 

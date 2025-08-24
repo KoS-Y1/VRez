@@ -4,18 +4,14 @@
 
  Camera::Camera() {
      Reset();
-
      PracticalCascadeSplits();
-
-     VulkanBuffer buffer(sizeof(CameraData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
-     m_buffer = std::move(buffer);
 }
 
-void Camera::Destroy() {
-    m_buffer = {};
+ Camera::~Camera(){
+     m_frustumCorners.clear();
 }
 
-void Camera::Update() {
+CameraData Camera::Update() {
     GetFrustumCorners();
 
     CameraData data = {};
@@ -24,7 +20,7 @@ void Camera::Update() {
     data.position   = m_location;
     data.splits     = glm::vec3(m_splits[1], m_splits[2], m_splits[3]);
 
-    m_buffer.Upload(sizeof(CameraData), &data);
+    return data;
 }
 
 void Camera::SetFov(float fov) {

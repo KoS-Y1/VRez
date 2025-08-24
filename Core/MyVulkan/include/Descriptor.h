@@ -1,6 +1,6 @@
 #pragma once
 
-namespace Descriptor {
+namespace descriptor {
 inline constexpr uint32_t MAX_SET_COUNT = 1024;
 
 inline constexpr uint32_t UNIFORM_SET = 0;

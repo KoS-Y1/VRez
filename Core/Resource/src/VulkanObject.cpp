@@ -21,6 +21,6 @@ void VulkanObject::Destroy() {
 }
 
 void VulkanObject::BindAndDraw(VkPipelineLayout layout) const {
-    m_material->Bind(layout, Descriptor::TEXTURE_SET);
+    m_material->Bind(layout, descriptor::TEXTURE_SET);
     m_mesh->BindAndDraw();
 }

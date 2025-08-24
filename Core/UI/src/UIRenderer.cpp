@@ -8,7 +8,7 @@
 #include <include/VulkanUtil.h>
 #include <include/Window.h>
 
-void UIRenderer::Init() {
+UIRenderer::UIRenderer() {
     CreateDescriptorPool();
 
     ImGui::CreateContext();
@@ -52,12 +52,11 @@ void UIRenderer::Init() {
     Enqueue([this]() { m_ui.LightsWindow(); });
 }
 
-void UIRenderer::Destroy() {
+UIRenderer::~UIRenderer() {
     vkDestroyDescriptorPool(VulkanState::GetInstance().GetDevice(), m_imguiDescriptorPool, nullptr);
     m_uniformScales.clear();
     m_uiQueue.clear();
 }
-
 
 void UIRenderer::Render() {
     // Layout transition for imgui draw
@@ -112,24 +111,24 @@ void UIRenderer::Present() {
 
 void UIRenderer::CreateDescriptorPool() {
     std::vector<VkDescriptorPoolSize> poolSizes{
-        {VK_DESCRIPTOR_TYPE_SAMPLER,                Descriptor::MAX_SET_COUNT},
-        {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, Descriptor::MAX_SET_COUNT},
-        {VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,          Descriptor::MAX_SET_COUNT},
-        {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,          Descriptor::MAX_SET_COUNT},
-        {VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER,   Descriptor::MAX_SET_COUNT},
-        {VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER,   Descriptor::MAX_SET_COUNT},
-        {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         Descriptor::MAX_SET_COUNT},
-        {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,         Descriptor::MAX_SET_COUNT},
-        {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, Descriptor::MAX_SET_COUNT},
-        {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, Descriptor::MAX_SET_COUNT},
-        {VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,       Descriptor::MAX_SET_COUNT}
+        {VK_DESCRIPTOR_TYPE_SAMPLER,                descriptor::MAX_SET_COUNT},
+        {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, descriptor::MAX_SET_COUNT},
+        {VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,          descriptor::MAX_SET_COUNT},
+        {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,          descriptor::MAX_SET_COUNT},
+        {VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER,   descriptor::MAX_SET_COUNT},
+        {VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER,   descriptor::MAX_SET_COUNT},
+        {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         descriptor::MAX_SET_COUNT},
+        {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,         descriptor::MAX_SET_COUNT},
+        {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, descriptor::MAX_SET_COUNT},
+        {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, descriptor::MAX_SET_COUNT},
+        {VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,       descriptor::MAX_SET_COUNT}
     };
 
     VkDescriptorPoolCreateInfo infoPool{
         .sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
         .pNext         = nullptr,
         .flags         = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
-        .maxSets       = Descriptor::MAX_SET_COUNT,
+        .maxSets       = descriptor::MAX_SET_COUNT,
         .poolSizeCount = static_cast<uint32_t>(poolSizes.size()),
         .pPoolSizes    = poolSizes.data()
     };

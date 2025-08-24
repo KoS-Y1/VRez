@@ -12,7 +12,7 @@
 #include <include/Descriptor.h>
 #include <include/Window.h>
 
-void VulkanState::Init() {
+VulkanState::VulkanState() {
     m_window = Window::GetInstance().GetSDLWindow();
     m_width  = Window::GetInstance().GetWidth();
     m_height = Window::GetInstance().GetHeight();
@@ -33,7 +33,7 @@ void VulkanState::Init() {
     CreateDescriptorPool();
 }
 
-void VulkanState::Destroy() {
+VulkanState::~VulkanState() {
     if (m_device == VK_NULL_HANDLE) {
         return;
     }
@@ -340,7 +340,7 @@ void VulkanState::CreateDescriptorPool() {
         .sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
         .pNext         = nullptr,
         .flags         = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
-        .maxSets       = Descriptor::MAX_SET_COUNT,
+        .maxSets       = descriptor::MAX_SET_COUNT,
         .poolSizeCount = 1,
         .pPoolSizes    = &poolSize
     };

@@ -29,6 +29,4 @@ public:
 private:
     void CreateRenderingInfo(const RenderingConfig &config) override;
     void DrawCalls(const DrawContent &content, VkPipelineLayout layout) override;
-    void PreRender() override;
-    void PostRender() override;
 };

@@ -14,7 +14,7 @@ VulkanMaterial::VulkanMaterial(
     , m_normal(normal)
     , m_orm(orm)
     , m_emissive(emissive) {
-    m_descriptorSet = vk_util::CreateDescriptorSet(pipeline->GetDescriptorSetLayouts()[Descriptor::TEXTURE_SET]);
+    m_descriptorSet = vk_util::CreateDescriptorSet(pipeline->GetDescriptorSetLayouts()[descriptor::TEXTURE_SET]);
     OneTimeUpdateDescriptorSets();
 }
 

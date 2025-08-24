@@ -23,8 +23,6 @@ public:
         const DrawContent                                       &content,
         VulkanGraphicsPipeline                                  *pipeline
     ) {
-        PreRender();
-
         CreateRenderingInfo(config);
 
         vkCmdBeginRendering(VulkanState::GetInstance().GetCommandBuffer(), &m_infoRendering);
@@ -36,8 +34,6 @@ public:
         DrawCalls(content, pipeline->GetLayout());
 
         vkCmdEndRendering(VulkanState::GetInstance().GetCommandBuffer());
-
-        PostRender();
     }
 
 protected:
@@ -48,8 +44,6 @@ protected:
 
     virtual void CreateRenderingInfo(const RenderingConfig &config)             = 0;
     virtual void DrawCalls(const DrawContent &content, VkPipelineLayout layout) = 0;
-    virtual void PreRender()                                                    = 0;
-    virtual void PostRender()                                                   = 0;
 
 private:
     void Bind(const std::vector<std::pair<VkDescriptorSet, uint32_t>> &globalSets, VulkanGraphicsPipeline *pipeline) {

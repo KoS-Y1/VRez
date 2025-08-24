@@ -22,19 +22,13 @@ struct alignas(16) LightsData {
 
 class LightManager : public Singleton<LightManager> {
 public:
-    void Init(VkPhysicalDevice physicalDevice, VkDevice device);
-
-    void Destroy();
-
-    void Update();
+    LightsData Update();
 
     void UpdateLight(uint32_t index, Light &light);
 
     void AddLight(LightType type);
 
     void RemoveLight(size_t index);
-
-    [[nodiscard]] const VkBuffer &GetBuffer() const { return m_buffer.GetBuffer(); }
 
     [[nodiscard]] size_t GetLightCount() const { return m_lights.size(); }
 
@@ -46,10 +40,9 @@ public:
 protected:
     LightManager() = default;
 
-    ~LightManager() = default;
+    ~LightManager();
 
 private:
     std::vector<Light> m_lights;
     bool               m_directionalLight = false;
-    VulkanBuffer       m_buffer;
 };

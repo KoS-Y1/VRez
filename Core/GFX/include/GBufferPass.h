@@ -25,6 +25,9 @@ public:
         return *this;
     }
 
+    void PreRender();
+    void PostRender();
+
     void Swap(GBufferPass &other) noexcept;
 
     void Destroy();
@@ -41,6 +44,5 @@ private:
 
     void CreateRenderingInfo(const RenderingConfig &config) override;
     void DrawCalls(const DrawContent &content, VkPipelineLayout layout) override;
-    void PreRender() override;
-    void PostRender() override;
+
 };

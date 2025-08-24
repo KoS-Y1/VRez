@@ -16,6 +16,7 @@ PbrRenderer::PbrRenderer() {
 
     CreateSkybox();
     CreateImages();
+    CreateBuffers();
     CreateDrawContent();
     CreateDescriptorSets();
     CreateRenderConfig();
@@ -38,12 +39,21 @@ PbrRenderer::~PbrRenderer() {
     m_irradiance = nullptr;
     m_specular   = nullptr;
 
+    m_cameraBuffer = {};
+    m_lightBuffer  = {};
+
     vkFreeDescriptorSets(VulkanState::GetInstance().GetDevice(), VulkanState::GetInstance().GetDescriptorPool(), 1, &m_uniformSet);
     vkFreeDescriptorSets(VulkanState::GetInstance().GetDevice(), VulkanState::GetInstance().GetDescriptorPool(), 1, &m_cameraSet);
     vkFreeDescriptorSets(VulkanState::GetInstance().GetDevice(), VulkanState::GetInstance().GetDescriptorPool(), 1, &m_iblSet);
 }
 
 void PbrRenderer::Render() {
+    CameraData cameraData = Camera::GetInstance().Update();
+    m_cameraBuffer.Upload(sizeof(CameraData), &cameraData);
+
+    LightsData lightsData = LightManager::GetInstance().Update();
+    m_lightBuffer.Upload(sizeof(LightsData), &lightsData);
+
     // Layout transition
     vk_util::CmdImageLayoutTransition(
         VulkanState::GetInstance().GetCommandBuffer(),
@@ -65,25 +75,28 @@ void PbrRenderer::Render() {
     );
 
     m_config.depthAttachments.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    m_config.drawAttachments.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    m_config.drawAttachments.loadOp  = VK_ATTACHMENT_LOAD_OP_CLEAR;
     // Shadow pass...
 
+    m_gBufferPass.PreRender();
     m_gBufferPass.Render(
         m_config,
         {
-            {m_cameraSet, Descriptor::UNIFORM_SET}
+            {m_cameraSet, descriptor::UNIFORM_SET}
     },
         m_drawContent,
         dynamic_cast<VulkanGraphicsPipeline *>(PipelineManager::GetInstance().Load("gbuffer_gfx"))
     );
+    m_gBufferPass.PostRender();
+
     m_config.depthAttachments.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
 
     m_lightingPass.Render(
         m_config,
         {
-            {m_uniformSet,                  Descriptor::UNIFORM_SET},
-            {m_gBufferPass.GetGBufferSet(), Descriptor::TEXTURE_SET},
-            {m_iblSet,                      Descriptor::IBL_SET    }
+            {m_uniformSet,                  descriptor::UNIFORM_SET},
+            {m_gBufferPass.GetGBufferSet(), descriptor::TEXTURE_SET},
+            {m_iblSet,                      descriptor::IBL_SET    }
     },
         m_drawContent,
         dynamic_cast<VulkanGraphicsPipeline *>(PipelineManager::GetInstance().Load("lighting_gfx"))
@@ -105,7 +118,7 @@ void PbrRenderer::Render() {
 void PbrRenderer::CreateSkybox() {
     // SkyboxPass skyboxPass(
     //     "../Assets/Skybox/Skybox.png",
-    //     PipelineManager::GetInstance().Load("skybox_gfx")->GetDescriptorSetLayouts()[Descriptor::TEXTURE_SET]
+    //     PipelineManager::GetInstance().Load("skybox_gfx")->GetDescriptorSetLayouts()[descriptor::TEXTURE_SET]
     // );
     //
     // m_skybox = std::move(skyboxPass);
@@ -130,6 +143,14 @@ void PbrRenderer::CreateImages() {
     m_depthImage = std::move(depthImg);
 }
 
+void PbrRenderer::CreateBuffers() {
+    VulkanBuffer camerabuffer(sizeof(CameraData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
+    m_cameraBuffer = std::move(camerabuffer);
+
+    VulkanBuffer lightBuffer(sizeof(LightsData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
+    m_lightBuffer = std::move(lightBuffer);
+}
+
 void PbrRenderer::CreateDrawContent() {
     m_drawContent.prefabs.emplace_back("../Assets/Models/BoomBox/BoomBox.json", glm::vec3(0.0f, 0.1f, 0.0f));
     m_drawContent.prefabs.emplace_back("../Assets/Models/Chessboard/Chessboard.json");
@@ -140,12 +161,12 @@ void PbrRenderer::CreateDrawContent() {
 
 void PbrRenderer::CreateDescriptorSets() {
     m_uniformSet =
-        vk_util::CreateDescriptorSet(PipelineManager::GetInstance().Load("lighting_gfx")->GetDescriptorSetLayouts()[Descriptor::UNIFORM_SET]);
+        vk_util::CreateDescriptorSet(PipelineManager::GetInstance().Load("lighting_gfx")->GetDescriptorSetLayouts()[descriptor::UNIFORM_SET]);
 
     m_cameraSet =
-        vk_util::CreateDescriptorSet(PipelineManager::GetInstance().Load("gbuffer_gfx")->GetDescriptorSetLayouts()[Descriptor::UNIFORM_SET]);
+        vk_util::CreateDescriptorSet(PipelineManager::GetInstance().Load("gbuffer_gfx")->GetDescriptorSetLayouts()[descriptor::UNIFORM_SET]);
 
-    m_iblSet = vk_util::CreateDescriptorSet(PipelineManager::GetInstance().Load("lighting_gfx")->GetDescriptorSetLayouts()[Descriptor::IBL_SET]);
+    m_iblSet = vk_util::CreateDescriptorSet(PipelineManager::GetInstance().Load("lighting_gfx")->GetDescriptorSetLayouts()[descriptor::IBL_SET]);
 }
 
 void PbrRenderer::CreateRenderConfig() {
@@ -194,8 +215,8 @@ void PbrRenderer::CreateRenderConfig() {
 
 void PbrRenderer::OneTimeUpdateDescriptorSets() {
     std::vector<VkDescriptorBufferInfo> infoBuffers{
-        {.buffer = Camera::GetInstance().GetBuffer(),       .offset = 0, .range = VK_WHOLE_SIZE},
-        {.buffer = LightManager::GetInstance().GetBuffer(), .offset = 0, .range = VK_WHOLE_SIZE}
+        {.buffer = m_cameraBuffer.GetBuffer(),              .offset = 0, .range = VK_WHOLE_SIZE},
+        {.buffer = m_lightBuffer.GetBuffer(), .offset = 0, .range = VK_WHOLE_SIZE}
     };
 
     VkWriteDescriptorSet writeSetUniform{

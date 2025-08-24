@@ -16,11 +16,11 @@ target_link_libraries(ShaderCompiler PUBLIC glslang Vulkan::Vulkan SDL3::SDL3 Fi
 
 add_library(UI UI/include/UI.h UI/src/UI.cpp UI/include/UIRenderer.h UI/src/UIRenderer.cpp)
 target_include_directories(UI PUBLIC UI)
-target_link_libraries(UI PUBLIC imgui MyVulkan glm Camera Light Util Vulkan::Vulkan)
+target_link_libraries(UI PUBLIC imgui MyVulkan glm Camera Light Vulkan::Vulkan)
 
 add_library(Camera Camera/include/Camera.h Camera/src/Camera.cpp)
 target_include_directories(Camera PUBLIC Camera)
-target_link_libraries(Camera PUBLIC glm Util MyVulkan)
+target_link_libraries(Camera PUBLIC glm Util)
 
 add_library(Light Light/include/Light.h Light/include/LightManager.h Light/src/LightManager.cpp)
 target_include_directories(Light PUBLIC Light)

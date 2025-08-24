@@ -18,10 +18,3 @@ void LightingPass::CreateRenderingInfo(const RenderingConfig &config) {
 void LightingPass::DrawCalls(const DrawContent &content, VkPipelineLayout layout) {
     content.screen->BindAndDraw();
 }
-
-void LightingPass::PreRender() {
-
-}
-
-void LightingPass::PostRender() {
-}
