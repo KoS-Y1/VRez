@@ -7,8 +7,16 @@
 #include <Debug.h>
 
 #include <include/Camera.h>
-#include <include/VulkanState.h>
+#include <include/LightManager.h>
+#include <include/MaterialRegistry.h>
+#include <include/MeshManager.h>
+#include <include/ObjectRegistry.h>
+#include <include/PbrRenderer.h>
+#include <include/PipelineManager.h>
+#include <include/TextureManager.h>
+#include <include/ThreadPool.h>
 #include <include/UIRenderer.h>
+#include <include/VulkanState.h>
 
 Window::Window() {
     m_lastTime = SDL_GetTicks();
@@ -33,7 +41,18 @@ void Window::Run() {
 
     VulkanState::GetInstance().Init();
 
-    UIRenderer uiRenderer;
+    // TODO: no need to init
+    PipelineManager::GetInstance().Init();
+    MeshManager::GetInstance().Init();
+    TextureManager::GetInstance().Init();
+    ThreadPool::GetInstance().WaitIdle();
+
+    MaterialRegistry::GetInstance().Init();
+    ObjectRegistry::GetInstance().Init();
+
+    LightManager::GetInstance().Init(VulkanState::GetInstance().GetPhysicalDevice(), VulkanState::GetInstance().GetDevice());
+    UIRenderer::GetInstance().Init();
+    PbrRenderer pbrRenderer;
 
     while (m_running) {
         uint32_t  time = SDL_GetTicks();
@@ -54,17 +73,22 @@ void Window::Run() {
         ImGui_ImplVulkan_NewFrame();
         ImGui_ImplSDL3_NewFrame();
         ImGui::NewFrame();
-        
-        uiRenderer.Present();
+
+        UIRenderer::GetInstance().Present();
 
         //make imgui calculate internal draw structures
         ImGui::Render();
-        VulkanState::GetInstance().Update();
-        VulkanState::GetInstance().BeginFrame();
-        VulkanState::GetInstance().Present();
-        uiRenderer.Render();
-        VulkanState::GetInstance().EndFrame();
 
+        LightManager::GetInstance().Update();
+        Camera::GetInstance().Update();
+
+        VulkanState::GetInstance().BeginFrame();
+
+        pbrRenderer.Render();
+
+        UIRenderer::GetInstance().Render();
+
+        VulkanState::GetInstance().EndFrame();
 
         m_lastTime = time;
     }
@@ -72,12 +96,19 @@ void Window::Run() {
 
     VulkanState::GetInstance().WaitIdle();
 
+    UIRenderer::GetInstance().Destroy();
+    PipelineManager::GetInstance().Destroy();
+    MeshManager::GetInstance().Destroy();
+    TextureManager::GetInstance().Destroy();
+
+    MaterialRegistry::GetInstance().Destroy();
+    ObjectRegistry::GetInstance().Destroy();
+
+    LightManager::GetInstance().Destroy();
+
     ImGui_ImplVulkan_Shutdown();
     ImGui_ImplSDL3_Shutdown();
     ImGui::DestroyContext();
-
-    uiRenderer.Destroy();
-    VulkanState::GetInstance().Destroy();
 }
 
 void Window::ProcessCamera(const SDL_Event &event, float deltaTime) {

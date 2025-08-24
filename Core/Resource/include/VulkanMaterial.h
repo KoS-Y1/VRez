@@ -1,9 +1,12 @@
 #pragma once
 
 
+#include "include/VulkanUtil.h"
+
+
 #include <vulkan/vulkan.h>
 
-#include <include/DescriptorSets.h>
+#include <include/Descriptor.h>
 #include <include/VulkanGraphicsPipeline.h>
 
 class VulkanTexture;
@@ -16,13 +19,7 @@ public:
         const VulkanTexture          *orm,
         const VulkanTexture          *emissive,
         const VulkanGraphicsPipeline *pipeline
-    )
-        : m_albedo(albedo)
-        , m_normal(normal)
-        , m_orm(orm)
-        , m_emissive(emissive) {
-        CreateDescriptorSet(pipeline->GetDescriptorSetLayouts()[TEXTURE_SET]);
-    }
+    );
 
     VulkanMaterial() = delete;
 
@@ -56,5 +53,5 @@ private:
 
     VkDescriptorSet m_descriptorSet = VK_NULL_HANDLE;
 
-    void CreateDescriptorSet(const VkDescriptorSetLayout layout);
+    void OneTimeUpdateDescriptorSets();
 };

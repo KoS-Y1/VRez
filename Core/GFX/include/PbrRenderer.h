@@ -1,14 +1,58 @@
 #pragma once
 
+#include <vector>
+
+#include <include/GBufferPass.h>
+#include <include/LightingPass.h>
+#include <include/SkyboxPass.h>
+#include <include/VulkanImage.h>
+#include <include/VulkanPrefab.h>
+
+struct DrawContent {
+    std::vector<VulkanPrefab> prefabs;
+    VulkanMesh               *screen;
+};
+
 class PbrRenderer {
 public:
     PbrRenderer();
     ~PbrRenderer();
 
-    PbrRenderer(const PbrRenderer&) = delete;
-    PbrRenderer(PbrRenderer&&) = delete;
-    PbrRenderer& operator=(const PbrRenderer&) = delete;
-    PbrRenderer& operator=(PbrRenderer&&) = delete;
+    PbrRenderer(const PbrRenderer &)            = delete;
+    PbrRenderer(PbrRenderer &&)                 = delete;
+    PbrRenderer &operator=(const PbrRenderer &) = delete;
+    PbrRenderer &operator=(PbrRenderer &&)      = delete;
+
+    void Render();
+
+    [[nodiscard]] const VkExtent3D &GetDrawImageExtent() const { return m_drawImage.GetExtent(); }
+
+    [[nodiscard]] const VkImage &GetDrawImage() const { return m_drawImage.GetImage(); }
 
 private:
+    VulkanImage m_depthImage;
+    VulkanImage m_drawImage;
+
+    RenderingConfig m_config;
+
+    GBufferPass  m_gBufferPass;
+    LightingPass m_lightingPass;
+    SkyboxPass   m_skybox;
+
+    DrawContent m_drawContent;
+
+    VulkanTexture *m_brdf       = nullptr;
+    VulkanTexture *m_irradiance = nullptr;
+    VulkanTexture *m_specular   = nullptr;
+
+    VkDescriptorSet m_uniformSet;
+    VkDescriptorSet m_cameraSet;
+    VkDescriptorSet m_iblSet;
+
+    void CreateSkybox();
+    void CreateImages();
+    void CreateDrawContent();
+    void CreateDescriptorSets();
+    void CreateRenderConfig();
+    void OneTimeUpdateDescriptorSets();
 };

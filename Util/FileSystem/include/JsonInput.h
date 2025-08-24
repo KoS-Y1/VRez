@@ -7,18 +7,8 @@ struct MaterialConfig {
     std::string normal;
     std::string orm;
     std::string emissive;
-    std::string pipeline;
 
     explicit MaterialConfig(const std::string &jsonFile);
-};
-
-struct SkyboxConfig {
-    std::string emissive;
-    std::string specular;
-    std::string irradiance;
-    std::string brdf;
-
-    explicit SkyboxConfig(const std::string &jsonFile);
 };
 
 struct ObjectConfig {
@@ -27,6 +17,5 @@ struct ObjectConfig {
 
     explicit ObjectConfig(const std::string &jsonFile);
 };
-
 
 } // namespace file_system

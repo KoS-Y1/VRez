@@ -7,7 +7,7 @@ void LightManager::Init(VkPhysicalDevice physicalDevice, VkDevice device) {
 
 void LightManager::Destroy() {
     m_lights.clear();
-    m_buffer.Destroy();
+    m_buffer= {};
 }
 
 void LightManager::Update() {
@@ -26,7 +26,7 @@ void LightManager::UpdateLight(uint32_t index, Light &light) {
 }
 
 void LightManager::AddLight(LightType type) {
-    if (m_lights.size() >= MAX_LIGHTS) {
+    if (m_lights.size() >= MAX_LIGHT_COUNT) {
         return;
     }
 

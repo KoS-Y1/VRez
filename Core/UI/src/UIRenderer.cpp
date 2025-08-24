@@ -1,14 +1,14 @@
 #include "include/UIRenderer.h"
 
-#include <imgui_impl_vulkan.h>
 #include <imgui.h>
 #include <imgui_impl_sdl3.h>
-#include <include/DescriptorSets.h>
+#include <imgui_impl_vulkan.h>
+#include <include/Descriptor.h>
 #include <include/VulkanState.h>
-#include <include/Window.h>
 #include <include/VulkanUtil.h>
+#include <include/Window.h>
 
-UIRenderer::UIRenderer() {
+void UIRenderer::Init() {
     CreateDescriptorPool();
 
     ImGui::CreateContext();
@@ -85,6 +85,7 @@ void UIRenderer::Render() {
         VK_NULL_HANDLE,
         VK_IMAGE_LAYOUT_UNDEFINED
     );
+
     VkRenderingInfo infoRendering = vk_util::GetRenderingInfo(renderAreas, &infoColorAttachment, nullptr);
 
     vkCmdBeginRendering(VulkanState::GetInstance().GetCommandBuffer(), &infoRendering);
@@ -110,27 +111,27 @@ void UIRenderer::Present() {
 }
 
 void UIRenderer::CreateDescriptorPool() {
-    VkDescriptorPoolSize poolSizes[]{
-        {VK_DESCRIPTOR_TYPE_SAMPLER,                MAX_DESCRIPTOR_SET_COUNT},
-        {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, MAX_DESCRIPTOR_SET_COUNT},
-        {VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,          MAX_DESCRIPTOR_SET_COUNT},
-        {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,          MAX_DESCRIPTOR_SET_COUNT},
-        {VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER,   MAX_DESCRIPTOR_SET_COUNT},
-        {VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER,   MAX_DESCRIPTOR_SET_COUNT},
-        {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         MAX_DESCRIPTOR_SET_COUNT},
-        {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,         MAX_DESCRIPTOR_SET_COUNT},
-        {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, MAX_DESCRIPTOR_SET_COUNT},
-        {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, MAX_DESCRIPTOR_SET_COUNT},
-        {VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,       MAX_DESCRIPTOR_SET_COUNT}
+    std::vector<VkDescriptorPoolSize> poolSizes{
+        {VK_DESCRIPTOR_TYPE_SAMPLER,                Descriptor::MAX_SET_COUNT},
+        {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, Descriptor::MAX_SET_COUNT},
+        {VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,          Descriptor::MAX_SET_COUNT},
+        {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,          Descriptor::MAX_SET_COUNT},
+        {VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER,   Descriptor::MAX_SET_COUNT},
+        {VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER,   Descriptor::MAX_SET_COUNT},
+        {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         Descriptor::MAX_SET_COUNT},
+        {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,         Descriptor::MAX_SET_COUNT},
+        {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, Descriptor::MAX_SET_COUNT},
+        {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, Descriptor::MAX_SET_COUNT},
+        {VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,       Descriptor::MAX_SET_COUNT}
     };
 
     VkDescriptorPoolCreateInfo infoPool{
         .sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
         .pNext         = nullptr,
         .flags         = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
-        .maxSets       = MAX_DESCRIPTOR_SET_COUNT,
-        .poolSizeCount = static_cast<uint32_t>(std::size(poolSizes)),
-        .pPoolSizes    = poolSizes
+        .maxSets       = Descriptor::MAX_SET_COUNT,
+        .poolSizeCount = static_cast<uint32_t>(poolSizes.size()),
+        .pPoolSizes    = poolSizes.data()
     };
 
     DEBUG_VK_ASSERT(vkCreateDescriptorPool(VulkanState::GetInstance().GetDevice(), &infoPool, nullptr, &m_imguiDescriptorPool));

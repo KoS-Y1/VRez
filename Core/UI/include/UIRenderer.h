@@ -5,20 +5,15 @@
 
 #include <vulkan/vulkan.h>
 
+#include <Singleton.h>
+
 #include "UI.h"
 
 class VulkanPrefab;
 
-class UIRenderer {
+class UIRenderer : public Singleton<UIRenderer>{
 public:
-    UIRenderer();
-
-    ~UIRenderer() = default;
-
-    UIRenderer(const UIRenderer &)            = delete;
-    UIRenderer(UIRenderer &&)                 = delete;
-    UIRenderer &operator=(const UIRenderer &) = delete;
-    UIRenderer &operator=(UIRenderer &&)      = delete;
+    void Init();
 
     void Render();
 
@@ -27,6 +22,11 @@ public:
     void AddPrefabWindow(VulkanPrefab& prefab, size_t prefabIndex);
 
     void Destroy();
+
+protected:
+    UIRenderer() = default;
+
+    ~UIRenderer() = default;
 
 private:
     UI                                m_ui;

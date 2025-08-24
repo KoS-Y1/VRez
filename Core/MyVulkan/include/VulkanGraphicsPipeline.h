@@ -30,7 +30,7 @@ struct GraphicsPipelineOption {
 
 class VulkanGraphicsPipeline : public VulkanPipeline {
 public:
-    VulkanGraphicsPipeline() = default;
+    VulkanGraphicsPipeline() = delete;
 
     VulkanGraphicsPipeline(const std::vector<std::string> &paths, const GraphicsPipelineOption &option)
         : VulkanPipeline(paths) {
@@ -39,7 +39,4 @@ public:
 
 protected:
     void CreatePipeline(const GraphicsPipelineOption &option);
-
-private:
-    friend class VulkanPipeline;
 };

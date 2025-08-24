@@ -8,15 +8,7 @@
 #include <include/VulkanState.h>
 #include <include/VulkanUtil.h>
 
-VulkanTexture::VulkanTexture(
-    uint32_t            width,
-    uint32_t            height,
-    VkFormat            format,
-    size_t              formatSize,
-    const void         *data,
-    const SamplerConfig config
-) {
-
+VulkanTexture::VulkanTexture(uint32_t width, uint32_t height, VkFormat format, size_t formatSize, const void *data, const SamplerConfig config) {
     CreateImage(width, height, format, formatSize, data);
     CreateSampler(config);
 }
@@ -24,7 +16,7 @@ VulkanTexture::VulkanTexture(
 void VulkanTexture::Destroy() {
     if (m_sampler != VK_NULL_HANDLE) {
         vkDestroySampler(VulkanState::GetInstance().GetDevice(), m_sampler, nullptr);
-        m_image.Destroy();
+        m_image = {};
     }
     m_sampler = VK_NULL_HANDLE;
 }
@@ -40,12 +32,7 @@ void VulkanTexture::CreateImage(uint32_t width, uint32_t height, VkFormat format
         .height = height,
         .depth  = 1,
     };
-    VulkanImage img(
-        format,
-        VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
-        extent,
-        VK_IMAGE_ASPECT_COLOR_BIT
-    );
+    VulkanImage img(format, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, extent, VK_IMAGE_ASPECT_COLOR_BIT);
     m_image = std::move(img);
 
     VkDeviceSize size = width * height * formatSize;

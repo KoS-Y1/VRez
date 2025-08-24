@@ -20,6 +20,7 @@ protected:
     PipelineManager()  = default;
     ~PipelineManager() = default;
 
+private:
     std::unique_ptr<VulkanPipeline> CreateResource(
         const std::string             &key,
         const std::vector<std::string> files,
@@ -27,6 +28,5 @@ protected:
     );
     std::unique_ptr<VulkanPipeline> CreateResource(const std::string &key, const std::vector<std::string> files);
 
-private:
     friend class ResourceManager<PipelineManager, std::unique_ptr<VulkanPipeline>>;
 };

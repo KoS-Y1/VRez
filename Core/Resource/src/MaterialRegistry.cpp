@@ -17,7 +17,7 @@ VulkanMaterial MaterialRegistry::CreateResource(const std::string &key) {
         TextureManager::GetInstance().Load(config.normal),
         TextureManager::GetInstance().Load(config.orm),
         TextureManager::GetInstance().Load(config.emissive),
-        dynamic_cast<VulkanGraphicsPipeline *>(PipelineManager::GetInstance().Load(config.pipeline))
+        dynamic_cast<VulkanGraphicsPipeline *>(PipelineManager::GetInstance().Load("lighting_gfx"))
     );
 }
 

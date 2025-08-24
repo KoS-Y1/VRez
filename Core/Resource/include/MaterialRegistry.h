@@ -16,8 +16,8 @@ protected:
     MaterialRegistry()  = default;
     ~MaterialRegistry() = default;
 
-    VulkanMaterial CreateResource(const std::string &key);
 
 private:
     friend class ResourceManager<MaterialRegistry, VulkanMaterial>;
+    VulkanMaterial CreateResource(const std::string &key);
 };

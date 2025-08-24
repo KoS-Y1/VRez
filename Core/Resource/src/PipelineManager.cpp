@@ -26,24 +26,35 @@ std::unique_ptr<VulkanPipeline> PipelineManager::CreateResource(
 
 void PipelineManager::Init() {
     std::vector<std::pair<std::string, std::vector<std::string>>> gfxPipelines{
-        {"basic_gfx",  {"../Assets/Shaders/BasicShader/basic.vert", "../Assets/Shaders/BasicShader/basic.frag"}},
-        {"skybox_gfx", {"../Assets/Shaders/Skybox/skybox.vert", "../Assets/Shaders/Skybox/skybox.frag"}        }
+        {"skybox_gfx",   {"../Assets/Shaders/skybox.vert", "../Assets/Shaders/skybox.frag"}      },
+        {"gbuffer_gfx",  {"../Assets/Shaders/base.vert", "../Assets/Shaders/gbuffer.frag"}       },
+        {"lighting_gfx", {"../Assets/Shaders/fullscreen.vert", "../Assets/Shaders/lighting.frag"}}
     };
     std::vector<GraphicsPipelineOption> gfxOptions{
-        {
-         .infoVertex           = VertexPNTT::GetVertexInputStateCreateInfo(),
-         .colorFormats         = {VK_FORMAT_R16G16B16A16_SFLOAT},
-         .depthTestEnable      = VK_TRUE,
-         .depthWriteEnable     = VK_TRUE,
-         .depthCompareOp       = VK_COMPARE_OP_LESS_OR_EQUAL,
-         .rasterizationSamples = VulkanState::GetInstance().GetSampleCount(),
-         },
         {
          .topology             = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP,
          .cullMode             = VK_CULL_MODE_NONE,
          .infoVertex           = VertexP::GetVertexInputStateCreateInfo(),
          .colorFormats         = {VK_FORMAT_R16G16B16A16_SFLOAT},
-         .rasterizationSamples = VulkanState::GetInstance().GetSampleCount(),
+         .rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
+         },
+        {
+         .infoVertex = VertexPNTT::GetVertexInputStateCreateInfo(),
+         .colorFormats =
+                {VK_FORMAT_R16G16B16A16_SFLOAT, VK_FORMAT_R16G16B16A16_SFLOAT, VK_FORMAT_R16G16B16A16_SFLOAT, VK_FORMAT_R16G16B16A16_SFLOAT},
+         .depthTestEnable      = VK_TRUE,
+         .depthWriteEnable     = VK_TRUE,
+         .depthCompareOp       = VK_COMPARE_OP_LESS_OR_EQUAL,
+         .rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
+         },
+        {
+         .topology             = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP,
+         .infoVertex           = VertexPT2D::GetVertexInputStateCreateInfo(),
+         .colorFormats         = {VK_FORMAT_R16G16B16A16_SFLOAT},
+         .depthTestEnable      = VK_TRUE,
+         .depthWriteEnable     = VK_TRUE,
+         .depthCompareOp       = VK_COMPARE_OP_LESS_OR_EQUAL,
+         .rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
          }
     };
 

@@ -9,22 +9,8 @@
 #include <Singleton.h>
 #include <include/VulkanBuffer.h>
 
-#define YAW         (-90.0f)
-#define PITCH       0.0f
-#define ROLL        0.0f
-#define PITCH_BOUND 89.0f
-
-#define MAX_FOV     45.0f
-#define MIN_FOV     1.0f
-#define DEFAULT_FOV 15.0f
-
-#define RATIO (16.0f / 9.0f)
-#define NEAR  0.001f
-#define FAR   64.0f
-
-#define CASCADES_NUM       3
-#define CASCADE_LAMBDA     0.75f
-#define FRUSTUM_CORNER_NUM 8
+inline constexpr size_t FRUSTUM_CORNER_NUM = 8;
+inline constexpr size_t CASCADES_NUM       = 3;
 
 enum class CameraMoveDirection : uint8_t {
     FORWARD,
@@ -47,8 +33,6 @@ struct alignas(16) CameraData {
 // Camera class as a singleton, since we only have 1 camera
 class Camera : public Singleton<Camera> {
 public:
-    void Init();
-
     void Destroy();
 
     void Update();
@@ -80,7 +64,7 @@ public:
     [[nodiscard]] const VkBuffer &GetBuffer() const { return m_buffer.GetBuffer(); }
 
 protected:
-    Camera() = default;
+    Camera();
 
     ~Camera() = default;
 
@@ -96,6 +80,20 @@ private:
 
     float m_sensity;
     float m_speed;
+
+
+    static constexpr float YAW         = -90.0f;
+    static constexpr float PITCH       = 0.0f;
+    static constexpr float ROLL        = 0.0f;
+    static constexpr float PITCH_BOUND = 89.0f;
+    static constexpr float MAX_FOV     = 45.0f;
+    static constexpr float MIN_FOV     = 1.0f;
+    static constexpr float DEFAULT_FOV = 15.0f;
+    static constexpr float RATIO       = (16.0f / 9.0f);
+    static constexpr float NEAR        = 0.001f;
+    static constexpr float FAR         = 64.0f;
+
+    static constexpr float CASCADE_LAMBDA = 0.75f;
 
     std::array<float, CASCADES_NUM + 1>                    m_splits;
     std::vector<std::array<glm::vec3, FRUSTUM_CORNER_NUM>> m_frustumCorners;

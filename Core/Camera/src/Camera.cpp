@@ -2,17 +2,17 @@
 
 #include <algorithm>
 
-void Camera::Init() {
-    Reset();
+ Camera::Camera() {
+     Reset();
 
-    PracticalCascadeSplits();
+     PracticalCascadeSplits();
 
-    VulkanBuffer buffer(sizeof(CameraData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
-    m_buffer = std::move(buffer);
+     VulkanBuffer buffer(sizeof(CameraData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
+     m_buffer = std::move(buffer);
 }
 
 void Camera::Destroy() {
-    m_buffer.Destroy();
+    m_buffer = {};
 }
 
 void Camera::Update() {

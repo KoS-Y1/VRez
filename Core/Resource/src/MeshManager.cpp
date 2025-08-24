@@ -24,9 +24,9 @@ void MeshManager::Init() {
         ThreadPool::GetInstance().Enqueue([this, key]() { Preload(key); });
     }
 
-    ThreadPool::GetInstance().Enqueue([this]() {
-        CreateSkyboxMesh();
-    });
+    ThreadPool::GetInstance().Enqueue([this]() { CreateSkyboxMesh(); });
+
+    ThreadPool::GetInstance().Enqueue([this]() { CraeteScreenMesh(); });
 }
 
 void MeshManager::CreateSkyboxMesh() {
@@ -47,10 +47,26 @@ void MeshManager::CreateSkyboxMesh() {
         VertexP(glm::vec3(1.0f, 1.0f, -1.)),
     };
 
-    VulkanMesh mesh = VulkanMesh("skybox", vertices.size(), sizeof(VertexP), vertices.data());
+    VulkanMesh mesh("skybox", vertices.size(), sizeof(VertexP), vertices.data());
 
     {
         std::scoped_lock<std::mutex> lk(m_cacheMutex);
         m_cache.emplace("skybox", std::move(mesh));
+    }
+}
+
+void MeshManager::CraeteScreenMesh() {
+    std::vector<VertexPT2D> vertices{
+        VertexPT2D({0.0f, 0.0f}, {0.0f, 0.0f}),
+        VertexPT2D({1.0f, 0.0f}, {1.0f, 0.0f}),
+        VertexPT2D({0.0f, 1.0f}, {0.0f, 1.0f}),
+        VertexPT2D({1.0f, 1.0f}, {1.0f, 1.0f})
+    };
+
+    VulkanMesh screen("screen", vertices.size(), sizeof(VertexPT2D), vertices.data());
+
+    {
+        std::scoped_lock<std::mutex> lk(m_cacheMutex);
+        m_cache.emplace("screen", std::move(screen));
     }
 }

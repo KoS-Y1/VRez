@@ -84,19 +84,21 @@ void VulkanGraphicsPipeline::CreatePipeline(const GraphicsPipelineOption &option
         .minDepthBounds        = 0.0f,
         .maxDepthBounds        = 1.0f
     };
+    std::vector<VkPipelineColorBlendAttachmentState> colorBlendAttachments;
 
-    // TODO: color blend state should be read from the input
-    // Setup a dummy color blending for now
-    VkPipelineColorBlendAttachmentState colorBlendAttachment{
-        .blendEnable         = VK_FALSE,
-        .srcColorBlendFactor = VK_BLEND_FACTOR_ZERO,
-        .dstColorBlendFactor = VK_BLEND_FACTOR_ZERO,
-        .colorBlendOp        = VK_BLEND_OP_ADD,
-        .srcAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
-        .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
-        .alphaBlendOp        = VK_BLEND_OP_ADD,
-        .colorWriteMask      = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT
-    };
+    for (size_t i = 0; i < option.colorFormats.size(); i++) {
+        VkPipelineColorBlendAttachmentState colorBlendAttachment{
+            .blendEnable         = VK_FALSE,
+            .srcColorBlendFactor = VK_BLEND_FACTOR_ZERO,
+            .dstColorBlendFactor = VK_BLEND_FACTOR_ZERO,
+            .colorBlendOp        = VK_BLEND_OP_ADD,
+            .srcAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
+            .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
+            .alphaBlendOp        = VK_BLEND_OP_ADD,
+            .colorWriteMask      = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT
+        };
+        colorBlendAttachments.push_back(colorBlendAttachment);
+    }
 
     VkPipelineColorBlendStateCreateInfo infoColorBlend{
         .sType           = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
@@ -104,8 +106,8 @@ void VulkanGraphicsPipeline::CreatePipeline(const GraphicsPipelineOption &option
         .flags           = 0,
         .logicOpEnable   = VK_FALSE,
         .logicOp         = VK_LOGIC_OP_CLEAR,
-        .attachmentCount = 1,
-        .pAttachments    = &colorBlendAttachment
+        .attachmentCount = static_cast<uint32_t>(colorBlendAttachments.size()),
+        .pAttachments    = colorBlendAttachments.data(),
     };
 
     std::vector<VkDynamicState>      dynamicStates{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};

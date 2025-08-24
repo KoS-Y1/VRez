@@ -10,14 +10,14 @@
 
 #include "Light.h"
 
-#define MAX_LIGHTS 16u
+inline constexpr size_t MAX_LIGHT_COUNT = 16;
 
 struct alignas(16) LightsData {
     int32_t lightCount = 0;
     int32_t padding0   = 0;
     int32_t padding1   = 0;
     int32_t padding2   = 0;
-    Light   lights[MAX_LIGHTS];
+    Light   lights[MAX_LIGHT_COUNT];
 };
 
 class LightManager : public Singleton<LightManager> {

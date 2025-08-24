@@ -5,8 +5,8 @@
 #include <glm/glm.hpp>
 
 #include <Singleton.h>
-#include "ResourceManager.h"
 #include <include/VulkanTexture.h>
+#include "ResourceManager.h"
 
 class VulkanTexture;
 class VulkanState;
@@ -23,10 +23,9 @@ protected:
     TextureManager()  = default;
     ~TextureManager() = default;
 
-    VulkanTexture CreateResource(const std::string &key, const SamplerConfig &config);
-
 
 private:
+    VulkanTexture CreateResource(const std::string &key, const SamplerConfig &config);
     void CreateDefaultTexture(const std::string &key, const SamplerConfig &config, glm::vec4 color, VkFormat format);
     friend class ResourceManager<TextureManager, VulkanTexture>;
 };

@@ -14,7 +14,7 @@ std::shared_ptr<ShaderIncluder> ShaderCompiler::m_includer = nullptr;
 struct ShaderIncluder : glslang::TShader::Includer {
 public:
     ShaderIncluder()
-        : m_dir(SHADER_HEADERS_DIR) {}
+        : m_dir(ShaderCompiler::SHADER_HEADERS_DIR) {}
 
     IncludeResult *includeLocal(const char *, const char *, size_t) override { return nullptr; }
 

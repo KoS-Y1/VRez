@@ -5,21 +5,19 @@
 #include <memory>
 #include <mutex>
 #include <string>
-#include <vector>
 
 #include <glm/glm.hpp>
 
 #include <Debug.h>
 #include <Singleton.h>
 #include <include/VulkanPrefab.h>
-#include <include/VulkanSkybox.h>
 
 #include "VulkanImage.h"
 
-#define MIN_SWAPCHAIN_IMG_COUNT 2
-#define MAX_SWAPCHAIN_IMG_COUNT 16
+inline constexpr size_t MIN_SWAPCHAIN_IMG_COUNT = 2;
+inline constexpr size_t MAX_SWAPCHAIN_IMG_COUNT = 16;
 
-#define POINT_ONE_SECOND 100000000u
+inline constexpr uint32_t POINT_ONE_SECOND = 100000000;
 
 struct VulkanSwapchain {
     VkSwapchainKHR swapchain                       = VK_NULL_HANDLE;
@@ -50,14 +48,9 @@ public:
     void Destroy();
 
     void WaitIdle();
-
-    void Present();
-
-    void Update();
-
     void BeginFrame();
-
     void EndFrame();
+    void CopyToPresentImage(const VulkanImage &image);
 
     template<class Func>
     void ImmediateSubmit(Func &&func) {
@@ -79,8 +72,6 @@ public:
     [[nodiscard]] const VkCommandBuffer &GetCommandBuffer() const { return m_cmdBuf; };
 
     [[nodiscard]] const VkDescriptorPool &GetDescriptorPool() const { return m_descriptorPool; }
-
-    [[nodiscard]] VkSampleCountFlagBits GetSampleCount() const { return m_sampleCount; };
 
     [[nodiscard]] const VkQueue &GetQueue() const { return m_queue; };
 
@@ -120,18 +111,6 @@ private:
     VkDescriptorPool m_descriptorPool      = VK_NULL_HANDLE;
     VkDescriptorPool m_imguiDescriptorPool = VK_NULL_HANDLE;
 
-    VkDescriptorSet m_uniformSet = VK_NULL_HANDLE;
-
-    VulkanImage m_drawImage;
-    VulkanImage m_depthImage;
-    VulkanImage m_msaaColorImage;
-
-    std::vector<VulkanPrefab> m_prefabs;
-
-    VulkanSkybox m_skybox;
-
-    VkSampleCountFlagBits m_sampleCount = VK_SAMPLE_COUNT_1_BIT;
-
     DeletionQueue m_deletionQueue;
 
     SDL_Window *m_window = nullptr;
@@ -160,12 +139,6 @@ private:
 
     void CreateDescriptorPool();
 
-    VkDescriptorSet CreateDescriptorSet(VkDescriptorSetLayout layout);
-
-    void CreateSkybox();
-
-    void CreateRenderObjects();
-
     void WaitAndResetFence(VkFence fence, uint64_t timeout = POINT_ONE_SECOND);
 
     static void BeginCommandBuffer(VkCommandBuffer cmdBuf, VkCommandBufferUsageFlags flag);
@@ -178,14 +151,7 @@ private:
         VkSemaphore          signalSemaphore
     );
 
-    void QueuePresent(VkSemaphore waitSemaphore, uint32_t imageIndex);
+    void QueuePresent(VkSemaphore waitSemaphore);
 
     void AcquireNextImage();
-
-    void Draw();
-
-    void DrawGeometry();
-
-    void OneTimeUpdateDescriptorSets();
-
 };

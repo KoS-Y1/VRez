@@ -50,3 +50,14 @@ struct VertexPNTT {
 
     static const VkPipelineVertexInputStateCreateInfo *GetVertexInputStateCreateInfo();
 };
+
+struct VertexPT2D {
+    glm::vec2 position;
+    glm::vec2 texCoords;
+
+    VertexPT2D() = default;
+
+    VertexPT2D(const glm::vec2 &position, const glm::vec2 &texCoords) : position(position), texCoords(texCoords) {}
+
+    static const VkPipelineVertexInputStateCreateInfo *GetVertexInputStateCreateInfo();
+};

@@ -27,7 +27,7 @@ void VulkanMesh::Swap(VulkanMesh &other) noexcept {
 }
 
 void VulkanMesh::Destroy() {
-    m_vertexBuffer.Destroy();
+    m_vertexBuffer = {};
     m_vertexCount = 0;
 }
 

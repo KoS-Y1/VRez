@@ -135,9 +135,29 @@ VkRenderingAttachmentInfo vk_util::GetRenderingAttachmentInfo(
 }
 
 VkRenderingInfo vk_util::GetRenderingInfo(
-    VkRect2D                   area,
-    VkRenderingAttachmentInfo *colorAttachment,
-    VkRenderingAttachmentInfo *depthStencilAttachment
+    VkRect2D                                      area,
+    const std::vector<VkRenderingAttachmentInfo> &colorAttachments,
+    const VkRenderingAttachmentInfo              *depthStencilAttachment
+) {
+    VkRenderingInfo infoRendering{
+        .sType                = VK_STRUCTURE_TYPE_RENDERING_INFO,
+        .pNext                = nullptr,
+        .flags                = 0,
+        .renderArea           = area,
+        .layerCount           = 1,
+        .viewMask             = 0,
+        .colorAttachmentCount = static_cast<uint32_t>(colorAttachments.size()),
+        .pColorAttachments    = colorAttachments.data(),
+        .pDepthAttachment     = depthStencilAttachment,
+        .pStencilAttachment   = nullptr,
+    };
+    return infoRendering;
+}
+
+VkRenderingInfo vk_util::GetRenderingInfo(
+    VkRect2D                         area,
+    const VkRenderingAttachmentInfo *colorAttachment,
+    const VkRenderingAttachmentInfo *depthStencilAttachment
 ) {
     VkRenderingInfo infoRendering{
         .sType                = VK_STRUCTURE_TYPE_RENDERING_INFO,
@@ -152,4 +172,20 @@ VkRenderingInfo vk_util::GetRenderingInfo(
         .pStencilAttachment   = nullptr,
     };
     return infoRendering;
+}
+
+VkDescriptorSet vk_util::CreateDescriptorSet(const VkDescriptorSetLayout &layout) {
+    VkDescriptorSet set = VK_NULL_HANDLE;
+
+    VkDescriptorSetAllocateInfo infoSet{
+        .sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+        .pNext              = nullptr,
+        .descriptorPool     = VulkanState::GetInstance().GetDescriptorPool(),
+        .descriptorSetCount = 1,
+        .pSetLayouts        = &layout
+    };
+
+    DEBUG_VK_ASSERT(vkAllocateDescriptorSets(VulkanState::GetInstance().GetDevice(), &infoSet, &set));
+
+    return set;
 }

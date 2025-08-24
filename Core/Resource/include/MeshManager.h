@@ -20,10 +20,11 @@ protected:
     MeshManager()  = default;
     ~MeshManager() = default;
 
-    VulkanMesh CreateResource(const std::string &key);
 
 private:
     void CreateSkyboxMesh();
+    void CraeteScreenMesh();
+    VulkanMesh CreateResource(const std::string &key);
 
     friend class ResourceManager<MeshManager, VulkanMesh>;
 };

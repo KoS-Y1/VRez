@@ -5,16 +5,13 @@
 
 class VulkanComputePipeline : public VulkanPipeline {
 public:
-    VulkanComputePipeline() = default;
+    VulkanComputePipeline() = delete;
 
-    VulkanComputePipeline(const std::vector<std::string> &paths)
+    explicit VulkanComputePipeline(const std::vector<std::string> &paths)
         : VulkanPipeline(paths) {
         CreatePipeline();
     }
 
 protected:
     void CreatePipeline();
-
-private:
-    friend class VulkanPipeline;
 };

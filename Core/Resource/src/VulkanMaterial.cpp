@@ -3,6 +3,21 @@
 #include <include/VulkanState.h>
 #include <include/VulkanTexture.h>
 
+VulkanMaterial::VulkanMaterial(
+    const VulkanTexture          *albedo,
+    const VulkanTexture          *normal,
+    const VulkanTexture          *orm,
+    const VulkanTexture          *emissive,
+    const VulkanGraphicsPipeline *pipeline
+)
+    : m_albedo(albedo)
+    , m_normal(normal)
+    , m_orm(orm)
+    , m_emissive(emissive) {
+    m_descriptorSet = vk_util::CreateDescriptorSet(pipeline->GetDescriptorSetLayouts()[Descriptor::TEXTURE_SET]);
+    OneTimeUpdateDescriptorSets();
+}
+
 void VulkanMaterial::Swap(VulkanMaterial &other) noexcept {
     std::swap(m_albedo, other.m_albedo);
     std::swap(m_normal, other.m_normal);
@@ -24,19 +39,19 @@ void VulkanMaterial::Destroy() {
 }
 
 void VulkanMaterial::Bind(VkPipelineLayout layout, uint32_t firstSet) const {
-    vkCmdBindDescriptorSets(VulkanState::GetInstance().GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, layout, firstSet, 1, &m_descriptorSet, 0, nullptr);
+    vkCmdBindDescriptorSets(
+        VulkanState::GetInstance().GetCommandBuffer(),
+        VK_PIPELINE_BIND_POINT_GRAPHICS,
+        layout,
+        firstSet,
+        1,
+        &m_descriptorSet,
+        0,
+        nullptr
+    );
 }
 
-void VulkanMaterial::CreateDescriptorSet(const VkDescriptorSetLayout layout) {
-    VkDescriptorSetAllocateInfo infoSet{
-        .sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-        .pNext              = nullptr,
-        .descriptorPool     = VulkanState::GetInstance().GetDescriptorPool(),
-        .descriptorSetCount = 1,
-        .pSetLayouts        = &layout
-    };
-    DEBUG_VK_ASSERT(vkAllocateDescriptorSets(VulkanState::GetInstance().GetDevice(), &infoSet, &m_descriptorSet));
-
+void VulkanMaterial::OneTimeUpdateDescriptorSets() {
     std::vector<VkDescriptorImageInfo> infoImage{
         {.sampler = m_albedo->GetSampler(),   .imageView = m_albedo->GetImageView(),   .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL},
         {.sampler = m_normal->GetSampler(),   .imageView = m_normal->GetImageView(),   .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL},

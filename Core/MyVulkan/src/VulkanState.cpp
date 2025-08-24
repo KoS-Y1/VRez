@@ -9,16 +9,7 @@
 #include <imgui_impl_vulkan.h>
 #include <include/VulkanUtil.h>
 
-#include <include/Camera.h>
-#include <include/LightManager.h>
-#include <include/MeshManager.h>
-#include <include/PipelineManager.h>
-#include <include/TextureManager.h>
-#include <include/MaterialRegistry.h>
-#include <include/ObjectRegistry.h>
-#include <include/VulkanGraphicsPipeline.h>
-#include <include/DescriptorSets.h>
-#include <include/VulkanPrefab.h>
+#include <include/Descriptor.h>
 #include <include/Window.h>
 
 void VulkanState::Init() {
@@ -40,17 +31,6 @@ void VulkanState::Init() {
     m_presentSemaphore = CreateSemaphore();
 
     CreateDescriptorPool();
-
-    PipelineManager::GetInstance().Init();
-    MeshManager::GetInstance().Init();
-    TextureManager::GetInstance().Init();
-    ThreadPool::GetInstance().WaitIdle();
-
-    MaterialRegistry::GetInstance().Init();
-    ObjectRegistry::GetInstance().Init();
-
-    CreateRenderObjects();
-
 }
 
 void VulkanState::Destroy() {
@@ -60,28 +40,10 @@ void VulkanState::Destroy() {
 
     WaitIdle();
 
-    vkFreeDescriptorSets(m_device, m_descriptorPool, 1, &m_uniformSet);
-
-    LightManager::GetInstance().Destroy();
-    Camera::GetInstance().Destroy();
-
-    m_drawImage.Destroy();
-    m_depthImage.Destroy();
-    m_msaaColorImage.Destroy();
-
     for (size_t i = 0; i < m_swapchain.count; i++) {
         vkDestroyImageView(m_device, m_swapchain.views[i], nullptr);
     }
 
-    m_prefabs.clear();
-
-    m_skybox.Destroy();
-
-    ObjectRegistry::GetInstance().Destroy();
-    MaterialRegistry::GetInstance().Destroy();
-
-    PipelineManager::GetInstance().Destroy();
-    MeshManager::GetInstance().Destroy();
     TextureManager::GetInstance().Destroy();
 
     m_deletionQueue.Flush();
@@ -113,7 +75,29 @@ void VulkanState::EndFrame() {
 
     EndAndSubmitCommandBuffer(m_cmdBuf, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, m_renderFence, m_presentSemaphore, m_renderSemaphore);
 
-    QueuePresent(m_renderSemaphore, m_presentImageIndex);
+    QueuePresent(m_renderSemaphore);
+}
+
+void VulkanState::CopyToPresentImage(const VulkanImage &image) {
+    vk_util::CmdImageLayoutTransition(
+        m_cmdBuf,
+        m_swapchain.images[m_presentImageIndex],
+        VK_IMAGE_LAYOUT_UNDEFINED,
+        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        VK_IMAGE_ASPECT_COLOR_BIT,
+        0,
+        VK_ACCESS_TRANSFER_WRITE_BIT
+    );
+
+    // Copy draw image to the current swapchain image
+    vk_util::CopyImageToImage(
+        m_cmdBuf,
+        image.GetImage(),
+        m_swapchain.images[m_presentImageIndex],
+        image.GetExtent(),
+        {m_width, m_height, 1},
+        VK_IMAGE_ASPECT_COLOR_BIT
+    );
 }
 
 void VulkanState::CreateInstance() {
@@ -174,18 +158,6 @@ void VulkanState::CreatePhysicalDevice() {
 
     VkPhysicalDeviceProperties properties = {0};
     vkGetPhysicalDeviceProperties(m_physicalDevice, &properties);
-    VkSampleCountFlags sampleCounts = properties.limits.framebufferColorSampleCounts & properties.limits.framebufferDepthSampleCounts;
-
-    // Set sample count
-    if (sampleCounts & VK_SAMPLE_COUNT_8_BIT) {
-        m_sampleCount = VK_SAMPLE_COUNT_8_BIT;
-    } else if (sampleCounts & VK_SAMPLE_COUNT_4_BIT) {
-        m_sampleCount = VK_SAMPLE_COUNT_4_BIT;
-    } else if (sampleCounts & VK_SAMPLE_COUNT_2_BIT) {
-        m_sampleCount = VK_SAMPLE_COUNT_2_BIT;
-    } else if (sampleCounts & VK_SAMPLE_COUNT_1_BIT) {
-        m_sampleCount = VK_SAMPLE_COUNT_1_BIT;
-    }
 
     SDL_Log(
         "Selected physical device: %s %d.%d.%d",
@@ -265,17 +237,16 @@ void VulkanState::CreateSurface(SDL_Window *window) {
 
 void VulkanState::CreateSwapchain(uint32_t width, uint32_t height) {
     VkSwapchainCreateInfoKHR infoSwapchain{
-        .sType            = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
-        .pNext            = nullptr,
-        .flags            = 0,
-        .surface          = m_surface,
-        .minImageCount    = MIN_SWAPCHAIN_IMG_COUNT,
-        .imageFormat      = VK_FORMAT_R16G16B16A16_SFLOAT,
-        .imageColorSpace  = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR,
-        .imageExtent      = {width, height},
-        .imageArrayLayers = 1,
-        .imageUsage =
-            VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+        .sType                 = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
+        .pNext                 = nullptr,
+        .flags                 = 0,
+        .surface               = m_surface,
+        .minImageCount         = MIN_SWAPCHAIN_IMG_COUNT,
+        .imageFormat           = VK_FORMAT_R16G16B16A16_SFLOAT,
+        .imageColorSpace       = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR,
+        .imageExtent           = {width, height},
+        .imageArrayLayers      = 1,
+        .imageUsage            = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
         .imageSharingMode      = VK_SHARING_MODE_EXCLUSIVE,
         .queueFamilyIndexCount = 0,
         .pQueueFamilyIndices   = nullptr,
@@ -309,36 +280,6 @@ void VulkanState::CreateSwapchain(uint32_t width, uint32_t height) {
             DEBUG_VK_ASSERT(vkCreateImageView(m_device, &infoView, nullptr, &m_swapchain.views[i]));
         }
     }
-
-    // Init drawImage that swapchain images copy from
-    VulkanImage drawImg(
-        VK_FORMAT_R16G16B16A16_SFLOAT,
-        VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-        {m_width, m_height, 1},
-        VK_IMAGE_ASPECT_COLOR_BIT
-    );
-
-    m_drawImage = std::move(drawImg);
-
-    // Init depth image for depth testing
-    VulkanImage depthImg(
-        VK_FORMAT_D32_SFLOAT,
-        VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-        {m_width, m_height, 1},
-        VK_IMAGE_ASPECT_DEPTH_BIT,
-        m_sampleCount
-    );
-    m_depthImage = std::move(depthImg);
-
-    // Init msaa images for anti aliasing
-    VulkanImage msaaColorImage(
-        VK_FORMAT_R16G16B16A16_SFLOAT,
-        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT,
-        {m_width, m_height, 1},
-        VK_IMAGE_ASPECT_COLOR_BIT,
-        m_sampleCount
-    );
-    m_msaaColorImage = std::move(msaaColorImage);
 
     m_deletionQueue.PushFunction([&]() { vkDestroySwapchainKHR(m_device, m_swapchain.swapchain, nullptr); });
 }
@@ -399,7 +340,7 @@ void VulkanState::CreateDescriptorPool() {
         .sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
         .pNext         = nullptr,
         .flags         = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
-        .maxSets       = MAX_DESCRIPTOR_SET_COUNT,
+        .maxSets       = Descriptor::MAX_SET_COUNT,
         .poolSizeCount = 1,
         .pPoolSizes    = &poolSize
     };
@@ -431,133 +372,8 @@ void VulkanState::CreateDescriptorPool() {
     m_deletionQueue.PushFunction([&]() { vkDestroyDescriptorPool(m_device, m_imguiDescriptorPool, nullptr); });
 }
 
-VkDescriptorSet VulkanState::CreateDescriptorSet(const VkDescriptorSetLayout layout) {
-    VkDescriptorSet set = VK_NULL_HANDLE;
-
-    VkDescriptorSetAllocateInfo infoSet{
-        .sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-        .pNext              = nullptr,
-        .descriptorPool     = m_descriptorPool,
-        .descriptorSetCount = 1,
-        .pSetLayouts        = &layout
-    };
-
-    DEBUG_VK_ASSERT(vkAllocateDescriptorSets(m_device, &infoSet, &set));
-
-    return set;
-}
-
 void VulkanState::WaitIdle() {
     DEBUG_VK_ASSERT(vkDeviceWaitIdle(m_device));
-}
-
-void VulkanState::Present() {
-
-    // Layout transition so that we can clear image color
-    vk_util::CmdImageLayoutTransition(
-        m_cmdBuf,
-        m_drawImage.GetImage(),
-        VK_IMAGE_LAYOUT_UNDEFINED,
-        VK_IMAGE_LAYOUT_GENERAL,
-        VK_IMAGE_ASPECT_COLOR_BIT,
-        0,
-        VK_ACCESS_TRANSFER_WRITE_BIT
-    );
-
-    // Layout transition for drawing
-    vk_util::CmdImageLayoutTransition(
-        m_cmdBuf,
-        m_drawImage.GetImage(),
-        VK_IMAGE_LAYOUT_GENERAL,
-        VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-        VK_IMAGE_ASPECT_COLOR_BIT,
-        VK_ACCESS_TRANSFER_WRITE_BIT,
-        VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT
-    );
-
-    // Layout transition for depth testing
-    vk_util::CmdImageLayoutTransition(
-        m_cmdBuf,
-        m_depthImage.GetImage(),
-        VK_IMAGE_LAYOUT_UNDEFINED,
-        VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
-        VK_IMAGE_ASPECT_DEPTH_BIT,
-        0,
-        VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT
-    );
-
-    // Layout transition for msaa
-    vk_util::CmdImageLayoutTransition(
-        m_cmdBuf,
-        m_msaaColorImage.GetImage(),
-        VK_IMAGE_LAYOUT_UNDEFINED,
-        VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-        VK_IMAGE_ASPECT_COLOR_BIT,
-        0,
-        VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT
-    );
-    // Draw
-    Draw();
-
-    // Layout transition for copying image
-    vk_util::CmdImageLayoutTransition(
-        m_cmdBuf,
-        m_drawImage.GetImage(),
-        VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-        VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-        VK_IMAGE_ASPECT_COLOR_BIT,
-        VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-        VK_ACCESS_TRANSFER_WRITE_BIT
-    );
-    vk_util::CmdImageLayoutTransition(
-        m_cmdBuf,
-        m_swapchain.images[m_presentImageIndex],
-        VK_IMAGE_LAYOUT_UNDEFINED,
-        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-        VK_IMAGE_ASPECT_COLOR_BIT,
-        0,
-        VK_ACCESS_TRANSFER_WRITE_BIT
-    );
-
-    // Copy draw image to the current swapchain image
-    vk_util::CopyImageToImage(
-        m_cmdBuf,
-        m_drawImage.GetImage(),
-        m_swapchain.images[m_presentImageIndex],
-        m_drawImage.GetExtent(),
-        {m_width, m_height, 1},
-        VK_IMAGE_ASPECT_COLOR_BIT
-    );
-
-}
-
-void VulkanState::CreateSkybox() {
-    VulkanSkybox skybox("../Assets/Skybox/skybox.json", PipelineManager::GetInstance().Load("skybox_gfx")->GetDescriptorSetLayouts());
-    m_skybox = std::move(skybox);
-};
-
-void VulkanState::CreateRenderObjects() {
-    LightManager::GetInstance().Init(m_physicalDevice, m_device);
-
-    Camera::GetInstance().Init();
-
-    CreateSkybox();
-
-    // Descriptor sets
-    m_uniformSet = CreateDescriptorSet(PipelineManager::GetInstance().Load("basic_gfx")->GetDescriptorSetLayouts()[UNIFORM_SET]);
-
-    OneTimeUpdateDescriptorSets();
-
-    // Prefabs
-    glm::vec3 boomboxLocation = glm::vec3(0.0f, 0.2f, 0.0f);
-    m_prefabs.emplace_back("../Assets/Models/BoomBox/BoomBox.json", boomboxLocation);
-    m_prefabs.emplace_back("../Assets/Models/Chessboard/Chessboard.json");
-    m_prefabs.emplace_back("../Assets/Models/Castle/Castle.json");
-}
-
-void VulkanState::Update() {
-    LightManager::GetInstance().Update();
-    Camera::GetInstance().Update();
 }
 
 void VulkanState::WaitAndResetFence(VkFence fence, uint64_t timeout) {
@@ -602,14 +418,14 @@ void VulkanState::EndAndSubmitCommandBuffer(
     DEBUG_VK_ASSERT(vkQueueSubmit(m_queue, 1, &infoSubmit, fence));
 }
 
-void VulkanState::QueuePresent(VkSemaphore waitSemaphore, uint32_t imageIndex) {
+void VulkanState::QueuePresent(VkSemaphore waitSemaphore) {
     VkPresentInfoKHR infoPresent{
         .sType           = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
         .pNext           = nullptr,
         .pWaitSemaphores = &waitSemaphore,
         .swapchainCount  = 1,
         .pSwapchains     = &m_swapchain.swapchain,
-        .pImageIndices   = &imageIndex,
+        .pImageIndices   = &m_presentImageIndex,
         .pResults        = nullptr,
     };
     if (waitSemaphore != VK_NULL_HANDLE) {
@@ -618,121 +434,7 @@ void VulkanState::QueuePresent(VkSemaphore waitSemaphore, uint32_t imageIndex) {
     DEBUG_VK_ASSERT(vkQueuePresentKHR(m_queue, &infoPresent));
 }
 
-void VulkanState::OneTimeUpdateDescriptorSets() {
-    std::vector<VkDescriptorBufferInfo> infoBuffers{
-        {.buffer = Camera::GetInstance().GetBuffer(),       .offset = 0, .range = VK_WHOLE_SIZE},
-        {.buffer = LightManager::GetInstance().GetBuffer(), .offset = 0, .range = VK_WHOLE_SIZE}
-    };
-
-    VkWriteDescriptorSet writeSet{
-        .sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-        .pNext            = nullptr,
-        .dstSet           = m_uniformSet,
-        .dstBinding       = 0,
-        .dstArrayElement  = 0,
-        .descriptorCount  = static_cast<uint32_t>(infoBuffers.size()),
-        .descriptorType   = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-        .pImageInfo       = nullptr,
-        .pBufferInfo      = infoBuffers.data(),
-        .pTexelBufferView = nullptr,
-    };
-
-    vkUpdateDescriptorSets(m_device, 1, &writeSet, 0, nullptr);
-}
-
-
 void VulkanState::AcquireNextImage() {
     // Acquire next image in the swapchain for presenting
     DEBUG_VK_ASSERT(vkAcquireNextImageKHR(m_device, m_swapchain.swapchain, POINT_ONE_SECOND, m_presentSemaphore, nullptr, &m_presentImageIndex));
-}
-
-
-void VulkanState::Draw() {
-    VkRect2D renderAreas{
-        .offset = {0,       0       },
-        .extent = {m_width, m_height}
-    };
-    VkClearValue colorClear{
-        .color = {0.0f, 0.0f, 0.0f, 1.0f}
-    };
-
-    VkRenderingAttachmentInfo infoColorAttachment = vk_util::GetRenderingAttachmentInfo(
-        m_msaaColorImage.GetImageView(),
-        VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-        &colorClear,
-        VK_ATTACHMENT_LOAD_OP_CLEAR,
-        VK_ATTACHMENT_STORE_OP_STORE,
-        VK_RESOLVE_MODE_AVERAGE_BIT,
-        m_drawImage.GetImageView(),
-        VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
-    );
-
-    VkClearValue depthClear{
-        .depthStencil = {.depth = 1.0f, .stencil = 0}
-    };
-    VkRenderingAttachmentInfo infoDepthAttachment = vk_util::GetRenderingAttachmentInfo(
-        m_depthImage.GetImageView(),
-        VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
-        &depthClear,
-        VK_ATTACHMENT_LOAD_OP_CLEAR,
-        VK_ATTACHMENT_STORE_OP_STORE,
-        VK_RESOLVE_MODE_NONE,
-        VK_NULL_HANDLE,
-        VK_IMAGE_LAYOUT_UNDEFINED
-    );
-
-    VkRenderingInfo infoRender = vk_util::GetRenderingInfo(renderAreas, &infoColorAttachment, &infoDepthAttachment);
-
-    vkCmdBeginRendering(m_cmdBuf, &infoRender);
-
-    // Set dynamic viewport and scissor
-    VkViewport viewport{
-        .x        = 0.f,
-        // Flip the view port
-        .y        = static_cast<float>(m_height),
-        .width    = static_cast<float>(m_width),
-        // Flip the view port
-        .height   = -static_cast<float>(m_height),
-        .minDepth = 0.f,
-        .maxDepth = 1.f
-    };
-
-    vkCmdSetViewport(m_cmdBuf, 0, 1, &viewport);
-    vkCmdSetScissor(m_cmdBuf, 0, 1, &renderAreas);
-
-    m_skybox.BindAndDraw(dynamic_cast<VulkanGraphicsPipeline *>(PipelineManager::GetInstance().Load("skybox_gfx")));
-
-    DrawGeometry();
-
-    vkCmdEndRendering(m_cmdBuf);
-}
-
-void VulkanState::DrawGeometry() {
-    vkCmdBindPipeline(m_cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, PipelineManager::GetInstance().Load("basic_gfx")->GetPipeline());
-
-    vkCmdBindDescriptorSets(
-        m_cmdBuf,
-        VK_PIPELINE_BIND_POINT_GRAPHICS,
-        PipelineManager::GetInstance().Load("basic_gfx")->GetLayout(),
-        UNIFORM_SET,
-        1,
-        &m_uniformSet,
-        0,
-        nullptr
-    );
-
-    vkCmdBindDescriptorSets(
-       m_cmdBuf,
-       VK_PIPELINE_BIND_POINT_GRAPHICS,
-       PipelineManager::GetInstance().Load("basic_gfx")->GetLayout(),
-       IBL_SET,
-       1,
-       &m_skybox.GetIBLSet(),
-       0,
-       nullptr
-   );
-
-    for (const auto &instance: m_prefabs) {
-        instance.BindAndDraw(PipelineManager::GetInstance().Load("basic_gfx")->GetLayout());
-    }
 }

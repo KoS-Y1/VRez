@@ -1,5 +1,7 @@
 #version 450
 
+#include <util.glsl>
+
 layout (location = 0) in vec3 vWorldPosition;
 layout (location = 1) in mat3 vTBN;
 layout (location = 4) in vec2 vTexcoord;

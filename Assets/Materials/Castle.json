@@ -1,6 +1,5 @@
 {
   "albedo": "../Assets/Models/Castle/castle_white_base_color.jpg",
   "normal": "../Assets/Models/Castle/Castle_normal.jpg",
-  "orm": "../Assets/Models/Castle/Castle_ORM.jpg",
-  "pipeline": "basic_gfx"
+  "orm": "../Assets/Models/Castle/Castle_ORM.jpg"
 }

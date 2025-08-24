@@ -1,4 +1,6 @@
 #pragma once
+#include <vector>
+
 #include <vulkan/vulkan_core.h>
 
 namespace vk_util {
@@ -39,5 +41,13 @@ VkRenderingAttachmentInfo GetRenderingAttachmentInfo(
     VkImageLayout         resolveLayout
 );
 
-VkRenderingInfo GetRenderingInfo(VkRect2D area, VkRenderingAttachmentInfo *colorAttachment, VkRenderingAttachmentInfo *depthStencilAttachment);
+VkRenderingInfo GetRenderingInfo(
+    VkRect2D                                      area,
+    const std::vector<VkRenderingAttachmentInfo> &colorAttachments,
+    const VkRenderingAttachmentInfo                    *depthStencilAttachment
+);
+
+VkRenderingInfo GetRenderingInfo(VkRect2D area, const VkRenderingAttachmentInfo *colorAttachment, const VkRenderingAttachmentInfo *depthStencilAttachment);
+
+VkDescriptorSet CreateDescriptorSet(const VkDescriptorSetLayout &layout);
 } // namespace vk_util

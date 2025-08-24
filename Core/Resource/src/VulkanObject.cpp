@@ -1,9 +1,9 @@
 #include "include/VulkanObject.h"
 
+#include <include/Descriptor.h>
+#include <include/VulkanMaterial.h>
 #include <include/VulkanMesh.h>
 #include <include/VulkanState.h>
-#include <include/DescriptorSets.h>
-#include <include/VulkanMaterial.h>
 
 VulkanObject::VulkanObject(const VulkanMesh *mesh, const VulkanMaterial *material) {
     m_mesh = mesh;
@@ -21,6 +21,6 @@ void VulkanObject::Destroy() {
 }
 
 void VulkanObject::BindAndDraw(VkPipelineLayout layout) const {
-    m_material->Bind(layout, TEXTURE_SET);
+    m_material->Bind(layout, Descriptor::TEXTURE_SET);
     m_mesh->BindAndDraw();
 }

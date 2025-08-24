@@ -37,10 +37,10 @@ void TextureManager::Init() {
         CreateDefaultTexture("normal", config, glm::vec4(0.5f, 0.5f, 1.0f, 1.0f), VK_FORMAT_R32G32B32A32_SFLOAT);
     });
     ThreadPool::GetInstance().Enqueue([this, config]() {
-        CreateDefaultTexture("orm", config, glm::vec4(0.2f, 1.0f, 0.1f, 1.0f), VK_FORMAT_R32G32_SFLOAT);
+        CreateDefaultTexture("orm", config, glm::vec4(0.2f, 1.0f, 0.1f, 1.0f), VK_FORMAT_R32G32B32A32_SFLOAT);
     });
     ThreadPool::GetInstance().Enqueue([this, config]() {
-        CreateDefaultTexture("emissive", config, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), VK_FORMAT_R32G32_SFLOAT);
+        CreateDefaultTexture("emissive", config, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), VK_FORMAT_R32G32B32A32_SFLOAT);
     });
 }
 

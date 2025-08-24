@@ -1,6 +1,0 @@
-{
-  "emissive": "../Assets/Skybox/Skybox.png",
-  "specular": "../Assets/Skybox/specular.png",
-  "irradiance": "../Assets/Skybox/irradiance.png",
-  "brdf": "../Assets/Skybox/brdf_lut.png"
-}

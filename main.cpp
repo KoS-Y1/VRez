@@ -1,35 +1,13 @@
 #include <vulkan/vulkan.h>
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
+#include <glslang/Public/ShaderLang.h>
 
 #include <Debug.h>
 #include <include/Window.h>
+#include <include/VulkanState.h>
+#include <include/UIRenderer.h>
 
-#include <include/ShaderCompiler.h>
-
-
-
-// class TestJob : public Job
-// {
-// public:
-//     explicit TestJob(size_t i, int name) : counter(i), name(name) {};
-//
-//     CompletionPolicy Execute() override
-//     {
-//         for (int i = 0; i < counter; i++)
-//         {
-//             {
-//                 std::cout << name << " called " << i << std::endl;
-//
-//             }
-//         }
-//         return CompletionPolicy::Complete;
-//     }
-//
-// private:
-//     size_t counter;
-//     int name;
-// };
 
 int main(void)
 {
@@ -44,14 +22,8 @@ int main(void)
 
     Window::GetInstance().Run();
 
-    // std::cout << "Returns " << result << std::endl;
-    //
-    // int i = 1, j = 2, k = 3;
-    // JobSystem::GetInstance().Schedule<TestJob>(i, i);
-    // JobSystem::GetInstance().Schedule<TestJob>(j, j);
-    // JobSystem::GetInstance().ScheduleImportant<TestJob>(k, k);
-    //
-    // std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    UIRenderer::GetInstance().Destroy();
+    VulkanState::GetInstance().Destroy();
 
     glslang::FinalizeProcess();
 

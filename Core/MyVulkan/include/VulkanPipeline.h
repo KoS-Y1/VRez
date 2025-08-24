@@ -7,19 +7,13 @@
 
 class VulkanPipeline {
 public:
-    VulkanPipeline() = default;
-
-    virtual ~VulkanPipeline() { Destroy(); };
-
-
-    VulkanPipeline(const std::vector<std::string> &paths);
-
     VulkanPipeline(const VulkanPipeline &)            = delete;
     VulkanPipeline(VulkanPipeline &&)                 = delete;
     VulkanPipeline &operator=(const VulkanPipeline &) = delete;
     VulkanPipeline &operator=(VulkanPipeline &&)      = delete;
 
-    void Destroy();
+    virtual ~VulkanPipeline() { Destroy(); };
+
     [[nodiscard]] const std::vector<VkDescriptorSetLayout> &GetDescriptorSetLayouts() const { return m_descriptorSetLayouts; };
 
     [[nodiscard]] const VkPipeline &GetPipeline() const { return m_pipeline; };
@@ -27,6 +21,12 @@ public:
     [[nodiscard]] const VkPipelineLayout &GetLayout() const { return m_layout; };
 
 protected:
+    VulkanPipeline() = default;
+
+    VulkanPipeline(const std::vector<std::string> &paths);
+
+    void Destroy();
+
     VkPipelineLayout                                m_layout   = VK_NULL_HANDLE;
     VkPipeline                                      m_pipeline = VK_NULL_HANDLE;
     std::map<VkShaderStageFlagBits, VkShaderModule> m_shaderModules;
@@ -34,8 +34,8 @@ protected:
     std::vector<VkDescriptorSetLayout> m_descriptorSetLayouts;
     std::vector<VkPushConstantRange>   m_pushConstantRanges;
 
-    void CreateLayout();
-    void CreateShaderModules(const ShaderCompiler &shaderCompiler);
-    void CreateDescriptorSetLayout(const std::vector<VkDescriptorSetLayoutCreateInfo> &infos);
+    void                                         CreateLayout();
+    void                                         CreateShaderModules(const ShaderCompiler &shaderCompiler);
+    void                                         CreateDescriptorSetLayout(const std::vector<VkDescriptorSetLayoutCreateInfo> &infos);
     std::vector<VkPipelineShaderStageCreateInfo> CreateShaderStages();
 };

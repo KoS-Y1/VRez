@@ -10,12 +10,12 @@
 
 #include <glslang/Public/ShaderLang.h>
 
-#define SHADER_HEADERS_DIR "../Assets/Shaders/Headers/"
-
 struct ShaderIncluder;
 
 class ShaderCompiler {
 public:
+    static constexpr const char* SHADER_HEADERS_DIR = "../Assets/Shaders/Headers/";
+
     ShaderCompiler() = delete;
 
     explicit ShaderCompiler(const std::vector<std::string> &dirs);

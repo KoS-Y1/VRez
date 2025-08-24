@@ -16,8 +16,8 @@ protected:
     ObjectRegistry() = default;
     ~ObjectRegistry() = default;
 
-    VulkanObject CreateResource(const std::string &key);
 
 private:
+    VulkanObject CreateResource(const std::string &key);
     friend class ResourceManager<ObjectRegistry, VulkanObject>;
 };
