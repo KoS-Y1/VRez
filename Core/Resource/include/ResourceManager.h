@@ -8,7 +8,10 @@
 #include <Debug.h>
 #include <Pointee.h>
 
+namespace {
 using Key = std::string;
+}
+
 template<class Derived, class Resource>
 class ResourceManager {
 public:

@@ -44,4 +44,4 @@ add_library(GFX GFX/include/PbrRenderer.h GFX/src/PbrRenderer.cpp GFX/include/GB
         GFX/include/LightingPass.h GFX/src/LightingPass.cpp GFX/include/SkyboxPass.h GFX/src/SkyboxPass.cpp
         GFX/include/RenderPass.h)
 target_include_directories(GFX PUBLIC GFX)
-target_link_libraries(GFX PUBLIC MyVulkan Resource Camera Light imgui)
+target_link_libraries(GFX PUBLIC MyVulkan Resource Camera Light imgui UI)

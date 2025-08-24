@@ -7,6 +7,7 @@
 #include <include/SkyboxPass.h>
 #include <include/VulkanImage.h>
 #include <include/VulkanPrefab.h>
+#include <include/UIRenderer.h>
 
 struct DrawContent {
     std::vector<VulkanPrefab> prefabs;
@@ -15,7 +16,10 @@ struct DrawContent {
 
 class PbrRenderer {
 public:
-    PbrRenderer();
+    PbrRenderer() = delete;
+
+    explicit PbrRenderer(UIRenderer& uiRenderer);
+
     ~PbrRenderer();
 
     PbrRenderer(const PbrRenderer &)            = delete;

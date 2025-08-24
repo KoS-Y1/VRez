@@ -9,7 +9,7 @@
 #include <include/VulkanState.h>
 #include <include/VulkanUtil.h>
 
-PbrRenderer::PbrRenderer()
+PbrRenderer::PbrRenderer(UIRenderer& uiRenderer)
     : m_skybox("../Assets/Skybox/Skybox.png", PipelineManager::GetInstance().Load("skybox_gfx")->GetDescriptorSetLayouts()[descriptor::TEXTURE_SET]) {
     m_brdf       = TextureManager::GetInstance().Load("../Assets/Skybox/brdf_lut.png");
     m_irradiance = TextureManager::GetInstance().Load("../Assets/Skybox/irradiance.png");
@@ -20,6 +20,10 @@ PbrRenderer::PbrRenderer()
     CreateDrawContent();
     CreateDescriptorSets();
     CreateRenderConfig();
+
+    for (size_t i = 0; i < m_drawContent.prefabs.size(); i++) {
+        uiRenderer.AddPrefabWindow(m_drawContent.prefabs[i], i);
+    }
 
     OneTimeUpdateDescriptorSets();
 }

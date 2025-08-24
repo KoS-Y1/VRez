@@ -35,7 +35,7 @@ void Window::Run() {
     m_running = true;
 
     UIRenderer  uiRenderer;
-    PbrRenderer pbrRenderer;
+    PbrRenderer pbrRenderer(uiRenderer);
 
     while (m_running) {
         uint32_t  time = SDL_GetTicks();
