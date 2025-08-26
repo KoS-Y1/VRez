@@ -9,7 +9,7 @@
 #include <Singleton.h>
 
 inline constexpr size_t FRUSTUM_CORNER_NUM = 8;
-inline constexpr size_t CASCADES_NUM       = 3;
+inline constexpr size_t CASCADES_NUM       = 4;
 
 
 enum class CameraMoveDirection : uint8_t {

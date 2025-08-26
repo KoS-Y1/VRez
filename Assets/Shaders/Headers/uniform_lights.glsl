@@ -23,7 +23,7 @@ layout(std140, set = UNIFORM_SET, binding = 1) uniform Lights
     int uPadding0;
     int uPadding1;
     int uPadding2;
-    mat4 uLightSpaceMatix[3];
+    mat4 uLightSpaceMatix;
     Light uLights[MAX_LIGHTS];
 };
 

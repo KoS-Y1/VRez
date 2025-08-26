@@ -4,7 +4,7 @@
 const int UNIFORM_SET = 0;
 const int TEXTURE_SET = 1;
 const int IBL_SET = 2;
-const int CSM_SET = 3;
+const int SHADOW_SET = 3;
 
 const float INF = 1.0 / 0.0;
 const float LN2 = 0.6931471805599453;

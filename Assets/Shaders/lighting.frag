@@ -5,7 +5,7 @@
 #include <uniform_camera.glsl>
 #include <pbr.glsl>
 #include <ibl.glsl>
-#include <csm.glsl>
+#include <shadow.glsl>
 
 layout (location = 0) in vec2 vTexcoord;
 
