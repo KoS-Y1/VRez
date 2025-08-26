@@ -66,3 +66,8 @@ void VulkanPrefab::BindAndDraw(VkPipelineLayout pipeline) const {
 
     m_object->BindAndDraw(pipeline);
 }
+
+void VulkanPrefab::BindAndDrawMesh(VkPipelineLayout pipeline) const {
+    vkCmdPushConstants(VulkanState::GetInstance().GetCommandBuffer(), pipeline, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(m_transformation), &m_transformation);
+
+    m_object->BindAndDrawMesh(pipeline);}

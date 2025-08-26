@@ -167,7 +167,7 @@ void PbrRenderer::CreateDrawContent() {
     m_drawContent.prefabs.emplace_back("../Assets/Models/BoomBox/BoomBox.json", glm::vec3(0.0f, 0.1f, 0.0f));
     m_drawContent.prefabs.emplace_back("../Assets/Models/Chessboard/Chessboard.json");
     m_drawContent.prefabs.emplace_back("../Assets/Models/Castle/Castle.json");
-
+    m_drawContent.prefabs.emplace_back("../Assets/Models/Suzanne/Suzanne.json");
     m_drawContent.screen = MeshManager::GetInstance().Load("screen");
 }
 

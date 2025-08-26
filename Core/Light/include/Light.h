@@ -15,7 +15,7 @@ public:
     glm::vec3 position = glm::vec3(0.0f);
     float     range    = 10.0f; // Point falloff
 
-    glm::vec3 direction = glm::vec3(0.0f, -1.0f, -1.0f); // Directional direction
+    glm::vec3 direction = glm::normalize(glm::vec3(0.0f, -1.0f, 1.0f)); // Directional direction
 
     float intensity = 1.0f;
 };

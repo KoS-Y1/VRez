@@ -62,6 +62,7 @@ void PipelineManager::Init() {
          .rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
          },
         {
+         .cullMode             = VK_CULL_MODE_NONE,
          .infoVertex           = VertexPNTT::GetVertexInputStateCreateInfo(),
          .colorFormats         = {},
          .depthTestEnable      = VK_TRUE,

@@ -51,6 +51,8 @@ public:
 
     void BindAndDraw(VkPipelineLayout pipeline) const;
 
+    void BindAndDrawMesh(VkPipelineLayout pipeline) const;
+
     [[nodiscard]] const std::string GetName() const { return m_object->GetName(); }
 
     [[nodiscard]] const glm::vec3 GetLocation() const { return m_location; }

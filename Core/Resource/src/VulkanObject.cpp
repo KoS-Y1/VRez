@@ -24,3 +24,7 @@ void VulkanObject::BindAndDraw(VkPipelineLayout layout) const {
     m_material->Bind(layout, descriptor::TEXTURE_SET);
     m_mesh->BindAndDraw();
 }
+
+void VulkanObject::BindAndDrawMesh(VkPipelineLayout layout) const {
+    m_mesh->BindAndDraw();
+}

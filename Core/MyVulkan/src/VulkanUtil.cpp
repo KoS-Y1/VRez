@@ -139,14 +139,15 @@ VkRenderingAttachmentInfo vk_util::GetRenderingAttachmentInfo(
 VkRenderingInfo vk_util::GetRenderingInfo(
     VkRect2D                                      area,
     const std::vector<VkRenderingAttachmentInfo> &colorAttachments,
-    const VkRenderingAttachmentInfo              *depthStencilAttachment
+    const VkRenderingAttachmentInfo              *depthStencilAttachment,
+    uint32_t                                      layerCount
 ) {
     VkRenderingInfo infoRendering{
         .sType                = VK_STRUCTURE_TYPE_RENDERING_INFO,
         .pNext                = nullptr,
         .flags                = 0,
         .renderArea           = area,
-        .layerCount           = 1,
+        .layerCount           = layerCount,
         .viewMask             = 0,
         .colorAttachmentCount = static_cast<uint32_t>(colorAttachments.size()),
         .pColorAttachments    = colorAttachments.data(),
@@ -159,14 +160,15 @@ VkRenderingInfo vk_util::GetRenderingInfo(
 VkRenderingInfo vk_util::GetRenderingInfo(
     VkRect2D                         area,
     const VkRenderingAttachmentInfo *colorAttachment,
-    const VkRenderingAttachmentInfo *depthStencilAttachment
+    const VkRenderingAttachmentInfo *depthStencilAttachment,
+    uint32_t                          layerCount
 ) {
     VkRenderingInfo infoRendering{
         .sType                = VK_STRUCTURE_TYPE_RENDERING_INFO,
         .pNext                = nullptr,
         .flags                = 0,
         .renderArea           = area,
-        .layerCount           = 1,
+        .layerCount           = layerCount,
         .viewMask             = 0,
         .colorAttachmentCount = 1,
         .pColorAttachments    = colorAttachment,

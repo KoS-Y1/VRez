@@ -6,6 +6,8 @@ layout (location = 0) in vec3 inPositon;
 layout (location = 1) in vec3 inNormal;
 layout (location = 2) in vec2 inTexCord;
 
+layout (location = 0) out vec4 vNormal;
+
 layout (push_constant) uniform PushConstantData
 {
     mat4 inModel;
@@ -14,4 +16,5 @@ layout (push_constant) uniform PushConstantData
 void main()
 {
     gl_Position = inModel * vec4(inPositon, 1.0f);
+    vNormal = inModel * vec4(inNormal, 1.0f);
 }

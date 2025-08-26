@@ -2,6 +2,8 @@
 
 #include <include/VulkanState.h>
 #include <include/VulkanTexture.h>
+#include <include/VulkanUtil.h>
+#include <include/Descriptor.h>
 
 VulkanMaterial::VulkanMaterial(
     const VulkanTexture          *albedo,

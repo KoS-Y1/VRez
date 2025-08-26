@@ -183,7 +183,7 @@ int32_t UI::LightSection(size_t idx) {
     ImGui::ColorEdit3("Color", glm::value_ptr(light.color));
     ImGui::DragFloat("Intensity", &light.intensity, step, minIntensity, maxIntensity);
 
-
+    light.direction = glm::normalize(light.direction);
     LightManager::GetInstance().UpdateLight(idx, light);
 
     if (remove) {

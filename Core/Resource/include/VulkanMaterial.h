@@ -1,12 +1,7 @@
 #pragma once
 
-
-#include "include/VulkanUtil.h"
-
-
 #include <vulkan/vulkan.h>
 
-#include <include/Descriptor.h>
 #include <include/VulkanGraphicsPipeline.h>
 
 class VulkanTexture;

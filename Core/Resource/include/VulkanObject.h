@@ -39,6 +39,8 @@ public:
 
     void BindAndDraw(VkPipelineLayout layout) const;
 
+    void BindAndDrawMesh(VkPipelineLayout layout) const;
+
     [[nodiscard]] const std::string &GetName() const { return m_mesh->GetName(); }
 
 private:

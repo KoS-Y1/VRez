@@ -1,7 +1,6 @@
 #include "include/ShadowPass.h"
 
-#include "include/Descriptor.h"
-
+#include <include/Descriptor.h>
 #include <include/Camera.h>
 #include <include/PbrRenderer.h>
 #include <include/PipelineManager.h>
@@ -14,7 +13,7 @@ ShadowPass::ShadowPass() {
 }
 
 ShadowPass::~ShadowPass() {
-    if (m_csmSet == VK_NULL_HANDLE) {
+    if (m_csmSet != VK_NULL_HANDLE) {
         vkFreeDescriptorSets(VulkanState::GetInstance().GetDevice(), VulkanState::GetInstance().GetDescriptorPool(), 1, &m_csmSet);
         vkDestroySampler(VulkanState::GetInstance().GetDevice(), m_sampler, nullptr);
     }
@@ -27,12 +26,12 @@ ShadowPass::~ShadowPass() {
 }
 
 void ShadowPass::CreateRenderingInfo(const RenderingConfig &config) {
-    m_infoRendering = vk_util::GetRenderingInfo(config.renderArea, nullptr, &m_shadowAttachment);
+    m_infoRendering = vk_util::GetRenderingInfo(config.renderArea, nullptr, &m_shadowAttachment, CASCADES_NUM);
 }
 
 void ShadowPass::DrawCalls(const DrawContent &content, VkPipelineLayout layout) {
     for (const auto &prefab: content.prefabs) {
-        prefab.BindAndDraw(layout);
+        prefab.BindAndDrawMesh(layout);
     }
 }
 
@@ -56,8 +55,9 @@ void ShadowPass::PostRender() {
         m_shadowMap.GetImage(),
         VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
         VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-        VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+        VK_IMAGE_ASPECT_DEPTH_BIT,
         VK_ACCESS_SHADER_READ_BIT,
+        1,
         1,
         CASCADES_NUM
     );

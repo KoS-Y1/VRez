@@ -49,12 +49,14 @@ void main()
 
     const float shadow = ReadShadowMap(viewSpacePos, vec4(worldPosition, 1.0f));
     Lo += CalculatePBRLight(uLights[0].position, uLights[0].direction, uLights[0].color, uLights[0].intensity,
-    uLights[0].range, uLights[0].type, N, V, worldPosition, albedo, roughness, metallic) + (1.0f - shadow);
+    uLights[0].range, uLights[0].type, N, V, worldPosition, albedo, roughness, metallic) * (1.0f - shadow);
 
     // IBL
-    vec3 ibl = IBL(N, NdotV, R, F0, metallic, roughness, albedo, ao) * 0.5f;
+    vec3 ibl = IBL(N, NdotV, R, F0, metallic, roughness, albedo, ao);
 
     // Gamma correction
     //    outColor = vec4(pow(Lo + emissive, vec3(1.0/2.2)), 1.0f);
     outColor = vec4((ibl+ Lo + emissive), 1.0);
+
+//    outColor = CSMDebugColor(viewSpacePos);
 }

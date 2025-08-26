@@ -71,7 +71,7 @@ protected:
 private:
     static constexpr float RATIO = (16.0f / 9.0f);
     static constexpr float NEAR  = 0.001f;
-    static constexpr float FAR   = 64.0f;
+    static constexpr float FAR   = 8.0f;
 
     glm::vec3 m_location;
     glm::vec3 m_worldUp;
