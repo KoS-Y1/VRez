@@ -45,6 +45,17 @@ glm::mat4 GetLightProjectionMatrix(
         minZ                        = glm::min(minZ, worldCorner.z);
         maxZ                        = glm::max(maxZ, worldCorner.z);
     }
+    // constexpr float zMult = 10.0f;
+    // if (minZ < 0) {
+    //     minZ *= zMult;
+    // } else {
+    //     minZ /= zMult;
+    // }
+    // if (maxZ < 0) {
+    //     maxZ /= zMult;
+    // } else {
+    //     maxZ *= zMult;
+    // }
 
     return glm::ortho(minX, maxX, minY, maxY, minZ, maxZ);
 }

@@ -56,8 +56,8 @@ void ShadowPass::PostRender() {
         VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
         VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
         VK_IMAGE_ASPECT_DEPTH_BIT,
+        VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
         VK_ACCESS_SHADER_READ_BIT,
-        1,
         1,
         CASCADES_NUM
     );
@@ -82,7 +82,7 @@ void ShadowPass::CreateShadowMapImage() {
 
     m_shadowAttachment = vk_util::GetRenderingAttachmentInfo(
         m_shadowMap.GetImageView(),
-        VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL,
+        VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
         &colorClear,
         VK_ATTACHMENT_LOAD_OP_CLEAR,
         VK_ATTACHMENT_STORE_OP_STORE,
@@ -101,14 +101,14 @@ void ShadowPass::CreateCSMSet() {
             .magFilter               = VK_FILTER_LINEAR,
             .minFilter               = VK_FILTER_LINEAR,
             .mipmapMode              = VK_SAMPLER_MIPMAP_MODE_LINEAR,
-            .addressModeU            = VK_SAMPLER_ADDRESS_MODE_REPEAT,
-            .addressModeV            = VK_SAMPLER_ADDRESS_MODE_REPEAT,
-            .addressModeW            = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+            .addressModeU            = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+            .addressModeV            = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+            .addressModeW            = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
             .mipLodBias              = 0.0f,
             .anisotropyEnable        = VK_FALSE,
             .maxAnisotropy           = 1.0f,
-            .compareEnable           = VK_FALSE,
-            .compareOp               = VK_COMPARE_OP_ALWAYS,
+            .compareEnable           = VK_TRUE,
+            .compareOp               = VK_COMPARE_OP_LESS_OR_EQUAL,
             .minLod                  = 0.0f,
             .maxLod                  = 1.0f,
             .borderColor             = VK_BORDER_COLOR_INT_OPAQUE_BLACK,

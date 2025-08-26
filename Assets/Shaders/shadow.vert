@@ -16,5 +16,5 @@ layout (push_constant) uniform PushConstantData
 void main()
 {
     gl_Position = inModel * vec4(inPositon, 1.0f);
-    vNormal = inModel * vec4(inNormal, 1.0f);
+    vNormal = inModel * vec4(inNormal, 0.0f);
 }
