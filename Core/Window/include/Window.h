@@ -5,10 +5,7 @@
 
 #include <SDL3/SDL_events.h>
 
-namespace {
-constexpr int WINDOW_WIDTH  = 1600;
-constexpr int WINDOW_HEIGHT = 900;
-} // namespace
+
 
 enum class CameraMoveDirection : uint8_t;
 

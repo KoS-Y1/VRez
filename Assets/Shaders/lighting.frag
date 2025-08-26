@@ -5,6 +5,7 @@
 #include <uniform_camera.glsl>
 #include <pbr.glsl>
 #include <ibl.glsl>
+#include <csm.glsl>
 
 layout (location = 0) in vec2 vTexcoord;
 
@@ -39,16 +40,19 @@ void main()
     const vec3 F0 = mix(vec3(0.04f), albedo, metallic);
 
     // PBR
-    int i = 0;
     vec3 Lo = vec3(0.0f);
-    for(i = 0; i < uLightCount; ++i)
+    for(int i = 1; i < uLightCount; ++i)
     {
         Lo += CalculatePBRLight(uLights[i].position, uLights[i].direction, uLights[i].color, uLights[i].intensity,
         uLights[i].range, uLights[i].type, N, V, worldPosition, albedo, roughness, metallic);
     }
 
+    const float shadow = ReadShadowMap(viewSpacePos, vec4(worldPosition, 1.0f));
+    Lo += CalculatePBRLight(uLights[0].position, uLights[0].direction, uLights[0].color, uLights[0].intensity,
+    uLights[0].range, uLights[0].type, N, V, worldPosition, albedo, roughness, metallic) + (1.0f - shadow);
+
     // IBL
-    vec3 ibl = IBL(N, NdotV, R, F0, metallic, roughness, albedo, ao);
+    vec3 ibl = IBL(N, NdotV, R, F0, metallic, roughness, albedo, ao) * 0.5f;
 
     // Gamma correction
     //    outColor = vec4(pow(Lo + emissive, vec3(1.0/2.2)), 1.0f);

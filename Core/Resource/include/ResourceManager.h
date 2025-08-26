@@ -2,28 +2,25 @@
 
 #include <map>
 #include <mutex>
-#include <utility>
 #include <string>
+#include <utility>
 
 #include <Debug.h>
 #include <Pointee.h>
 
-namespace {
-using Key = std::string;
-}
-
 template<class Derived, class Resource>
 class ResourceManager {
 public:
+    using Key = std::string;
     using Ptr = Pointee<Resource>::Pointer;
 
     Ptr Load(const Key &key) {
-            auto pair = m_cache.find(key);
+        auto pair = m_cache.find(key);
 
-            DEBUG_ASSERT_LOG(pair != m_cache.end(), (key + " does not exist").c_str());
+        DEBUG_ASSERT_LOG(pair != m_cache.end(), (key + " does not exist").c_str());
 
-            return Pointee<Resource>::ptr(pair->second);
-        }
+        return Pointee<Resource>::ptr(pair->second);
+    }
 
 protected:
     std::map<Key, Resource> m_cache;
@@ -38,11 +35,8 @@ protected:
         }
     }
 
-    void DestroyAll() {
-        m_cache.clear();
-    }
+    void DestroyAll() { m_cache.clear(); }
 
     ResourceManager()  = default;
     ~ResourceManager() = default;
-
 };

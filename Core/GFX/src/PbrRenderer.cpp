@@ -9,7 +9,7 @@
 #include <include/VulkanState.h>
 #include <include/VulkanUtil.h>
 
-PbrRenderer::PbrRenderer(UIRenderer& uiRenderer)
+PbrRenderer::PbrRenderer(UIRenderer &uiRenderer)
     : m_skybox("../Assets/Skybox/Skybox.png", PipelineManager::GetInstance().Load("skybox_gfx")->GetDescriptorSetLayouts()[descriptor::TEXTURE_SET]) {
     m_brdf       = TextureManager::GetInstance().Load("../Assets/Skybox/brdf_lut.png");
     m_irradiance = TextureManager::GetInstance().Load("../Assets/Skybox/irradiance.png");
@@ -45,6 +45,7 @@ PbrRenderer::~PbrRenderer() {
     vkFreeDescriptorSets(VulkanState::GetInstance().GetDevice(), VulkanState::GetInstance().GetDescriptorPool(), 1, &m_uniformSet);
     vkFreeDescriptorSets(VulkanState::GetInstance().GetDevice(), VulkanState::GetInstance().GetDescriptorPool(), 1, &m_cameraSet);
     vkFreeDescriptorSets(VulkanState::GetInstance().GetDevice(), VulkanState::GetInstance().GetDescriptorPool(), 1, &m_iblSet);
+    vkFreeDescriptorSets(VulkanState::GetInstance().GetDevice(), VulkanState::GetInstance().GetDescriptorPool(), 1, &m_uniformShadowSet);
 }
 
 void PbrRenderer::Render() {
@@ -76,7 +77,17 @@ void PbrRenderer::Render() {
 
     m_config.depthAttachments.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     m_config.drawAttachments.loadOp  = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    // Shadow pass...
+
+    m_shadowPass.PreRender();
+    m_shadowPass.Render(
+        m_config,
+        {
+            {m_uniformShadowSet, descriptor::UNIFORM_SET}
+    },
+        m_drawContent,
+        dynamic_cast<VulkanGraphicsPipeline *>(PipelineManager::GetInstance().Load("shadow_gfx"))
+    );
+    m_shadowPass.PostRender();
 
     m_gBufferPass.PreRender();
     m_gBufferPass.Render(
@@ -94,14 +105,15 @@ void PbrRenderer::Render() {
         {
             {m_uniformSet,                  descriptor::UNIFORM_SET},
             {m_gBufferPass.GetGBufferSet(), descriptor::TEXTURE_SET},
-            {m_iblSet,                      descriptor::IBL_SET    }
+            {m_iblSet,                      descriptor::IBL_SET    },
+            {m_shadowPass.GetCSMSet(),      descriptor::CSM_SET    }
     },
         m_drawContent,
         dynamic_cast<VulkanGraphicsPipeline *>(PipelineManager::GetInstance().Load("lighting_gfx"))
     );
 
     m_config.depthAttachments.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
-    m_config.drawAttachments.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+    m_config.drawAttachments.loadOp  = VK_ATTACHMENT_LOAD_OP_LOAD;
     m_skybox.Render(
         m_config,
         {
@@ -136,7 +148,7 @@ void PbrRenderer::CreateImages() {
 
     VulkanImage depthImg(
         VK_FORMAT_D32_SFLOAT,
-        VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+        VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
         {VulkanState::GetInstance().GetWidth(), VulkanState::GetInstance().GetHeight(), 1},
         VK_IMAGE_ASPECT_DEPTH_BIT
     );
@@ -167,6 +179,9 @@ void PbrRenderer::CreateDescriptorSets() {
         vk_util::CreateDescriptorSet(PipelineManager::GetInstance().Load("gbuffer_gfx")->GetDescriptorSetLayouts()[descriptor::UNIFORM_SET]);
 
     m_iblSet = vk_util::CreateDescriptorSet(PipelineManager::GetInstance().Load("lighting_gfx")->GetDescriptorSetLayouts()[descriptor::IBL_SET]);
+
+    m_uniformShadowSet =
+        vk_util::CreateDescriptorSet(PipelineManager::GetInstance().Load("shadow_gfx")->GetDescriptorSetLayouts()[descriptor::UNIFORM_SET]);
 }
 
 void PbrRenderer::CreateRenderConfig() {
@@ -265,7 +280,21 @@ void PbrRenderer::OneTimeUpdateDescriptorSets() {
         .pTexelBufferView = nullptr,
     };
 
+    VkWriteDescriptorSet writeSetShadow{
+        .sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .pNext            = nullptr,
+        .dstSet           = m_uniformShadowSet,
+        .dstBinding       = 0,
+        .dstArrayElement  = 0,
+        .descriptorCount  = static_cast<uint32_t>(infoBuffers.size()),
+        .descriptorType   = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        .pImageInfo       = nullptr,
+        .pBufferInfo      = infoBuffers.data(),
+        .pTexelBufferView = nullptr,
+    };
+
     vkUpdateDescriptorSets(VulkanState::GetInstance().GetDevice(), 1, &writeSetUniform, 0, 0);
     vkUpdateDescriptorSets(VulkanState::GetInstance().GetDevice(), 1, &writeSetCamera, 0, 0);
     vkUpdateDescriptorSets(VulkanState::GetInstance().GetDevice(), 1, &writeSetIBL, 0, 0);
+    vkUpdateDescriptorSets(VulkanState::GetInstance().GetDevice(), 1, &writeSetShadow, 0, 0);
 }

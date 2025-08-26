@@ -11,20 +11,6 @@
 inline constexpr size_t FRUSTUM_CORNER_NUM = 8;
 inline constexpr size_t CASCADES_NUM       = 3;
 
-namespace {
-constexpr float YAW         = -90.0f;
-constexpr float PITCH       = 0.0f;
-constexpr float ROLL        = 0.0f;
-constexpr float PITCH_BOUND = 89.0f;
-constexpr float MAX_FOV     = 45.0f;
-constexpr float MIN_FOV     = 1.0f;
-constexpr float DEFAULT_FOV = 15.0f;
-constexpr float RATIO       = (16.0f / 9.0f);
-constexpr float NEAR        = 0.001f;
-constexpr float FAR         = 64.0f;
-
-constexpr float CASCADE_LAMBDA = 0.75f;
-}
 
 enum class CameraMoveDirection : uint8_t {
     FORWARD,
@@ -36,12 +22,12 @@ enum class CameraMoveDirection : uint8_t {
 };
 
 struct alignas(16) CameraData {
-    glm::mat4 view;
-    glm::mat4 projection;
-    glm::vec3 position;
-    float     padding0;
-    glm::vec3 splits;
-    float     padding1;
+    glm::mat4              view;
+    glm::mat4              projection;
+    glm::vec3              position;
+    [[maybe_unused]] float padding0;
+    glm::vec3              splits;
+    [[maybe_unused]] float padding1;
 };
 
 // Camera class as a singleton, since we only have 1 camera
@@ -73,12 +59,20 @@ public:
 
     [[nodiscard]] glm::vec3 GetLocation() const { return m_location; }
 
+    [[nodiscard]] const std::array<glm::vec3, FRUSTUM_CORNER_NUM> &GetFrustumCorners(size_t index) { return m_frustumCorners[index]; }
+
+    [[nodiscard]] const std::array<glm::vec3, FRUSTUM_CORNER_NUM> &GetCameraFrustum() { return m_cameraFrustum; }
+
 protected:
     Camera();
 
     ~Camera();
 
 private:
+    static constexpr float RATIO = (16.0f / 9.0f);
+    static constexpr float NEAR  = 0.001f;
+    static constexpr float FAR   = 64.0f;
+
     glm::vec3 m_location;
     glm::vec3 m_worldUp;
     glm::vec3 m_front;
@@ -93,6 +87,7 @@ private:
 
     std::array<float, CASCADES_NUM + 1>                    m_splits;
     std::vector<std::array<glm::vec3, FRUSTUM_CORNER_NUM>> m_frustumCorners;
+    std::array<glm::vec3, FRUSTUM_CORNER_NUM>              m_cameraFrustum;
 
     void UpdateCameraVectors();
 

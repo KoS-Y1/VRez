@@ -17,6 +17,7 @@ GBufferPass::~GBufferPass() {
         vkDestroySampler(VulkanState::GetInstance().GetDevice(), m_sampler, nullptr);
     }
     m_gBufferSet = VK_NULL_HANDLE;
+    m_sampler = VK_NULL_HANDLE;
     m_gBufferImages.clear();
     m_gBufferAttachments.clear();
 }
@@ -62,28 +63,30 @@ void GBufferPass::PostRender() {
 }
 
 void GBufferPass::CreateGBufferSet() {
-    VkSamplerCreateInfo infoSampler = {
-        .sType                   = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
-        .pNext                   = nullptr,
-        .flags                   = 0,
-        .magFilter               = VK_FILTER_LINEAR,
-        .minFilter               = VK_FILTER_LINEAR,
-        .mipmapMode              = VK_SAMPLER_MIPMAP_MODE_LINEAR,
-        .addressModeU            = VK_SAMPLER_ADDRESS_MODE_REPEAT,
-        .addressModeV            = VK_SAMPLER_ADDRESS_MODE_REPEAT,
-        .addressModeW            = VK_SAMPLER_ADDRESS_MODE_REPEAT,
-        .mipLodBias              = 0.0f,
-        .anisotropyEnable        = VK_FALSE,
-        .maxAnisotropy           = 1.0f,
-        .compareEnable           = VK_FALSE,
-        .compareOp               = VK_COMPARE_OP_ALWAYS,
-        .minLod                  = 0.0f,
-        .maxLod                  = 1.0f,
-        .borderColor             = VK_BORDER_COLOR_INT_OPAQUE_BLACK,
-        .unnormalizedCoordinates = VK_FALSE, // Always normalized
-    };
+    {
+        VkSamplerCreateInfo infoSampler = {
+            .sType                   = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+            .pNext                   = nullptr,
+            .flags                   = 0,
+            .magFilter               = VK_FILTER_LINEAR,
+            .minFilter               = VK_FILTER_LINEAR,
+            .mipmapMode              = VK_SAMPLER_MIPMAP_MODE_LINEAR,
+            .addressModeU            = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+            .addressModeV            = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+            .addressModeW            = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+            .mipLodBias              = 0.0f,
+            .anisotropyEnable        = VK_FALSE,
+            .maxAnisotropy           = 1.0f,
+            .compareEnable           = VK_FALSE,
+            .compareOp               = VK_COMPARE_OP_ALWAYS,
+            .minLod                  = 0.0f,
+            .maxLod                  = 1.0f,
+            .borderColor             = VK_BORDER_COLOR_INT_OPAQUE_BLACK,
+            .unnormalizedCoordinates = VK_FALSE, // Always normalized
+        };
 
-    vkCreateSampler(VulkanState::GetInstance().GetDevice(), &infoSampler, nullptr, &m_sampler);
+        vkCreateSampler(VulkanState::GetInstance().GetDevice(), &infoSampler, nullptr, &m_sampler);
+    }
 
     m_gBufferSet =
         vk_util::CreateDescriptorSet(PipelineManager::GetInstance().Load("lighting_gfx")->GetDescriptorSetLayouts()[descriptor::TEXTURE_SET]);

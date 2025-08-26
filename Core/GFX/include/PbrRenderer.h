@@ -1,13 +1,16 @@
 #pragma once
 
+#include "ShadowPass.h"
+
+
 #include <vector>
 
 #include <include/GBufferPass.h>
 #include <include/LightingPass.h>
 #include <include/SkyboxPass.h>
+#include <include/UIRenderer.h>
 #include <include/VulkanImage.h>
 #include <include/VulkanPrefab.h>
-#include <include/UIRenderer.h>
 
 struct DrawContent {
     std::vector<VulkanPrefab> prefabs;
@@ -18,7 +21,7 @@ class PbrRenderer {
 public:
     PbrRenderer() = delete;
 
-    explicit PbrRenderer(UIRenderer& uiRenderer);
+    explicit PbrRenderer(UIRenderer &uiRenderer);
 
     ~PbrRenderer();
 
@@ -39,6 +42,7 @@ private:
 
     RenderingConfig m_config;
 
+    ShadowPass   m_shadowPass;
     GBufferPass  m_gBufferPass;
     LightingPass m_lightingPass;
     SkyboxPass   m_skybox;
@@ -52,9 +56,10 @@ private:
     VulkanBuffer m_cameraBuffer;
     VulkanBuffer m_lightBuffer;
 
-    VkDescriptorSet m_uniformSet = VK_NULL_HANDLE;
-    VkDescriptorSet m_cameraSet = VK_NULL_HANDLE;
-    VkDescriptorSet m_iblSet = VK_NULL_HANDLE;
+    VkDescriptorSet m_uniformSet       = VK_NULL_HANDLE;
+    VkDescriptorSet m_cameraSet        = VK_NULL_HANDLE;
+    VkDescriptorSet m_iblSet           = VK_NULL_HANDLE;
+    VkDescriptorSet m_uniformShadowSet = VK_NULL_HANDLE; // uniform set, but shadow pipeline has geometry shader, so pipeline stages are different
 
     void CreateImages();
     void CreateDrawContent();

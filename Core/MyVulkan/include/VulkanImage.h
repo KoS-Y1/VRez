@@ -12,7 +12,9 @@ public:
         VkImageUsageFlags     usage,
         VkExtent3D            extent,
         VkImageAspectFlags    aspect,
-        VkSampleCountFlagBits samples = VK_SAMPLE_COUNT_1_BIT
+        VkSampleCountFlagBits samples     = VK_SAMPLE_COUNT_1_BIT,
+        uint32_t              mipLevels   = 1,
+        uint32_t              arrayLayers = 1
     );
 
     ~VulkanImage() { Destroy(); };
@@ -48,9 +50,9 @@ private:
     VkExtent3D     m_extent = {0};
     VkFormat       m_format = VK_FORMAT_UNDEFINED;
 
-    void CreateImage(VkImageUsageFlags usage, VkExtent3D extent, VkSampleCountFlagBits samples);
+    void CreateImage(VkImageUsageFlags usage, VkExtent3D extent, VkSampleCountFlagBits samples, uint32_t mipLevels, uint32_t arrayLayers);
 
-    void CreateImageView(VkImageAspectFlags aspect);
+    void CreateImageView(VkImageAspectFlags aspect, uint32_t levelCout, uint32_t layerCout);
 
     void BindMemory();
 };

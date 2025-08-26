@@ -308,6 +308,8 @@ VkShaderStageFlagBits ShaderCompiler::GetShaderStage(const std::string &dir) {
         shaderStage = VK_SHADER_STAGE_FRAGMENT_BIT;
     } else if (dir.ends_with(".comp")) {
         shaderStage = VK_SHADER_STAGE_COMPUTE_BIT;
+    } else if (dir.ends_with(".geom")) {
+        shaderStage = VK_SHADER_STAGE_GEOMETRY_BIT;
     } else {
         SDL_Log("%s is not a valid shader!", dir.c_str());
         exit(EXIT_FAILURE);

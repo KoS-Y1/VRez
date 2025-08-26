@@ -2,22 +2,24 @@
 
 #include <vector>
 
+#include <glm/glm.hpp>
 #include <vulkan/vulkan.h>
 
 #include <Debug.h>
 #include <Singleton.h>
-#include <include/VulkanBuffer.h>
 
 #include "Light.h"
+#include "include/Camera.h"
 
 inline constexpr size_t MAX_LIGHT_COUNT = 16;
 
 struct alignas(16) LightsData {
-    int32_t lightCount = 0;
-    int32_t padding0   = 0;
-    int32_t padding1   = 0;
-    int32_t padding2   = 0;
-    Light   lights[MAX_LIGHT_COUNT];
+    int32_t                  lightCount = 0;
+    [[maybe_unused]] int32_t padding0   = 0;
+    [[maybe_unused]] int32_t padding1   = 0;
+    [[maybe_unused]] int32_t padding2   = 0;
+    glm::mat4                lightSpaceMatrix[CASCADES_NUM];
+    Light                    lights[MAX_LIGHT_COUNT];
 };
 
 class LightManager : public Singleton<LightManager> {
@@ -38,11 +40,10 @@ public:
     }
 
 protected:
-    LightManager() = default;
+    LightManager();
 
     ~LightManager();
 
 private:
     std::vector<Light> m_lights;
-    bool               m_directionalLight = false;
 };

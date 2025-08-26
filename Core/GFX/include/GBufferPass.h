@@ -19,15 +19,13 @@ public:
     void PreRender();
     void PostRender();
 
-    void Destroy();
-
     [[nodiscard]] const VkDescriptorSet &GetGBufferSet() const { return m_gBufferSet; }
 
 private:
     std::vector<VulkanImage>               m_gBufferImages;
     std::vector<VkRenderingAttachmentInfo> m_gBufferAttachments;
-    VkDescriptorSet                        m_gBufferSet;
-    VkSampler                              m_sampler;
+    VkDescriptorSet                        m_gBufferSet = VK_NULL_HANDLE;
+    VkSampler                              m_sampler = VK_NULL_HANDLE;
 
     void CreateGBufferImages();
     void CreateGBufferSet();

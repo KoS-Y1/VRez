@@ -187,7 +187,7 @@ void VulkanState::CreateDevice() {
         "VK_KHR_depth_stencil_resolve"
     };
 
-    VkPhysicalDeviceFeatures feature{.sampleRateShading = VK_TRUE};
+    VkPhysicalDeviceFeatures feature{.geometryShader = VK_TRUE, .sampleRateShading = VK_TRUE};
 
     VkPhysicalDeviceVulkan13Features feature13{
         .sType            = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES,

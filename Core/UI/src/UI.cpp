@@ -118,16 +118,12 @@ void UI::CameraWindow() {
 
 void UI::LightsWindow() {
     bool addPoint       = false;
-    bool addDirectional = false;
 
     int removeLightIndex = -1;
 
     ImGui::Begin("Lights(Max 16)");
     if (ImGui::Button("Add Point")) {
         addPoint = true;
-    }
-    if (ImGui::Button("Add Directional")) {
-        addDirectional = true;
     }
 
     size_t lightCount = LightManager::GetInstance().GetLightCount();
@@ -151,9 +147,6 @@ void UI::LightsWindow() {
     if (addPoint) {
         LightManager::GetInstance().AddLight(LightType::Point);
     }
-    if (addDirectional) {
-        LightManager::GetInstance().AddLight(LightType::Directional);
-    }
     if (removeLightIndex > -1) {
         LightManager::GetInstance().RemoveLight(removeLightIndex);
     }
@@ -171,12 +164,14 @@ int32_t UI::LightSection(size_t idx) {
 
     bool remove = false;
 
-    // TODO: use variables
     switch (type) {
     case LightType::Point:
         ImGui::Text("Point Light");
         ImGui::DragFloat3("Position", glm::value_ptr(light.position), step);
         ImGui::DragFloat("Range", &light.range, step, minRange, maxRange);
+        if (ImGui::Button("Remove")) {
+            remove = true;
+        }
         break;
 
     case LightType::Directional:
@@ -185,12 +180,9 @@ int32_t UI::LightSection(size_t idx) {
         break;
     }
 
-
     ImGui::ColorEdit3("Color", glm::value_ptr(light.color));
     ImGui::DragFloat("Intensity", &light.intensity, step, minIntensity, maxIntensity);
-    if (ImGui::Button("Remove")) {
-        remove = true;
-    }
+
 
     LightManager::GetInstance().UpdateLight(idx, light);
 

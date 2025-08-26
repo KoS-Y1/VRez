@@ -11,7 +11,9 @@ void vk_util::CmdImageLayoutTransition(
     VkImageLayout      newLayout,
     VkImageAspectFlags aspect,
     VkAccessFlags      srcAccess,
-    VkAccessFlags      dstAccess
+    VkAccessFlags      dstAccess,
+    uint32_t           mipLevels,
+    uint32_t           arrayLayers
 ) {
     VkImageMemoryBarrier barrier{
         .sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
@@ -23,19 +25,19 @@ void vk_util::CmdImageLayoutTransition(
         .srcQueueFamilyIndex = 0,
         .dstQueueFamilyIndex = 0,
         .image               = image,
-        .subresourceRange    = GetSubresourceRange(aspect),
+        .subresourceRange    = GetSubresourceRange(aspect, mipLevels, arrayLayers),
     };
 
     vkCmdPipelineBarrier(cmdBuf, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 }
 
-VkImageSubresourceRange vk_util::GetSubresourceRange(VkImageAspectFlags aspect) {
+VkImageSubresourceRange vk_util::GetSubresourceRange(VkImageAspectFlags aspect, uint32_t levelCout, uint32_t layerCout) {
     VkImageSubresourceRange subresourceRange{
         .aspectMask     = aspect,
         .baseMipLevel   = 0,
-        .levelCount     = 1,
+        .levelCount     = levelCout,
         .baseArrayLayer = 0,
-        .layerCount     = 1,
+        .layerCount     = layerCout,
     };
 
     return subresourceRange;
@@ -171,6 +173,10 @@ VkRenderingInfo vk_util::GetRenderingInfo(
         .pDepthAttachment     = depthStencilAttachment,
         .pStencilAttachment   = nullptr,
     };
+
+    if (colorAttachment == nullptr) {
+        infoRendering.colorAttachmentCount = 0;
+    }
     return infoRendering;
 }
 

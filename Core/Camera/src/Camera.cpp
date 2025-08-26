@@ -2,6 +2,19 @@
 
 #include <algorithm>
 
+namespace {
+constexpr float YAW         = -90.0f;
+constexpr float PITCH       = 0.0f;
+constexpr float ROLL        = 0.0f;
+constexpr float PITCH_BOUND = 89.0f;
+constexpr float MAX_FOV     = 45.0f;
+constexpr float MIN_FOV     = 1.0f;
+constexpr float DEFAULT_FOV = 15.0f;
+
+
+constexpr float CASCADE_LAMBDA = 0.75f;
+} // namespace
+
  Camera::Camera() {
      Reset();
      PracticalCascadeSplits();
@@ -134,6 +147,18 @@ void Camera::GetFrustumCorners() {
     for (size_t i = 0; i < CASCADES_NUM; ++i) {
         m_frustumCorners.push_back(CalculateFrustumCornersWorldSpace(m_splits[i], m_splits[i + 1]));
     }
+
+     // Near
+     m_cameraFrustum[0] = m_frustumCorners[0][0];
+     m_cameraFrustum[1] = m_frustumCorners[0][1];
+     m_cameraFrustum[2] = m_frustumCorners[0][2];
+     m_cameraFrustum[3] = m_frustumCorners[0][3];
+
+     // Far
+     m_cameraFrustum[4] = m_frustumCorners[CASCADES_NUM - 1][4];
+     m_cameraFrustum[5] = m_frustumCorners[CASCADES_NUM - 1][5];
+     m_cameraFrustum[6] = m_frustumCorners[CASCADES_NUM - 1][6];
+     m_cameraFrustum[7] = m_frustumCorners[CASCADES_NUM - 1][7];
 }
 
 std::array<glm::vec3, FRUSTUM_CORNER_NUM> Camera::CalculateFrustumCornersWorldSpace(float nearPlane, float farPlane) {

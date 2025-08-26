@@ -1,5 +1,14 @@
 #include "include/LightManager.h"
 
+#include <include/LightUtil.h>
+
+namespace {
+constexpr size_t DIRECTIONAL_INDEX = 0;
+} // namespace
+
+LightManager::LightManager() {
+    AddLight(LightType::Directional);
+}
 
 LightManager::~LightManager() {
     m_lights.clear();
@@ -9,8 +18,16 @@ LightsData LightManager::Update() {
     LightsData data = {};
 
     data.lightCount = m_lights.size();
-    for (size_t i = 0; i < m_lights.size(); i++) {
+    for (size_t i = 0; i < m_lights.size(); ++i) {
         data.lights[i] = m_lights[i];
+    }
+
+    for (size_t i = 0; i < CASCADES_NUM; ++i) {
+        data.lightSpaceMatrix[i] = light_util::GetLightSpaceMatrix(
+            m_lights[DIRECTIONAL_INDEX].direction,
+            Camera::GetInstance().GetFrustumCorners(i),
+            Camera::GetInstance().GetCameraFrustum()
+        );
     }
 
     return data;
@@ -25,23 +42,11 @@ void LightManager::AddLight(LightType type) {
         return;
     }
 
-    // Only one directional light
-    if (m_directionalLight && type == LightType::Directional) {
-        return;
-    }
-
-    if (type == LightType::Directional) {
-        m_directionalLight = true;
-    }
-
     Light light;
     light.type = static_cast<uint32_t>(type);
     m_lights.push_back(light);
 }
 
 void LightManager::RemoveLight(size_t index) {
-    if (m_lights[index].type == static_cast<uint32_t>(LightType::Directional)) {
-        m_directionalLight = false;
-    }
     m_lights.erase(m_lights.begin() + index);
 }

@@ -11,10 +11,12 @@ void CmdImageLayoutTransition(
     VkImageLayout      newLayout,
     VkImageAspectFlags aspect,
     VkAccessFlags      srcAccess,
-    VkAccessFlags      dstAccess
+    VkAccessFlags      dstAccess,
+    uint32_t           mipLevels   = 1,
+    uint32_t           arrayLayers = 1
 );
 
-VkImageSubresourceRange GetSubresourceRange(VkImageAspectFlags aspect);
+VkImageSubresourceRange GetSubresourceRange(VkImageAspectFlags aspect, uint32_t levelCount = 1, uint32_t layerCount = 1);
 
 uint32_t FindMemoryType(uint32_t memoryTypeBitsRequirement, VkMemoryPropertyFlags requiredProperties);
 
@@ -44,10 +46,14 @@ VkRenderingAttachmentInfo GetRenderingAttachmentInfo(
 VkRenderingInfo GetRenderingInfo(
     VkRect2D                                      area,
     const std::vector<VkRenderingAttachmentInfo> &colorAttachments,
-    const VkRenderingAttachmentInfo                    *depthStencilAttachment
+    const VkRenderingAttachmentInfo              *depthStencilAttachment
 );
 
-VkRenderingInfo GetRenderingInfo(VkRect2D area, const VkRenderingAttachmentInfo *colorAttachment, const VkRenderingAttachmentInfo *depthStencilAttachment);
+VkRenderingInfo GetRenderingInfo(
+    VkRect2D                         area,
+    const VkRenderingAttachmentInfo *colorAttachment,
+    const VkRenderingAttachmentInfo *depthStencilAttachment
+);
 
 VkDescriptorSet CreateDescriptorSet(const VkDescriptorSetLayout &layout);
 } // namespace vk_util

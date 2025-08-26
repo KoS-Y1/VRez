@@ -3,21 +3,23 @@
 #include <Debug.h>
 #include <format>
 
-#include <include/VulkanUtil.h>
 #include <include/VulkanState.h>
+#include <include/VulkanUtil.h>
 
 VulkanImage::VulkanImage(
     VkFormat              format,
     VkImageUsageFlags     usage,
     VkExtent3D            extent,
     VkImageAspectFlags    aspect,
-    VkSampleCountFlagBits samples
+    VkSampleCountFlagBits samples,
+    uint32_t              mipLevels,
+    uint32_t              arrayLayers
 ) {
     m_format = format;
     m_extent = extent;
-    CreateImage(usage, extent, samples);
+    CreateImage(usage, extent, samples, mipLevels, arrayLayers);
     BindMemory();
-    CreateImageView(aspect);
+    CreateImageView(aspect, mipLevels, arrayLayers);
 }
 
 void VulkanImage::Destroy() {
@@ -32,7 +34,7 @@ void VulkanImage::Destroy() {
     m_memory = VK_NULL_HANDLE;
 }
 
-void VulkanImage::CreateImage(VkImageUsageFlags usage, VkExtent3D extent, VkSampleCountFlagBits samples) {
+void VulkanImage::CreateImage(VkImageUsageFlags usage, VkExtent3D extent, VkSampleCountFlagBits samples, uint32_t mipLevels, uint32_t arrayLayers) {
     VkImageCreateInfo infoImage{
         .sType                 = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
         .pNext                 = nullptr,
@@ -40,8 +42,8 @@ void VulkanImage::CreateImage(VkImageUsageFlags usage, VkExtent3D extent, VkSamp
         .imageType             = VK_IMAGE_TYPE_2D,
         .format                = m_format,
         .extent                = extent,
-        .mipLevels             = 1,
-        .arrayLayers           = 1,
+        .mipLevels             = mipLevels,
+        .arrayLayers           = arrayLayers,
         .samples               = samples,
         .tiling                = VK_IMAGE_TILING_OPTIMAL,
         .usage                 = usage,
@@ -54,7 +56,7 @@ void VulkanImage::CreateImage(VkImageUsageFlags usage, VkExtent3D extent, VkSamp
     DEBUG_VK_ASSERT(vkCreateImage(VulkanState::GetInstance().GetDevice(), &infoImage, nullptr, &m_image));
 }
 
-void VulkanImage::CreateImageView(VkImageAspectFlags aspect) {
+void VulkanImage::CreateImageView(VkImageAspectFlags aspect, uint32_t levelCout, uint32_t layerCout) {
     VkImageViewCreateInfo infoView{
         .sType      = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
         .pNext      = nullptr,
@@ -63,8 +65,12 @@ void VulkanImage::CreateImageView(VkImageAspectFlags aspect) {
         .viewType   = VK_IMAGE_VIEW_TYPE_2D,
         .format     = m_format,
         .components = {VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY},
-        .subresourceRange = vk_util::GetSubresourceRange(aspect)
+        .subresourceRange = vk_util::GetSubresourceRange(aspect, levelCout, layerCout)
     };
+
+    if (layerCout > 1) {
+        infoView.viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+    }
 
     DEBUG_VK_ASSERT(vkCreateImageView(VulkanState::GetInstance().GetDevice(), &infoView, nullptr, &m_view));
 }

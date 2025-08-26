@@ -22,9 +22,11 @@ add_library(Camera Camera/include/Camera.h Camera/src/Camera.cpp)
 target_include_directories(Camera PUBLIC Camera)
 target_link_libraries(Camera PUBLIC glm Util)
 
-add_library(Light Light/include/Light.h Light/include/LightManager.h Light/src/LightManager.cpp)
+add_library(Light Light/include/Light.h Light/include/LightManager.h Light/src/LightManager.cpp
+        Light/include/LightUtil.h Light/src/LightUtil.cpp)
 target_include_directories(Light PUBLIC Light)
-target_link_libraries(Light PUBLIC glm Util MyVulkan Debug)
+target_link_libraries(Light PUBLIC glm Util MyVulkan Debug Camera)
+
 add_library(ThreadPool ThreadPool/include/ThreadPool.h ThreadPool/src/ThreadPool.cpp)
 target_include_directories(ThreadPool PUBLIC ThreadPool)
 target_link_libraries(ThreadPool PUBLIC Util Debug)
@@ -42,6 +44,6 @@ target_link_libraries(Resource PUBLIC ThreadPool FileSystem MyVulkan Util SDL3::
 
 add_library(GFX GFX/include/PbrRenderer.h GFX/src/PbrRenderer.cpp GFX/include/GBufferPass.h  GFX/src/GBufferPass.cpp
         GFX/include/LightingPass.h GFX/src/LightingPass.cpp GFX/include/SkyboxPass.h GFX/src/SkyboxPass.cpp
-        GFX/include/RenderPass.h)
+        GFX/include/RenderPass.h GFX/include/ShadowPass.h GFX/src/ShadowPass.cpp)
 target_include_directories(GFX PUBLIC GFX)
 target_link_libraries(GFX PUBLIC MyVulkan Resource Camera Light imgui UI)
