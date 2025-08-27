@@ -51,10 +51,10 @@ void VulkanGraphicsPipeline::CreatePipeline(const GraphicsPipelineOption &option
         .polygonMode             = option.polygonMode,
         .cullMode                = option.cullMode,
         .frontFace               = option.frontFace,
-        .depthBiasEnable         = VK_FALSE,
-        .depthBiasConstantFactor = 0.0f,
-        .depthBiasClamp          = 0.0f,
-        .depthBiasSlopeFactor    = 0.0f,
+        .depthBiasEnable         = option.depthBiasEnable,
+        .depthBiasConstantFactor = option.depthBiasConstantFactor,
+        .depthBiasClamp          = option.depthBiasClamp,
+        .depthBiasSlopeFactor    = option.depthBiasSlopeFactor,
         .lineWidth               = 1.0f
     };
 

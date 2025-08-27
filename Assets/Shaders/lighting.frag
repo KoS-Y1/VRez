@@ -31,8 +31,6 @@ void main()
     const float roughness = worldNormalRoughness.w;
     const float ao = albedoAO.w;
 
-    const vec4 viewSpacePos = uView * vec4(worldPosition, 1.0f);
-
     const vec3 N = worldNormal;
     const vec3 V = normalize(uViewPosition - worldPosition);
     const vec3 R = reflect(-V, N);
@@ -58,5 +56,4 @@ void main()
     //    outColor = vec4(pow(Lo + emissive, vec3(1.0/2.2)), 1.0f);
     outColor = vec4((ibl+ Lo + emissive), 1.0);
 
-//    outColor = CSMDebugColor(viewSpacePos);
 }
