@@ -106,7 +106,7 @@ void PbrRenderer::Render() {
             {m_uniformSet,                  descriptor::UNIFORM_SET},
             {m_gBufferPass.GetGBufferSet(), descriptor::TEXTURE_SET},
             {m_iblSet,                      descriptor::IBL_SET    },
-            {m_shadowPass.GetCSMSet(),      descriptor::CSM_SET    }
+            {m_shadowPass.GetCSMSet(),      descriptor::SHADOW_SET }
     },
         m_drawContent,
         dynamic_cast<VulkanGraphicsPipeline *>(PipelineManager::GetInstance().Load("lighting_gfx"))
@@ -164,7 +164,7 @@ void PbrRenderer::CreateBuffers() {
 }
 
 void PbrRenderer::CreateDrawContent() {
-    // m_drawContent.prefabs.emplace_back("../Assets/Models/BoomBox/BoomBox.json", glm::vec3(0.0f, 0.1f, 0.0f));
+    m_drawContent.prefabs.emplace_back("../Assets/Models/BoomBox/BoomBox.json", glm::vec3(0.0f, 0.1f, 0.0f));
     m_drawContent.prefabs.emplace_back("../Assets/Models/Chessboard/Chessboard.json");
     m_drawContent.prefabs.emplace_back("../Assets/Models/Castle/Castle.json");
     // m_drawContent.prefabs.emplace_back("../Assets/Models/Suzanne/Suzanne.json");
@@ -179,9 +179,7 @@ void PbrRenderer::CreateDescriptorSets() {
         vk_util::CreateDescriptorSet(PipelineManager::GetInstance().Load("gbuffer_gfx")->GetDescriptorSetLayouts()[descriptor::UNIFORM_SET]);
 
     m_iblSet = vk_util::CreateDescriptorSet(PipelineManager::GetInstance().Load("lighting_gfx")->GetDescriptorSetLayouts()[descriptor::IBL_SET]);
-
-    m_uniformShadowSet =
-        vk_util::CreateDescriptorSet(PipelineManager::GetInstance().Load("shadow_gfx")->GetDescriptorSetLayouts()[descriptor::UNIFORM_SET]);
+    m_uniformShadowSet = vk_util::CreateDescriptorSet(PipelineManager::GetInstance().Load("shadow_gfx")->GetDescriptorSetLayouts()[descriptor::UNIFORM_SET]);
 }
 
 void PbrRenderer::CreateRenderConfig() {
@@ -280,7 +278,7 @@ void PbrRenderer::OneTimeUpdateDescriptorSets() {
         .pTexelBufferView = nullptr,
     };
 
-    VkWriteDescriptorSet writeSetShadow{
+    VkWriteDescriptorSet writeSetUniformShadow{
         .sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
         .pNext            = nullptr,
         .dstSet           = m_uniformShadowSet,
@@ -292,9 +290,8 @@ void PbrRenderer::OneTimeUpdateDescriptorSets() {
         .pBufferInfo      = infoBuffers.data(),
         .pTexelBufferView = nullptr,
     };
-
     vkUpdateDescriptorSets(VulkanState::GetInstance().GetDevice(), 1, &writeSetUniform, 0, 0);
     vkUpdateDescriptorSets(VulkanState::GetInstance().GetDevice(), 1, &writeSetCamera, 0, 0);
     vkUpdateDescriptorSets(VulkanState::GetInstance().GetDevice(), 1, &writeSetIBL, 0, 0);
-    vkUpdateDescriptorSets(VulkanState::GetInstance().GetDevice(), 1, &writeSetShadow, 0, 0);
+    vkUpdateDescriptorSets(VulkanState::GetInstance().GetDevice(), 1, &writeSetUniformShadow, 0, 0);
 }

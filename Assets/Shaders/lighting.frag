@@ -47,12 +47,12 @@ void main()
         uLights[i].range, uLights[i].type, N, V, worldPosition, albedo, roughness, metallic);
     }
 
-    const float shadow = ReadShadowMap(viewSpacePos, vec4(worldPosition, 1.0f));
+    const float shadow = ReadShadowMap(worldPosition);
     Lo += CalculatePBRLight(uLights[0].position, uLights[0].direction, uLights[0].color, uLights[0].intensity,
     uLights[0].range, uLights[0].type, N, V, worldPosition, albedo, roughness, metallic) * (1.0f - shadow);
 
     // IBL
-    vec3 ibl = IBL(N, NdotV, R, F0, metallic, roughness, albedo, ao);
+    vec3 ibl = IBL(N, NdotV, R, F0, metallic, roughness, albedo, ao) * 0.2;
 
     // Gamma correction
     //    outColor = vec4(pow(Lo + emissive, vec3(1.0/2.2)), 1.0f);

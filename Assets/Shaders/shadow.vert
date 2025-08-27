@@ -1,12 +1,11 @@
 #version 450
 
 #include <uniform_camera.glsl>
+#include <uniform_lights.glsl>
 
 layout (location = 0) in vec3 inPositon;
 layout (location = 1) in vec3 inNormal;
 layout (location = 2) in vec2 inTexCord;
-
-layout (location = 0) out vec4 vNormal;
 
 layout (push_constant) uniform PushConstantData
 {
@@ -15,6 +14,5 @@ layout (push_constant) uniform PushConstantData
 
 void main()
 {
-    gl_Position = inModel * vec4(inPositon, 1.0f);
-    vNormal = inModel * vec4(inNormal, 0.0f);
+    gl_Position = uLightSpaceMatrix * inModel * vec4(inPositon, 1.0f);
 }

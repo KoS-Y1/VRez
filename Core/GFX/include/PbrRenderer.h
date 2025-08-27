@@ -59,7 +59,7 @@ private:
     VkDescriptorSet m_uniformSet       = VK_NULL_HANDLE;
     VkDescriptorSet m_cameraSet        = VK_NULL_HANDLE;
     VkDescriptorSet m_iblSet           = VK_NULL_HANDLE;
-    VkDescriptorSet m_uniformShadowSet = VK_NULL_HANDLE; // uniform set, but shadow pipeline has geometry shader, so pipeline stages are different
+    VkDescriptorSet m_uniformShadowSet = VK_NULL_HANDLE;
 
     void CreateImages();
     void CreateDrawContent();

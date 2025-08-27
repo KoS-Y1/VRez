@@ -16,12 +16,12 @@ public:
     void PreRender();
     void PostRender();
 
-    [[nodiscard]] const VkDescriptorSet &GetCSMSet() const { return m_csmSet; }
+    [[nodiscard]] const VkDescriptorSet &GetCSMSet() const { return m_shadowSet; }
 
 private:
     VulkanImage               m_shadowMap;
     VkRenderingAttachmentInfo m_shadowAttachment;
-    VkDescriptorSet           m_csmSet;
+    VkDescriptorSet           m_shadowSet;
     VkSampler                 m_sampler;
 
     void CreateShadowMapImage();

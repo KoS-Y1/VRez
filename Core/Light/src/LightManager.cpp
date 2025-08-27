@@ -22,7 +22,7 @@ LightsData LightManager::Update() {
         data.lights[i] = m_lights[i];
     }
 
-  
+  data.lightSpaceMatrix = light_util::GetLightSpaceMatrix(m_lights[DIRECTIONAL_INDEX].direction);
 
     return data;
 }
