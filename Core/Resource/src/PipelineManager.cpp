@@ -29,7 +29,7 @@ void PipelineManager::Init() {
         {"skybox_gfx",   {"../Assets/Shaders/skybox.vert", "../Assets/Shaders/skybox.frag"}                                 },
         {"gbuffer_gfx",  {"../Assets/Shaders/base.vert", "../Assets/Shaders/gbuffer.frag"}                                  },
         {"lighting_gfx", {"../Assets/Shaders/fullscreen.vert", "../Assets/Shaders/lighting.frag"}                           },
-        {"shadow_gfx",   {"../Assets/Shaders/shadow.vert", "../Assets/Shaders/shadow.geom", "../Assets/Shaders/shadow.frag"}}
+        {"shadow_gfx",   {"../Assets/Shaders/shadow.vert", "../Assets/Shaders/shadow.frag"}}
     };
     std::vector<GraphicsPipelineOption> gfxOptions{
         {

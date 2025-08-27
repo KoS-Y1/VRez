@@ -17,21 +17,15 @@ constexpr float CASCADE_LAMBDA = 0.75f;
 
  Camera::Camera() {
      Reset();
-     PracticalCascadeSplits();
 }
 
- Camera::~Camera(){
-     m_frustumCorners.clear();
-}
 
 CameraData Camera::Update() {
-    GetFrustumCorners();
 
     CameraData data = {};
     data.view       = GetViewMatrix();
     data.projection = GetProjectonMatrix();
     data.position   = m_location;
-    data.splits     = glm::vec3(m_splits[1], m_splits[2], m_splits[3]);
 
     return data;
 }
@@ -125,69 +119,4 @@ void Camera::UpdateCameraVectors() {
     m_front = glm::normalize(front);
     m_right = glm::normalize(glm::cross(m_front, m_worldUp));
     m_up    = glm::normalize(glm::cross(m_right, m_front));
-}
-
-void Camera::PracticalCascadeSplits() {
-    m_splits[0]     = NEAR;
-    float nearPlane = NEAR;
-    float farPlane  = FAR;
-
-    for (size_t i = 1; i < CASCADES_NUM; ++i) {
-        float u       = static_cast<float>(i) / static_cast<float>(CASCADES_NUM);
-        float log     = nearPlane * std::pow(farPlane / nearPlane, u); // Logarithmic
-        float uniform = nearPlane + (farPlane - nearPlane) * u;        // Uniform
-        m_splits[i]   = glm::mix(uniform, log, CASCADE_LAMBDA);        // Practical blend
-    }
-
-    m_splits[CASCADES_NUM] = FAR;
-}
-
-void Camera::GetFrustumCorners() {
-    m_frustumCorners.clear();
-    for (size_t i = 0; i < CASCADES_NUM; ++i) {
-        m_frustumCorners.push_back(CalculateFrustumCornersWorldSpace(m_splits[i], m_splits[i + 1]));
-    }
-
-     // Near
-     m_cameraFrustum[0] = m_frustumCorners[0][0];
-     m_cameraFrustum[1] = m_frustumCorners[0][1];
-     m_cameraFrustum[2] = m_frustumCorners[0][2];
-     m_cameraFrustum[3] = m_frustumCorners[0][3];
-
-     // Far
-     m_cameraFrustum[4] = m_frustumCorners[CASCADES_NUM - 1][4];
-     m_cameraFrustum[5] = m_frustumCorners[CASCADES_NUM - 1][5];
-     m_cameraFrustum[6] = m_frustumCorners[CASCADES_NUM - 1][6];
-     m_cameraFrustum[7] = m_frustumCorners[CASCADES_NUM - 1][7];
-}
-
-std::array<glm::vec3, FRUSTUM_CORNER_NUM> Camera::CalculateFrustumCornersWorldSpace(float nearPlane, float farPlane) {
-    const glm::vec2 ndcXY[4] = {
-        {-1.0f, 1.0f }, // top-left
-        {1.0f,  1.0f }, // top-right
-        {1.0f,  -1.0f}, // bottom-right
-        {-1.0f, -1.0f}  // bottom-left
-    };
-
-    std::array<glm::vec3, FRUSTUM_CORNER_NUM> corners;
-
-    const glm::mat4 inverse = glm::inverse(GetProjectonMatrix() * GetViewMatrix());
-
-    const size_t cornerPerPlane = 4;
-
-    // Near plane
-    for (size_t i = 0; i < cornerPerPlane; ++i) {
-        glm::vec4 pClip(ndcXY[i].x, ndcXY[i].y, nearPlane, 1.0f);
-        glm::vec4 pWorld = inverse * pClip;
-        corners[i]       = glm::vec3(pWorld) / pWorld.w;
-    }
-
-    // Far plane
-    for (size_t i = 0; i < cornerPerPlane; ++i) {
-        glm::vec4 pClip(ndcXY[i].x, ndcXY[i].y, farPlane, 1.0f);
-        glm::vec4 pWorld = inverse * pClip;
-        corners[4 + i]   = glm::vec3(pWorld) / pWorld.w;
-    }
-
-    return corners;
 }

@@ -22,13 +22,7 @@ LightsData LightManager::Update() {
         data.lights[i] = m_lights[i];
     }
 
-    for (size_t i = 0; i < CASCADES_NUM; ++i) {
-        data.lightSpaceMatrix[i] = light_util::GetLightSpaceMatrix(
-            m_lights[DIRECTIONAL_INDEX].direction,
-            Camera::GetInstance().GetFrustumCorners(i),
-            Camera::GetInstance().GetCameraFrustum()
-        );
-    }
+  
 
     return data;
 }

@@ -9,8 +9,6 @@ layout(std140, set = UNIFORM_SET, binding = 0) uniform CameraData
     mat4 uProjection;
     vec3 uViewPosition;
     float padding0;
-    vec3 uSplits;
-    float padding1;
 };
 
 #endif
