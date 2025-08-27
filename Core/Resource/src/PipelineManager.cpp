@@ -26,10 +26,10 @@ std::unique_ptr<VulkanPipeline> PipelineManager::CreateResource(
 
 void PipelineManager::Init() {
     std::vector<std::pair<std::string, std::vector<std::string>>> gfxPipelines{
-        {"skybox_gfx",   {"../Assets/Shaders/skybox.vert", "../Assets/Shaders/skybox.frag"}                                 },
-        {"gbuffer_gfx",  {"../Assets/Shaders/base.vert", "../Assets/Shaders/gbuffer.frag"}                                  },
-        {"lighting_gfx", {"../Assets/Shaders/fullscreen.vert", "../Assets/Shaders/lighting.frag"}                           },
-        {"shadow_gfx",   {"../Assets/Shaders/shadow.vert", "../Assets/Shaders/shadow.geom", "../Assets/Shaders/shadow.frag"}}
+        {"skybox_gfx",   {"../Assets/Shaders/skybox.vert", "../Assets/Shaders/skybox.frag"}      },
+        {"gbuffer_gfx",  {"../Assets/Shaders/base.vert", "../Assets/Shaders/gbuffer.frag"}       },
+        {"lighting_gfx", {"../Assets/Shaders/fullscreen.vert", "../Assets/Shaders/lighting.frag"}},
+        {"shadow_gfx",   {"../Assets/Shaders/shadow.vert", "../Assets/Shaders/shadow.frag"}      }
     };
     std::vector<GraphicsPipelineOption> gfxOptions{
         {
@@ -62,13 +62,13 @@ void PipelineManager::Init() {
          .rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
          },
         {
-         .cullMode             = VK_CULL_MODE_NONE,
-         .infoVertex           = VertexPNTT::GetVertexInputStateCreateInfo(),
-         .colorFormats         = {},
-         .depthTestEnable      = VK_TRUE,
-         .depthWriteEnable     = VK_TRUE,
-         .depthCompareOp       = VK_COMPARE_OP_LESS_OR_EQUAL,
-         .rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
+         .cullMode                = VK_CULL_MODE_FRONT_BIT,
+         .infoVertex              = VertexPNTT::GetVertexInputStateCreateInfo(),
+         .colorFormats            = {},
+         .depthTestEnable         = VK_TRUE,
+         .depthWriteEnable        = VK_TRUE,
+         .depthCompareOp          = VK_COMPARE_OP_LESS_OR_EQUAL,
+         .rasterizationSamples    = VK_SAMPLE_COUNT_1_BIT,
          },
     };
 

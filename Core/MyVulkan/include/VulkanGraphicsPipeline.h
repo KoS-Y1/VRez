@@ -26,6 +26,12 @@ struct GraphicsPipelineOption {
 
     // MSAA
     VkSampleCountFlagBits rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+
+    // Depth bias
+    VkBool32 depthBiasEnable         = VK_FALSE;
+    float    depthBiasConstantFactor = 0.0f;
+    float    depthBiasClamp          = 0.0f;
+    float    depthBiasSlopeFactor    = 0.0f;
 };
 
 class VulkanGraphicsPipeline : public VulkanPipeline {

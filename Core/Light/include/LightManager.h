@@ -18,7 +18,7 @@ struct alignas(16) LightsData {
     [[maybe_unused]] int32_t padding0   = 0;
     [[maybe_unused]] int32_t padding1   = 0;
     [[maybe_unused]] int32_t padding2   = 0;
-    glm::mat4                lightSpaceMatrix[CASCADES_NUM];
+    glm::mat4                lightSpaceMatrix;
     Light                    lights[MAX_LIGHT_COUNT];
 };
 

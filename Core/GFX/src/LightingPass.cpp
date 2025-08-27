@@ -6,6 +6,7 @@
 
 void LightingPass::CreateRenderingInfo(const RenderingConfig &config) {
     m_infoRendering = vk_util::GetRenderingInfo(config.renderArea, &config.drawAttachments, nullptr);
+    m_viewport = config.viewport;
 }
 
 void LightingPass::DrawCalls(const DrawContent &content, VkPipelineLayout layout) {

@@ -1,7 +1,5 @@
 #pragma once
 
-#include <array>
-
 #include <glm/detail/type_quat.hpp>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/glm.hpp>
@@ -9,8 +7,6 @@
 #include <Singleton.h>
 
 inline constexpr size_t FRUSTUM_CORNER_NUM = 8;
-inline constexpr size_t CASCADES_NUM       = 3;
-
 
 enum class CameraMoveDirection : uint8_t {
     FORWARD,
@@ -26,8 +22,6 @@ struct alignas(16) CameraData {
     glm::mat4              projection;
     glm::vec3              position;
     [[maybe_unused]] float padding0;
-    glm::vec3              splits;
-    [[maybe_unused]] float padding1;
 };
 
 // Camera class as a singleton, since we only have 1 camera
@@ -59,18 +53,15 @@ public:
 
     [[nodiscard]] glm::vec3 GetLocation() const { return m_location; }
 
-    [[nodiscard]] const std::array<glm::vec3, FRUSTUM_CORNER_NUM> &GetFrustumCorners(size_t index) { return m_frustumCorners[index]; }
-
-    [[nodiscard]] const std::array<glm::vec3, FRUSTUM_CORNER_NUM> &GetCameraFrustum() { return m_cameraFrustum; }
 
 protected:
     Camera();
 
-    ~Camera();
+    ~Camera() = default;
 
 private:
     static constexpr float RATIO = (16.0f / 9.0f);
-    static constexpr float NEAR  = 0.001f;
+    static constexpr float NEAR  = 0.1f;
     static constexpr float FAR   = 8.0f;
 
     glm::vec3 m_location;
@@ -85,15 +76,6 @@ private:
     float m_sensity;
     float m_speed;
 
-    std::array<float, CASCADES_NUM + 1>                    m_splits;
-    std::vector<std::array<glm::vec3, FRUSTUM_CORNER_NUM>> m_frustumCorners;
-    std::array<glm::vec3, FRUSTUM_CORNER_NUM>              m_cameraFrustum;
-
     void UpdateCameraVectors();
 
-    void PracticalCascadeSplits();
-
-    void GetFrustumCorners();
-
-    std::array<glm::vec3, FRUSTUM_CORNER_NUM> CalculateFrustumCornersWorldSpace(float nearPlane, float farPlane);
 };
