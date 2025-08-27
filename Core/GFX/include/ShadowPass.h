@@ -24,6 +24,8 @@ private:
     VkDescriptorSet           m_shadowSet;
     VkSampler                 m_sampler;
 
+    VkExtent2D                m_extent;
+
     void CreateShadowMapImage();
     void CreateCSMSet();
 

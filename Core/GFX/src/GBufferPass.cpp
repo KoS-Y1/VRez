@@ -24,6 +24,7 @@ GBufferPass::~GBufferPass() {
 
 void GBufferPass::CreateRenderingInfo(const RenderingConfig &config) {
     m_infoRendering = vk_util::GetRenderingInfo(config.renderArea, m_gBufferAttachments, &config.depthAttachments);
+    m_viewport = config.viewport;
 }
 
 void GBufferPass::DrawCalls(const DrawContent &content, VkPipelineLayout layout) {

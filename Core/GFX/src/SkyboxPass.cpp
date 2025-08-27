@@ -3,7 +3,6 @@
 #include "include/VulkanUtil.h"
 
 #include <include/Descriptor.h>
-#include <include/JsonInput.h>
 #include <include/MeshManager.h>
 #include <include/TextureManager.h>
 #include <include/VulkanMesh.h>
@@ -31,6 +30,7 @@ SkyboxPass::~SkyboxPass() {
 
 void SkyboxPass::CreateRenderingInfo(const RenderingConfig &config) {
     m_infoRendering = vk_util::GetRenderingInfo(config.renderArea, &config.drawAttachments, &config.depthAttachments);
+    m_viewport = config.viewport;
 }
 
 void SkyboxPass::DrawCalls(const DrawContent &content, VkPipelineLayout layout) {

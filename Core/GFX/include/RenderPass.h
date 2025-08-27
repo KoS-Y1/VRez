@@ -26,8 +26,8 @@ public:
         CreateRenderingInfo(config);
 
         vkCmdBeginRendering(VulkanState::GetInstance().GetCommandBuffer(), &m_infoRendering);
-        vkCmdSetViewport(VulkanState::GetInstance().GetCommandBuffer(), 0, 1, &config.viewport);
-        vkCmdSetScissor(VulkanState::GetInstance().GetCommandBuffer(), 0, 1, &config.renderArea);
+        vkCmdSetViewport(VulkanState::GetInstance().GetCommandBuffer(), 0, 1, &m_viewport);
+        vkCmdSetScissor(VulkanState::GetInstance().GetCommandBuffer(), 0, 1, &m_infoRendering.renderArea);
 
         Bind(globalSets, pipeline);
 
@@ -38,6 +38,7 @@ public:
 
 protected:
     VkRenderingInfo m_infoRendering = {};
+    VkViewport m_viewport = {};
 
     RenderPass()  = default;
     ~RenderPass() = default;

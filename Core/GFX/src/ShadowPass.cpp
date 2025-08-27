@@ -1,13 +1,14 @@
 #include "include/ShadowPass.h"
 
-#include <include/Descriptor.h>
 #include <include/Camera.h>
+#include <include/Descriptor.h>
 #include <include/PbrRenderer.h>
 #include <include/PipelineManager.h>
 #include <include/VulkanState.h>
 #include <include/VulkanUtil.h>
 
 ShadowPass::ShadowPass() {
+    m_extent = {.width = 3200, .height = 1800};
     CreateShadowMapImage();
     CreateCSMSet();
 }
@@ -18,15 +19,28 @@ ShadowPass::~ShadowPass() {
         vkDestroySampler(VulkanState::GetInstance().GetDevice(), m_sampler, nullptr);
     }
 
-    m_shadowSet  = VK_NULL_HANDLE;
-    m_sampler = VK_NULL_HANDLE;
+    m_shadowSet = VK_NULL_HANDLE;
+    m_sampler   = VK_NULL_HANDLE;
 
     m_shadowMap        = {};
     m_shadowAttachment = {};
 }
 
 void ShadowPass::CreateRenderingInfo(const RenderingConfig &config) {
-    m_infoRendering = vk_util::GetRenderingInfo(config.renderArea, nullptr, &m_shadowAttachment);
+    VkRect2D area{
+        .offset = {0, 0},
+        .extent = {m_extent.width, m_extent.height},
+    };
+    VkViewport viewport{
+        .x        = 0.f,
+        .y        = 0.f,
+        .width    = static_cast<float>(m_extent.width),
+        .height   = static_cast<float>(m_extent.height),
+        .minDepth = 0.f,
+        .maxDepth = 1.f
+    };
+    m_infoRendering = vk_util::GetRenderingInfo(area, nullptr, &m_shadowAttachment);
+    m_viewport      = viewport;
 }
 
 void ShadowPass::DrawCalls(const DrawContent &content, VkPipelineLayout layout) {
@@ -67,9 +81,8 @@ void ShadowPass::CreateShadowMapImage() {
     VulkanImage shadowMap(
         VK_FORMAT_D32_SFLOAT,
         VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-        {VulkanState::GetInstance().GetWidth(), VulkanState::GetInstance().GetHeight(), 1},
-        VK_IMAGE_ASPECT_DEPTH_BIT,
-        VK_SAMPLE_COUNT_1_BIT
+        {m_extent.width, m_extent.height, 1},
+        VK_IMAGE_ASPECT_DEPTH_BIT
     );
 
     m_shadowMap = std::move(shadowMap);
@@ -112,7 +125,8 @@ void ShadowPass::CreateCSMSet() {
         vkCreateSampler(VulkanState::GetInstance().GetDevice(), &infoSampler, nullptr, &m_sampler);
     }
 
-    m_shadowSet = vk_util::CreateDescriptorSet(PipelineManager::GetInstance().Load("lighting_gfx")->GetDescriptorSetLayouts()[descriptor::SHADOW_SET]);
+    m_shadowSet =
+        vk_util::CreateDescriptorSet(PipelineManager::GetInstance().Load("lighting_gfx")->GetDescriptorSetLayouts()[descriptor::SHADOW_SET]);
 
     VkDescriptorImageInfo infoImage{
         .sampler     = m_sampler,
