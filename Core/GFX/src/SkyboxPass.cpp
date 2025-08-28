@@ -8,6 +8,7 @@
 #include <include/VulkanMesh.h>
 #include <include/VulkanState.h>
 #include <include/VulkanTexture.h>
+#include <include/PbrRenderer.h>
 
 SkyboxPass::SkyboxPass(const std::string &file, VkDescriptorSetLayout layout) {
     m_emissive = TextureManager::GetInstance().Load(file);
@@ -28,8 +29,8 @@ SkyboxPass::~SkyboxPass() {
     m_emissive   = nullptr;
 }
 
-void SkyboxPass::CreateRenderingInfo(const RenderingConfig &config) {
-    m_infoRendering = vk_util::GetRenderingInfo(config.renderArea, &config.drawAttachments, &config.depthAttachments);
+void SkyboxPass::CreateRenderingInfo(const RenderingConfig &config, const DrawContent &content) {
+    m_infoRendering = vk_util::GetRenderingInfo(config.renderArea, &content.drawAttachments, &content.depthAttachments);
     m_viewport = config.viewport;
 }
 

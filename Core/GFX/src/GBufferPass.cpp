@@ -22,8 +22,8 @@ GBufferPass::~GBufferPass() {
     m_gBufferAttachments.clear();
 }
 
-void GBufferPass::CreateRenderingInfo(const RenderingConfig &config) {
-    m_infoRendering = vk_util::GetRenderingInfo(config.renderArea, m_gBufferAttachments, &config.depthAttachments);
+void GBufferPass::CreateRenderingInfo(const RenderingConfig &config, const DrawContent &content) {
+    m_infoRendering = vk_util::GetRenderingInfo(config.renderArea, m_gBufferAttachments, &content.depthAttachments);
     m_viewport = config.viewport;
 }
 

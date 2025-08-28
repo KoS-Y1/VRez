@@ -5,7 +5,7 @@
 
 layout (location = 0) in vec3 inPositon;
 layout (location = 1) in vec3 inNormal;
-layout (location = 2) in vec2 inTexCord;
+layout (location = 2) in vec2 inTexCoord;
 
 layout (push_constant) uniform PushConstantData
 {

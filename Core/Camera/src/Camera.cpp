@@ -1,5 +1,7 @@
 #include "include/Camera.h"
 
+#include <include/VulkanState.h>
+
 #include <algorithm>
 
 namespace {
@@ -15,18 +17,16 @@ constexpr float DEFAULT_FOV = 15.0f;
 constexpr float CASCADE_LAMBDA = 0.75f;
 } // namespace
 
- Camera::Camera() {
-     Reset();
+Camera::Camera() {
+    Reset();
 }
 
-
 CameraData Camera::Update() {
-
     CameraData data = {};
     data.view       = GetViewMatrix();
     data.projection = GetProjectonMatrix();
     data.position   = m_location;
-
+    data.resolution = glm::vec2(VulkanState::GetInstance().GetWidth(), VulkanState::GetInstance().GetHeight());
     return data;
 }
 

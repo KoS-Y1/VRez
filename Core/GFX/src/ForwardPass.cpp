@@ -3,8 +3,8 @@
 #include "include/PbrRenderer.h"
 #include "include/VulkanUtil.h"
 
-void ForwardPass::CreateRenderingInfo(const RenderingConfig &config) {
-    m_infoRendering = vk_util::GetRenderingInfo(config.renderArea, &config.drawAttachments, &config.depthAttachments);
+void ForwardPass::CreateRenderingInfo(const RenderingConfig &config, const DrawContent &content) {
+    m_infoRendering = vk_util::GetRenderingInfo(config.renderArea, &content.drawAttachments, &content.depthAttachments);
     m_viewport = config.viewport;
 }
 

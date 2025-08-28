@@ -22,6 +22,10 @@ struct alignas(16) CameraData {
     glm::mat4              projection;
     glm::vec3              position;
     [[maybe_unused]] float padding0;
+    glm::vec2              resolution;
+    [[maybe_unused]] float padding1;
+    [[maybe_unused]] float padding2;
+
 };
 
 // Camera class as a singleton, since we only have 1 camera

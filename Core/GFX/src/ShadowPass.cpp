@@ -26,7 +26,7 @@ ShadowPass::~ShadowPass() {
     m_shadowAttachment = {};
 }
 
-void ShadowPass::CreateRenderingInfo(const RenderingConfig &config) {
+void ShadowPass::CreateRenderingInfo(const RenderingConfig &config, const DrawContent &content) {
     VkRect2D area{
         .offset = {0,              0              },
         .extent = {m_extent.width, m_extent.height},

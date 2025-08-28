@@ -53,6 +53,9 @@ PbrRenderer::~PbrRenderer() {
     vkFreeDescriptorSets(VulkanState::GetInstance().GetDevice(), VulkanState::GetInstance().GetDescriptorPool(), 1, &m_iblSet);
     vkFreeDescriptorSets(VulkanState::GetInstance().GetDevice(), VulkanState::GetInstance().GetDescriptorPool(), 1, &m_uniformShadowSet);
     vkFreeDescriptorSets(VulkanState::GetInstance().GetDevice(), VulkanState::GetInstance().GetDescriptorPool(), 1, &m_uniformForwardSet);
+    vkFreeDescriptorSets(VulkanState::GetInstance().GetDevice(), VulkanState::GetInstance().GetDescriptorPool(), 1, &m_postProcessSet);
+
+    vkDestroySampler(VulkanState::GetInstance().GetDevice(), m_sampler, nullptr);
 }
 
 void PbrRenderer::Render() {
@@ -81,9 +84,18 @@ void PbrRenderer::Render() {
         0,
         VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT
     );
+    vk_util::CmdImageLayoutTransition(
+        VulkanState::GetInstance().GetCommandBuffer(),
+        m_postProcessedImage.GetImage(),
+        VK_IMAGE_LAYOUT_UNDEFINED,
+        VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+        VK_IMAGE_ASPECT_COLOR_BIT,
+        0,
+        VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT
+    );
 
-    m_config.depthAttachments.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    m_config.drawAttachments.loadOp  = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    m_drawContent.depthAttachments.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    m_drawContent.drawAttachments.loadOp  = VK_ATTACHMENT_LOAD_OP_CLEAR;
 
     m_shadowPass.PreRender();
     m_shadowPass.Render(
@@ -107,7 +119,7 @@ void PbrRenderer::Render() {
     );
     m_gBufferPass.PostRender();
 
-    m_config.drawAttachments.loadOp  = VK_ATTACHMENT_LOAD_OP_LOAD;
+    m_drawContent.drawAttachments.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
     m_lightingPass.Render(
         m_config,
         {
@@ -120,7 +132,7 @@ void PbrRenderer::Render() {
         dynamic_cast<VulkanGraphicsPipeline *>(PipelineManager::GetInstance().Load("lighting_gfx"))
     );
 
-    m_config.depthAttachments.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+    m_drawContent.depthAttachments.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
     m_forwardPass.Render(
         m_config,
         {
@@ -131,7 +143,6 @@ void PbrRenderer::Render() {
         m_drawContent,
         dynamic_cast<VulkanGraphicsPipeline *>(PipelineManager::GetInstance().Load("forward_gfx"))
     );
-
 
     m_skybox.Render(
         m_config,
@@ -146,19 +157,40 @@ void PbrRenderer::Render() {
         VulkanState::GetInstance().GetCommandBuffer(),
         m_drawImage.GetImage(),
         VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-        VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
         VK_IMAGE_ASPECT_COLOR_BIT,
         VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
         VK_ACCESS_SHADER_READ_BIT
     );
 
-    VulkanState::GetInstance().CopyToPresentImage(m_drawImage);
+    m_postProcessingPass.Render(
+        m_config,
+        {
+            {m_uniformSet,     descriptor::UNIFORM_SET},
+            {m_postProcessSet, descriptor::TEXTURE_SET}
+    },
+        m_drawContent,
+        dynamic_cast<VulkanGraphicsPipeline *>(PipelineManager::GetInstance().Load("post_processing_gfx"))
+    );
+
+    vk_util::CmdImageLayoutTransition(
+        VulkanState::GetInstance().GetCommandBuffer(),
+        m_postProcessedImage.GetImage(),
+        VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+        VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+        VK_IMAGE_ASPECT_COLOR_BIT,
+        VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+        VK_ACCESS_TRANSFER_READ_BIT
+    );
+
+
+    VulkanState::GetInstance().CopyToPresentImage(m_postProcessedImage);
 }
 
 void PbrRenderer::CreateImages() {
     VulkanImage drawImg(
         VK_FORMAT_R16G16B16A16_SFLOAT,
-        VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+        VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
         {VulkanState::GetInstance().GetWidth(), VulkanState::GetInstance().GetHeight(), 1},
         VK_IMAGE_ASPECT_COLOR_BIT
     );
@@ -172,6 +204,39 @@ void PbrRenderer::CreateImages() {
         VK_IMAGE_ASPECT_DEPTH_BIT
     );
     m_depthImage = std::move(depthImg);
+
+    VulkanImage postProcessedImage(
+        VK_FORMAT_R16G16B16A16_SFLOAT,
+        VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+        {VulkanState::GetInstance().GetWidth(), VulkanState::GetInstance().GetHeight(), 1},
+        VK_IMAGE_ASPECT_COLOR_BIT
+    );
+    m_postProcessedImage = std::move(postProcessedImage);
+
+    {
+        VkSamplerCreateInfo infoSampler = {
+            .sType                   = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+            .pNext                   = nullptr,
+            .flags                   = 0,
+            .magFilter               = VK_FILTER_LINEAR,
+            .minFilter               = VK_FILTER_LINEAR,
+            .mipmapMode              = VK_SAMPLER_MIPMAP_MODE_NEAREST,
+            .addressModeU            = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+            .addressModeV            = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+            .addressModeW            = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+            .mipLodBias              = 0.0f,
+            .anisotropyEnable        = VK_FALSE,
+            .maxAnisotropy           = 1.0f,
+            .compareEnable           = VK_FALSE,
+            .compareOp               = VK_COMPARE_OP_ALWAYS,
+            .minLod                  = 0.0f,
+            .maxLod                  = 1.0f,
+            .borderColor             = VK_BORDER_COLOR_INT_OPAQUE_BLACK,
+            .unnormalizedCoordinates = VK_FALSE, // Always normalized
+        };
+
+        vkCreateSampler(VulkanState::GetInstance().GetDevice(), &infoSampler, nullptr, &m_sampler);
+    }
 }
 
 void PbrRenderer::CreateBuffers() {
@@ -190,6 +255,44 @@ void PbrRenderer::CreateDrawContent() {
     m_drawContent.frontPrefabs.emplace_back("../Assets/Models/Castle/Castle.json", glm::vec3(0.35f, 0.0f, 0.0f));
 
     m_drawContent.screen = MeshManager::GetInstance().Load("screen");
+
+
+    VkClearValue colorClear{
+        .color = {0.0f, 0.0f, 0.0f, 1.0f}
+    };
+    m_drawContent.drawAttachments = vk_util::GetRenderingAttachmentInfo(
+        m_drawImage.GetImageView(),
+        VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+        &colorClear,
+        VK_ATTACHMENT_LOAD_OP_CLEAR,
+        VK_ATTACHMENT_STORE_OP_STORE,
+        VK_RESOLVE_MODE_NONE,
+        VK_NULL_HANDLE,
+        VK_IMAGE_LAYOUT_UNDEFINED
+    );
+    VkClearValue depthClear{
+        .depthStencil = {.depth = 1.0f, .stencil = 0}
+    };
+    m_drawContent.depthAttachments = vk_util::GetRenderingAttachmentInfo(
+        m_depthImage.GetImageView(),
+        VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+        &depthClear,
+        VK_ATTACHMENT_LOAD_OP_CLEAR,
+        VK_ATTACHMENT_STORE_OP_STORE,
+        VK_RESOLVE_MODE_NONE,
+        VK_NULL_HANDLE,
+        VK_IMAGE_LAYOUT_UNDEFINED
+    );
+    m_drawContent.postProcessdAttachments = vk_util::GetRenderingAttachmentInfo(
+        m_postProcessedImage.GetImageView(),
+        VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+        &colorClear,
+        VK_ATTACHMENT_LOAD_OP_CLEAR,
+        VK_ATTACHMENT_STORE_OP_STORE,
+        VK_RESOLVE_MODE_NONE,
+        VK_NULL_HANDLE,
+        VK_IMAGE_LAYOUT_UNDEFINED
+    );
 }
 
 void PbrRenderer::CreateDescriptorSets() {
@@ -206,6 +309,9 @@ void PbrRenderer::CreateDescriptorSets() {
 
     m_uniformForwardSet =
         vk_util::CreateDescriptorSet(PipelineManager::GetInstance().Load("forward_gfx")->GetDescriptorSetLayouts()[descriptor::UNIFORM_SET]);
+
+    m_postProcessSet =
+        vk_util::CreateDescriptorSet(PipelineManager::GetInstance().Load("post_processing_gfx")->GetDescriptorSetLayouts()[descriptor::TEXTURE_SET]);
 }
 
 void PbrRenderer::CreateRenderConfig() {
@@ -223,33 +329,6 @@ void PbrRenderer::CreateRenderConfig() {
         .minDepth = 0.f,
         .maxDepth = 1.f
     };
-
-    VkClearValue colorClear{
-        .color = {0.0f, 0.0f, 0.0f, 1.0f}
-    };
-    m_config.drawAttachments = vk_util::GetRenderingAttachmentInfo(
-        m_drawImage.GetImageView(),
-        VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-        &colorClear,
-        VK_ATTACHMENT_LOAD_OP_CLEAR,
-        VK_ATTACHMENT_STORE_OP_STORE,
-        VK_RESOLVE_MODE_NONE,
-        VK_NULL_HANDLE,
-        VK_IMAGE_LAYOUT_UNDEFINED
-    );
-    VkClearValue depthClear{
-        .depthStencil = {.depth = 1.0f, .stencil = 0}
-    };
-    m_config.depthAttachments = vk_util::GetRenderingAttachmentInfo(
-        m_depthImage.GetImageView(),
-        VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-        &depthClear,
-        VK_ATTACHMENT_LOAD_OP_CLEAR,
-        VK_ATTACHMENT_STORE_OP_STORE,
-        VK_RESOLVE_MODE_NONE,
-        VK_NULL_HANDLE,
-        VK_IMAGE_LAYOUT_UNDEFINED
-    );
 }
 
 void PbrRenderer::OneTimeUpdateDescriptorSets() {
@@ -330,9 +409,31 @@ void PbrRenderer::OneTimeUpdateDescriptorSets() {
         .pTexelBufferView = nullptr,
     };
 
+
+    VkDescriptorImageInfo infoPostProcess{
+        .sampler     = m_sampler,
+        .imageView   = m_drawImage.GetImageView(),
+        .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+    };
+
+
+    VkWriteDescriptorSet writeSetPostProcess{
+        .sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .pNext            = nullptr,
+        .dstSet           = m_postProcessSet,
+        .dstBinding       = 0,
+        .dstArrayElement  = 0,
+        .descriptorCount  = 1,
+        .descriptorType   = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+        .pImageInfo       = &infoPostProcess,
+        .pBufferInfo      = nullptr,
+        .pTexelBufferView = nullptr,
+    };
+
     vkUpdateDescriptorSets(VulkanState::GetInstance().GetDevice(), 1, &writeSetUniform, 0, 0);
     vkUpdateDescriptorSets(VulkanState::GetInstance().GetDevice(), 1, &writeSetCamera, 0, 0);
     vkUpdateDescriptorSets(VulkanState::GetInstance().GetDevice(), 1, &writeSetIBL, 0, 0);
     vkUpdateDescriptorSets(VulkanState::GetInstance().GetDevice(), 1, &writeSetUniformShadow, 0, 0);
     vkUpdateDescriptorSets(VulkanState::GetInstance().GetDevice(), 1, &writeSetForward, 0, 0);
+    vkUpdateDescriptorSets(VulkanState::GetInstance().GetDevice(), 1, &writeSetPostProcess, 0, 0);
 }

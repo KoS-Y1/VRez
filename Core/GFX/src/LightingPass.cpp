@@ -4,8 +4,8 @@
 
 #include <include/VulkanUtil.h>
 
-void LightingPass::CreateRenderingInfo(const RenderingConfig &config) {
-    m_infoRendering = vk_util::GetRenderingInfo(config.renderArea, &config.drawAttachments, nullptr);
+void LightingPass::CreateRenderingInfo(const RenderingConfig &config, const DrawContent &content) {
+    m_infoRendering = vk_util::GetRenderingInfo(config.renderArea, &content.drawAttachments, nullptr);
     m_viewport = config.viewport;
 }
 

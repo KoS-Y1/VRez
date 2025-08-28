@@ -29,6 +29,6 @@ private:
     void CreateShadowMapImage();
     void CreateCSMSet();
 
-    void CreateRenderingInfo(const RenderingConfig &config) override;
+    void CreateRenderingInfo(const RenderingConfig &config, const DrawContent &content) override;
     void DrawCalls(const DrawContent &content, VkPipelineLayout layout) override;
 };

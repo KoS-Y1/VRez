@@ -6,6 +6,7 @@
 #include <include/ForwardPass.h>
 #include <include/GBufferPass.h>
 #include <include/LightingPass.h>
+#include <include/PostProcessingPass.h>
 #include <include/ShadowPass.h>
 #include <include/SkyboxPass.h>
 #include <include/UIRenderer.h>
@@ -16,6 +17,9 @@ struct DrawContent {
     std::vector<VulkanPrefab> deferredPrefabs;
     std::vector<VulkanPrefab> frontPrefabs;
     VulkanMesh               *screen;
+    VkRenderingAttachmentInfo drawAttachments;
+    VkRenderingAttachmentInfo depthAttachments;
+    VkRenderingAttachmentInfo postProcessdAttachments;
 };
 
 class PbrRenderer {
@@ -35,19 +39,20 @@ public:
 
     [[nodiscard]] const VkExtent3D &GetDrawImageExtent() const { return m_drawImage.GetExtent(); }
 
-    [[nodiscard]] const VkImage &GetDrawImage() const { return m_drawImage.GetImage(); }
-
 private:
     VulkanImage m_depthImage;
     VulkanImage m_drawImage;
+    VulkanImage m_postProcessedImage;
+    VkSampler   m_sampler;
 
     RenderingConfig m_config;
 
-    ShadowPass   m_shadowPass;
-    GBufferPass  m_gBufferPass;
-    LightingPass m_lightingPass;
-    ForwardPass  m_forwardPass;
-    SkyboxPass   m_skybox;
+    ShadowPass         m_shadowPass;
+    GBufferPass        m_gBufferPass;
+    LightingPass       m_lightingPass;
+    ForwardPass        m_forwardPass;
+    SkyboxPass         m_skybox;
+    PostProcessingPass m_postProcessingPass;
 
     DrawContent m_drawContent;
 
@@ -58,11 +63,12 @@ private:
     VulkanBuffer m_cameraBuffer;
     VulkanBuffer m_lightBuffer;
 
-    VkDescriptorSet m_uniformSet       = VK_NULL_HANDLE;
-    VkDescriptorSet m_cameraSet        = VK_NULL_HANDLE;
-    VkDescriptorSet m_iblSet           = VK_NULL_HANDLE;
-    VkDescriptorSet m_uniformShadowSet = VK_NULL_HANDLE;
-    VkDescriptorSet m_uniformForwardSet   = VK_NULL_HANDLE;
+    VkDescriptorSet m_uniformSet        = VK_NULL_HANDLE;
+    VkDescriptorSet m_cameraSet         = VK_NULL_HANDLE;
+    VkDescriptorSet m_iblSet            = VK_NULL_HANDLE;
+    VkDescriptorSet m_uniformShadowSet  = VK_NULL_HANDLE;
+    VkDescriptorSet m_uniformForwardSet = VK_NULL_HANDLE;
+    VkDescriptorSet m_postProcessSet    = VK_NULL_HANDLE;
 
     void CreateImages();
     void CreateDrawContent();

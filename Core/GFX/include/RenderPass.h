@@ -1,15 +1,13 @@
 #pragma once
 
-#include "include/VulkanGraphicsPipeline.h"
+#include <include/VulkanGraphicsPipeline.h>
 
 
 #include <include/VulkanState.h>
 
 struct RenderingConfig {
-    VkRect2D                  renderArea;
-    VkViewport                viewport;
-    VkRenderingAttachmentInfo drawAttachments;
-    VkRenderingAttachmentInfo depthAttachments;
+    VkRect2D   renderArea;
+    VkViewport viewport;
 };
 
 struct DrawContent;
@@ -23,7 +21,7 @@ public:
         const DrawContent                                       &content,
         VulkanGraphicsPipeline                                  *pipeline
     ) {
-        CreateRenderingInfo(config);
+        CreateRenderingInfo(config, content);
 
         vkCmdBeginRendering(VulkanState::GetInstance().GetCommandBuffer(), &m_infoRendering);
         vkCmdSetViewport(VulkanState::GetInstance().GetCommandBuffer(), 0, 1, &m_viewport);
@@ -38,13 +36,13 @@ public:
 
 protected:
     VkRenderingInfo m_infoRendering = {};
-    VkViewport m_viewport = {};
+    VkViewport      m_viewport      = {};
 
     RenderPass()  = default;
     ~RenderPass() = default;
 
-    virtual void CreateRenderingInfo(const RenderingConfig &config)             = 0;
-    virtual void DrawCalls(const DrawContent &content, VkPipelineLayout layout) = 0;
+    virtual void CreateRenderingInfo(const RenderingConfig &config, const DrawContent &content) = 0;
+    virtual void DrawCalls(const DrawContent &content, VkPipelineLayout layout)                 = 0;
 
 private:
     void Bind(const std::vector<std::pair<VkDescriptorSet, uint32_t>> &globalSets, VulkanGraphicsPipeline *pipeline) {
