@@ -1,19 +1,20 @@
 #pragma once
 
-#include "ShadowPass.h"
-
 
 #include <vector>
 
+#include <include/ForwardPass.h>
 #include <include/GBufferPass.h>
 #include <include/LightingPass.h>
+#include <include/ShadowPass.h>
 #include <include/SkyboxPass.h>
 #include <include/UIRenderer.h>
 #include <include/VulkanImage.h>
 #include <include/VulkanPrefab.h>
 
 struct DrawContent {
-    std::vector<VulkanPrefab> prefabs;
+    std::vector<VulkanPrefab> deferredPrefabs;
+    std::vector<VulkanPrefab> frontPrefabs;
     VulkanMesh               *screen;
 };
 
@@ -45,6 +46,7 @@ private:
     ShadowPass   m_shadowPass;
     GBufferPass  m_gBufferPass;
     LightingPass m_lightingPass;
+    ForwardPass  m_forwardPass;
     SkyboxPass   m_skybox;
 
     DrawContent m_drawContent;
@@ -60,6 +62,7 @@ private:
     VkDescriptorSet m_cameraSet        = VK_NULL_HANDLE;
     VkDescriptorSet m_iblSet           = VK_NULL_HANDLE;
     VkDescriptorSet m_uniformShadowSet = VK_NULL_HANDLE;
+    VkDescriptorSet m_uniformForwardSet   = VK_NULL_HANDLE;
 
     void CreateImages();
     void CreateDrawContent();

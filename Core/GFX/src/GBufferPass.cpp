@@ -28,7 +28,7 @@ void GBufferPass::CreateRenderingInfo(const RenderingConfig &config) {
 }
 
 void GBufferPass::DrawCalls(const DrawContent &content, VkPipelineLayout layout) {
-    for (const auto &prefab: content.prefabs) {
+    for (const auto &prefab: content.deferredPrefabs) {
         prefab.BindAndDraw(layout);
     }
 }

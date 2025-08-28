@@ -28,7 +28,7 @@ ShadowPass::~ShadowPass() {
 
 void ShadowPass::CreateRenderingInfo(const RenderingConfig &config) {
     VkRect2D area{
-        .offset = {0, 0},
+        .offset = {0,              0              },
         .extent = {m_extent.width, m_extent.height},
     };
     VkViewport viewport{
@@ -44,7 +44,11 @@ void ShadowPass::CreateRenderingInfo(const RenderingConfig &config) {
 }
 
 void ShadowPass::DrawCalls(const DrawContent &content, VkPipelineLayout layout) {
-    for (const auto &prefab: content.prefabs) {
+    for (const auto &prefab: content.deferredPrefabs) {
+        prefab.BindAndDrawMesh(layout);
+    }
+
+    for (const auto &prefab: content.frontPrefabs) {
         prefab.BindAndDrawMesh(layout);
     }
 }

@@ -44,6 +44,7 @@ target_link_libraries(Resource PUBLIC ThreadPool FileSystem MyVulkan Util SDL3::
 
 add_library(GFX GFX/include/PbrRenderer.h GFX/src/PbrRenderer.cpp GFX/include/GBufferPass.h  GFX/src/GBufferPass.cpp
         GFX/include/LightingPass.h GFX/src/LightingPass.cpp GFX/include/SkyboxPass.h GFX/src/SkyboxPass.cpp
-        GFX/include/RenderPass.h GFX/include/ShadowPass.h GFX/src/ShadowPass.cpp)
+        GFX/include/RenderPass.h GFX/include/ShadowPass.h GFX/src/ShadowPass.cpp GFX/include/ForwardPass.h
+        GFX/src/ForwardPass.cpp)
 target_include_directories(GFX PUBLIC GFX)
 target_link_libraries(GFX PUBLIC MyVulkan Resource Camera Light imgui UI)

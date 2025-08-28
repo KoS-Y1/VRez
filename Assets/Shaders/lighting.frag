@@ -52,8 +52,5 @@ void main()
     // IBL
     vec3 ibl = IBL(N, NdotV, R, F0, metallic, roughness, albedo, ao) * 0.5;
 
-    // Gamma correction
-    //    outColor = vec4(pow(Lo + emissive, vec3(1.0/2.2)), 1.0f);
     outColor = vec4((ibl+ Lo + emissive), 1.0);
-
 }

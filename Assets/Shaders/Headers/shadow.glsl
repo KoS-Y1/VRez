@@ -51,7 +51,6 @@ float ReadShadowMap(vec3 worldPosition, vec3 worldNormal){
     }
 
     return CalculatePCF(uv, ndc.z, worldNormal);
-//    return texture(uShadowMap, vec3(uv, ndc.z - CalculateBias(worldNormal, uLights[0].direction)));
 }
 
 #endif

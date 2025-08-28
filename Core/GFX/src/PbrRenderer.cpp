@@ -21,8 +21,13 @@ PbrRenderer::PbrRenderer(UIRenderer &uiRenderer)
     CreateDescriptorSets();
     CreateRenderConfig();
 
-    for (size_t i = 0; i < m_drawContent.prefabs.size(); i++) {
-        uiRenderer.AddPrefabWindow(m_drawContent.prefabs[i], i);
+    size_t i = 0;
+    for (i; i < m_drawContent.deferredPrefabs.size(); i++) {
+        uiRenderer.AddPrefabWindow(m_drawContent.deferredPrefabs[i], i);
+    }
+
+    for (size_t j = 0; j < m_drawContent.frontPrefabs.size(); j++) {
+        uiRenderer.AddPrefabWindow(m_drawContent.frontPrefabs[j], i + j);
     }
 
     OneTimeUpdateDescriptorSets();
@@ -32,7 +37,8 @@ PbrRenderer::~PbrRenderer() {
     m_drawImage  = {};
     m_depthImage = {};
 
-    m_drawContent.prefabs.clear();
+    m_drawContent.deferredPrefabs.clear();
+    m_drawContent.frontPrefabs.clear();
     m_drawContent.screen = nullptr;
 
     m_brdf       = nullptr;
@@ -46,6 +52,7 @@ PbrRenderer::~PbrRenderer() {
     vkFreeDescriptorSets(VulkanState::GetInstance().GetDevice(), VulkanState::GetInstance().GetDescriptorPool(), 1, &m_cameraSet);
     vkFreeDescriptorSets(VulkanState::GetInstance().GetDevice(), VulkanState::GetInstance().GetDescriptorPool(), 1, &m_iblSet);
     vkFreeDescriptorSets(VulkanState::GetInstance().GetDevice(), VulkanState::GetInstance().GetDescriptorPool(), 1, &m_uniformShadowSet);
+    vkFreeDescriptorSets(VulkanState::GetInstance().GetDevice(), VulkanState::GetInstance().GetDescriptorPool(), 1, &m_uniformForwardSet);
 }
 
 void PbrRenderer::Render() {
@@ -100,6 +107,19 @@ void PbrRenderer::Render() {
     );
     m_gBufferPass.PostRender();
 
+    m_config.depthAttachments.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+    m_forwardPass.Render(
+        m_config,
+        {
+            {m_uniformForwardSet,      descriptor::UNIFORM_SET},
+            {m_iblSet,                 descriptor::IBL_SET    },
+            {m_shadowPass.GetCSMSet(), descriptor::SHADOW_SET }
+    },
+        m_drawContent,
+        dynamic_cast<VulkanGraphicsPipeline *>(PipelineManager::GetInstance().Load("forward_gfx"))
+    );
+
+    m_config.drawAttachments.loadOp  = VK_ATTACHMENT_LOAD_OP_LOAD;
     m_lightingPass.Render(
         m_config,
         {
@@ -112,8 +132,7 @@ void PbrRenderer::Render() {
         dynamic_cast<VulkanGraphicsPipeline *>(PipelineManager::GetInstance().Load("lighting_gfx"))
     );
 
-    m_config.depthAttachments.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
-    m_config.drawAttachments.loadOp  = VK_ATTACHMENT_LOAD_OP_LOAD;
+
     m_skybox.Render(
         m_config,
         {
@@ -164,10 +183,12 @@ void PbrRenderer::CreateBuffers() {
 }
 
 void PbrRenderer::CreateDrawContent() {
-    m_drawContent.prefabs.emplace_back("../Assets/Models/BoomBox/BoomBox.json", glm::vec3(0.0f, 0.1f, 0.0f));
-    m_drawContent.prefabs.emplace_back("../Assets/Models/Chessboard/Chessboard.json");
-    m_drawContent.prefabs.emplace_back("../Assets/Models/Castle/Castle.json");
-    // m_drawContent.prefabs.emplace_back("../Assets/Models/Suzanne/Suzanne.json");
+    m_drawContent.deferredPrefabs.emplace_back("../Assets/Models/BoomBox/BoomBox.json", glm::vec3(0.0f, 0.1f, 0.0f));
+    m_drawContent.deferredPrefabs.emplace_back("../Assets/Models/Chessboard/Chessboard.json");
+    m_drawContent.deferredPrefabs.emplace_back("../Assets/Models/Castle/Castle.json");
+
+    m_drawContent.frontPrefabs.emplace_back("../Assets/Models/Castle/Castle.json", glm::vec3(0.35f, 0.0f, 0.0f));
+
     m_drawContent.screen = MeshManager::GetInstance().Load("screen");
 }
 
@@ -179,7 +200,12 @@ void PbrRenderer::CreateDescriptorSets() {
         vk_util::CreateDescriptorSet(PipelineManager::GetInstance().Load("gbuffer_gfx")->GetDescriptorSetLayouts()[descriptor::UNIFORM_SET]);
 
     m_iblSet = vk_util::CreateDescriptorSet(PipelineManager::GetInstance().Load("lighting_gfx")->GetDescriptorSetLayouts()[descriptor::IBL_SET]);
-    m_uniformShadowSet = vk_util::CreateDescriptorSet(PipelineManager::GetInstance().Load("shadow_gfx")->GetDescriptorSetLayouts()[descriptor::UNIFORM_SET]);
+
+    m_uniformShadowSet =
+        vk_util::CreateDescriptorSet(PipelineManager::GetInstance().Load("shadow_gfx")->GetDescriptorSetLayouts()[descriptor::UNIFORM_SET]);
+
+    m_uniformForwardSet =
+        vk_util::CreateDescriptorSet(PipelineManager::GetInstance().Load("forward_gfx")->GetDescriptorSetLayouts()[descriptor::UNIFORM_SET]);
 }
 
 void PbrRenderer::CreateRenderConfig() {
@@ -290,8 +316,23 @@ void PbrRenderer::OneTimeUpdateDescriptorSets() {
         .pBufferInfo      = infoBuffers.data(),
         .pTexelBufferView = nullptr,
     };
+
+    VkWriteDescriptorSet writeSetForward{
+        .sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .pNext            = nullptr,
+        .dstSet           = m_uniformForwardSet,
+        .dstBinding       = 0,
+        .dstArrayElement  = 0,
+        .descriptorCount  = static_cast<uint32_t>(infoBuffers.size()),
+        .descriptorType   = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        .pImageInfo       = nullptr,
+        .pBufferInfo      = infoBuffers.data(),
+        .pTexelBufferView = nullptr,
+    };
+
     vkUpdateDescriptorSets(VulkanState::GetInstance().GetDevice(), 1, &writeSetUniform, 0, 0);
     vkUpdateDescriptorSets(VulkanState::GetInstance().GetDevice(), 1, &writeSetCamera, 0, 0);
     vkUpdateDescriptorSets(VulkanState::GetInstance().GetDevice(), 1, &writeSetIBL, 0, 0);
     vkUpdateDescriptorSets(VulkanState::GetInstance().GetDevice(), 1, &writeSetUniformShadow, 0, 0);
+    vkUpdateDescriptorSets(VulkanState::GetInstance().GetDevice(), 1, &writeSetForward, 0, 0);
 }
