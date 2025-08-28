@@ -26,7 +26,7 @@ void main()
     const vec3 worldPosition = worldPositionMetallic.xyz;
     const vec3 worldNormal = worldNormalRoughness.xyz;
 
-    const vec3 albedo = vec3(albedoAO.xyz);
+    const vec3 albedo = albedoAO.xyz;
     const float metallic = worldPositionMetallic.w;
     const float roughness = worldNormalRoughness.w;
     const float ao = albedoAO.w;

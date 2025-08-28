@@ -107,18 +107,6 @@ void PbrRenderer::Render() {
     );
     m_gBufferPass.PostRender();
 
-    m_config.depthAttachments.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
-    m_forwardPass.Render(
-        m_config,
-        {
-            {m_uniformForwardSet,      descriptor::UNIFORM_SET},
-            {m_iblSet,                 descriptor::IBL_SET    },
-            {m_shadowPass.GetCSMSet(), descriptor::SHADOW_SET }
-    },
-        m_drawContent,
-        dynamic_cast<VulkanGraphicsPipeline *>(PipelineManager::GetInstance().Load("forward_gfx"))
-    );
-
     m_config.drawAttachments.loadOp  = VK_ATTACHMENT_LOAD_OP_LOAD;
     m_lightingPass.Render(
         m_config,
@@ -130,6 +118,18 @@ void PbrRenderer::Render() {
     },
         m_drawContent,
         dynamic_cast<VulkanGraphicsPipeline *>(PipelineManager::GetInstance().Load("lighting_gfx"))
+    );
+
+    m_config.depthAttachments.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+    m_forwardPass.Render(
+        m_config,
+        {
+            {m_uniformForwardSet,      descriptor::UNIFORM_SET},
+            {m_iblSet,                 descriptor::IBL_SET    },
+            {m_shadowPass.GetCSMSet(), descriptor::SHADOW_SET }
+    },
+        m_drawContent,
+        dynamic_cast<VulkanGraphicsPipeline *>(PipelineManager::GetInstance().Load("forward_gfx"))
     );
 
 

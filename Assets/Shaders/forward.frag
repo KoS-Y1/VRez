@@ -21,7 +21,7 @@ layout (set = TEXTURE_SET, binding = 3) uniform sampler2D uEmissive;
 void main()
 {
     const vec3 albedo = texture(uAlbedo, vTexcoord).xyz;
-    const vec3 tNormal = texture(uNormal, vTexcoord).xyz;
+    const vec3 tNormal = texture(uNormal, vTexcoord).xyz * 2.0 - 1.0;
     const vec3 worldNormal = normalize(vTBN * tNormal);
     const vec3 orm = texture(uORM, vTexcoord).xyz;
     const vec3 emissive = texture(uEmissive, vTexcoord).xyz;
@@ -38,7 +38,7 @@ void main()
 
     // PBR
     vec3 Lo = vec3(0.0f);
-    for(int i = 1; i < uLightCount; ++i)
+    for (int i = 1; i < uLightCount; ++i)
     {
         Lo += CalculatePBRLight(uLights[i].position, uLights[i].direction, uLights[i].color, uLights[i].intensity,
         uLights[i].range, uLights[i].type, N, V, vWorldPosition, albedo, roughness, metallic);
