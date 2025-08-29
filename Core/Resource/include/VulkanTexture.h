@@ -12,7 +12,7 @@ struct SamplerConfig {
     VkBool32             compareEnable    = VK_FALSE;
     VkCompareOp          compareOp        = VK_COMPARE_OP_ALWAYS;
     float                minLod           = 0.0f;
-    float                maxLod           = 1.0f;
+    float                maxLod           = VK_LOD_CLAMP_NONE;
     VkBorderColor        borderColor      = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
 };
 
@@ -22,14 +22,7 @@ public:
 
     ~VulkanTexture() { Destroy(); }
 
-    VulkanTexture(
-        uint32_t            width,
-        uint32_t            height,
-        VkFormat            format,
-        size_t              formatSize,
-        const void         *data,
-        const SamplerConfig config
-    );
+    VulkanTexture(uint32_t width, uint32_t height, VkFormat format, size_t formatSize, const void *data, const SamplerConfig &config);
 
     VulkanTexture(const VulkanTexture &) = delete;
 
@@ -61,4 +54,6 @@ private:
     void CreateImage(uint32_t width, uint32_t height, VkFormat format, size_t formatSize, const void *data);
 
     void CreateSampler(SamplerConfig config);
+
+    void GenerateMipmaps(VkCommandBuffer cmdBuf, VkImage image, uint32_t width, uint32_t height, VkFormat format, uint32_t mipLevels);
 };

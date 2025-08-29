@@ -12,15 +12,23 @@ void CmdImageLayoutTransition(
     VkImageAspectFlags aspect,
     VkAccessFlags      srcAccess,
     VkAccessFlags      dstAccess,
-    uint32_t           mipLevels   = 1,
+    uint32_t           baseLevel   = 0,
+    uint32_t           levelCount  = 1,
+    uint32_t           baseLayer   = 0,
     uint32_t           arrayLayers = 1
 );
 
-VkImageSubresourceRange GetSubresourceRange(VkImageAspectFlags aspect, uint32_t levelCount = 1, uint32_t layerCount = 1);
+VkImageSubresourceRange GetSubresourceRange(
+    VkImageAspectFlags aspect,
+    uint32_t           baseLevel  = 0,
+    uint32_t           levelCount = 1,
+    uint32_t           baseLayer  = 0,
+    uint32_t           layerCount = 1
+);
 
 uint32_t FindMemoryType(uint32_t memoryTypeBitsRequirement, VkMemoryPropertyFlags requiredProperties);
 
-void CopyImageToImage(
+void CmdCopyImageToImage(
     VkCommandBuffer    cmdBuf,
     VkImage            srcImage,
     VkImage            dstImage,
@@ -29,7 +37,12 @@ void CopyImageToImage(
     VkImageAspectFlags aspect
 );
 
-VkImageSubresourceLayers GetImageSubresourceLayers(VkImageAspectFlags aspect);
+VkImageSubresourceLayers GetImageSubresourceLayers(
+    VkImageAspectFlags aspect,
+    uint32_t           baseLevel  = 0,
+    uint32_t           baseLayer  = 0,
+    uint32_t           layerCount = 1
+);
 
 
 VkRenderingAttachmentInfo GetRenderingAttachmentInfo(
@@ -58,4 +71,6 @@ VkRenderingInfo GetRenderingInfo(
 );
 
 VkDescriptorSet CreateDescriptorSet(const VkDescriptorSetLayout &layout);
+
+void CmdBlitMipmap(VkCommandBuffer cmdBuf, VkImage image, VkExtent3D srcExtent, VkExtent3D dstExtent, VkImageAspectFlags aspect, uint32_t baseLevel);
 } // namespace vk_util

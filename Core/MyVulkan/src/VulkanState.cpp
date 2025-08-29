@@ -88,7 +88,7 @@ void VulkanState::CopyToPresentImage(const VulkanImage &image) {
     );
 
     // Copy draw image to the current swapchain image
-    vk_util::CopyImageToImage(
+    vk_util::CmdCopyImageToImage(
         m_cmdBuf,
         image.GetImage(),
         m_swapchain.images[m_presentImageIndex],

@@ -12,7 +12,9 @@ void vk_util::CmdImageLayoutTransition(
     VkImageAspectFlags aspect,
     VkAccessFlags      srcAccess,
     VkAccessFlags      dstAccess,
-    uint32_t           mipLevels,
+    uint32_t           baseLevel,
+    uint32_t           levelCount,
+    uint32_t           baseLayer,
     uint32_t           arrayLayers
 ) {
     VkImageMemoryBarrier barrier{
@@ -22,22 +24,28 @@ void vk_util::CmdImageLayoutTransition(
         .dstAccessMask       = dstAccess,
         .oldLayout           = oldLayout,
         .newLayout           = newLayout,
-        .srcQueueFamilyIndex = 0,
-        .dstQueueFamilyIndex = 0,
+        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
         .image               = image,
-        .subresourceRange    = GetSubresourceRange(aspect, mipLevels, arrayLayers),
+        .subresourceRange    = GetSubresourceRange(aspect, baseLevel, levelCount, baseLayer, arrayLayers),
     };
 
     vkCmdPipelineBarrier(cmdBuf, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 }
 
-VkImageSubresourceRange vk_util::GetSubresourceRange(VkImageAspectFlags aspect, uint32_t levelCout, uint32_t layerCout) {
+VkImageSubresourceRange vk_util::GetSubresourceRange(
+    VkImageAspectFlags aspect,
+    uint32_t           baseLevel,
+    uint32_t           levelCount,
+    uint32_t           baseLayer,
+    uint32_t           layerCount
+) {
     VkImageSubresourceRange subresourceRange{
         .aspectMask     = aspect,
-        .baseMipLevel   = 0,
-        .levelCount     = levelCout,
-        .baseArrayLayer = 0,
-        .layerCount     = layerCout,
+        .baseMipLevel   = baseLevel,
+        .levelCount     = levelCount,
+        .baseArrayLayer = baseLayer,
+        .layerCount     = layerCount,
     };
 
     return subresourceRange;
@@ -64,7 +72,7 @@ uint32_t vk_util::FindMemoryType(uint32_t memoryTypeBitsRequirement, VkMemoryPro
     return -1;
 }
 
-void vk_util::CopyImageToImage(
+void vk_util::CmdCopyImageToImage(
     VkCommandBuffer    cmdBuf,
     VkImage            srcImage,
     VkImage            dstImage,
@@ -95,12 +103,12 @@ void vk_util::CopyImageToImage(
     );
 }
 
-VkImageSubresourceLayers vk_util::GetImageSubresourceLayers(VkImageAspectFlags aspect) {
+VkImageSubresourceLayers vk_util::GetImageSubresourceLayers(VkImageAspectFlags aspect, uint32_t baseLevel, uint32_t baseLayer, uint32_t layerCount) {
     VkImageSubresourceLayers subresourceLayers{
         .aspectMask     = aspect,
-        .mipLevel       = 0,
-        .baseArrayLayer = 0,
-        .layerCount     = 1,
+        .mipLevel       = baseLevel,
+        .baseArrayLayer = baseLayer,
+        .layerCount     = layerCount,
     };
 
     return subresourceLayers;
@@ -161,7 +169,7 @@ VkRenderingInfo vk_util::GetRenderingInfo(
     VkRect2D                         area,
     const VkRenderingAttachmentInfo *colorAttachment,
     const VkRenderingAttachmentInfo *depthStencilAttachment,
-    uint32_t                          layerCount
+    uint32_t                         layerCount
 ) {
     VkRenderingInfo infoRendering{
         .sType                = VK_STRUCTURE_TYPE_RENDERING_INFO,
@@ -196,4 +204,27 @@ VkDescriptorSet vk_util::CreateDescriptorSet(const VkDescriptorSetLayout &layout
     DEBUG_VK_ASSERT(vkAllocateDescriptorSets(VulkanState::GetInstance().GetDevice(), &infoSet, &set));
 
     return set;
+}
+
+void vk_util::CmdBlitMipmap(
+    VkCommandBuffer    cmdBuf,
+    VkImage            image,
+    VkExtent3D         srcExtent,
+    VkExtent3D         dstExtent,
+    VkImageAspectFlags aspect,
+    uint32_t           baseLevel
+) {
+    VkImageBlit blit{
+        .srcSubresource = GetImageSubresourceLayers(aspect, baseLevel),
+        .dstSubresource = GetImageSubresourceLayers(aspect, baseLevel + 1)
+    };
+
+    blit.srcOffsets[1].x = static_cast<int32_t>(srcExtent.width);
+    blit.srcOffsets[1].y = static_cast<int32_t>(srcExtent.height);
+    blit.srcOffsets[1].z = static_cast<int32_t>(srcExtent.depth);
+    blit.dstOffsets[1].x = static_cast<int32_t>(dstExtent.width);
+    blit.dstOffsets[1].y = static_cast<int32_t>(dstExtent.height);
+    blit.dstOffsets[1].z = static_cast<int32_t>(dstExtent.depth);
+
+    vkCmdBlitImage(cmdBuf, image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_LINEAR);
 }

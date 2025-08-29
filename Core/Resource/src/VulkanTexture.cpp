@@ -8,7 +8,7 @@
 #include <include/VulkanState.h>
 #include <include/VulkanUtil.h>
 
-VulkanTexture::VulkanTexture(uint32_t width, uint32_t height, VkFormat format, size_t formatSize, const void *data, const SamplerConfig config) {
+VulkanTexture::VulkanTexture(uint32_t width, uint32_t height, VkFormat format, size_t formatSize, const void *data, const SamplerConfig &config) {
     CreateImage(width, height, format, formatSize, data);
     CreateSampler(config);
 }
@@ -27,12 +27,21 @@ void VulkanTexture::Swap(VulkanTexture &other) noexcept {
 }
 
 void VulkanTexture::CreateImage(uint32_t width, uint32_t height, VkFormat format, size_t formatSize, const void *data) {
+    uint32_t mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(width, height)))) + 1;
+
     VkExtent3D extent{
         .width  = width,
         .height = height,
         .depth  = 1,
     };
-    VulkanImage img(format, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, extent, VK_IMAGE_ASPECT_COLOR_BIT);
+    VulkanImage img(
+        format,
+        VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+        extent,
+        VK_IMAGE_ASPECT_COLOR_BIT,
+        VK_SAMPLE_COUNT_1_BIT,
+        mipLevels
+    );
     m_image = std::move(img);
 
     VkDeviceSize size = width * height * formatSize;
@@ -63,16 +72,7 @@ void VulkanTexture::CreateImage(uint32_t width, uint32_t height, VkFormat format
 
         vkCmdCopyBufferToImage(cmdBuf, stagingBuffer.GetBuffer(), m_image.GetImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy);
 
-        // Layout transition
-        vk_util::CmdImageLayoutTransition(
-            cmdBuf,
-            m_image.GetImage(),
-            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-            VK_IMAGE_ASPECT_COLOR_BIT,
-            VK_ACCESS_TRANSFER_WRITE_BIT,
-            VK_ACCESS_SHADER_WRITE_BIT
-        );
+        GenerateMipmaps(cmdBuf, m_image.GetImage(), width, height, format, mipLevels);
     });
 }
 
@@ -100,4 +100,54 @@ void VulkanTexture::CreateSampler(SamplerConfig config) {
     };
 
     DEBUG_VK_ASSERT(vkCreateSampler(VulkanState::GetInstance().GetDevice(), &infoSampler, nullptr, &m_sampler));
+}
+
+void VulkanTexture::GenerateMipmaps(VkCommandBuffer cmdBuf, VkImage image, uint32_t width, uint32_t height, VkFormat format, uint32_t mipLevels) {
+    for (size_t i = 1; i < mipLevels; ++i) {
+        vk_util::CmdImageLayoutTransition(
+            cmdBuf,
+            image,
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+            VK_IMAGE_ASPECT_COLOR_BIT,
+            VK_ACCESS_TRANSFER_WRITE_BIT,
+            VK_ACCESS_TRANSFER_READ_BIT,
+            i - 1
+        );
+
+        VkExtent3D srcExtent = {width, height, 1};
+        VkExtent3D dstExtent = {width > 1 ? width / 2 : 1, height > 1 ? height / 2 : 1, 1};
+
+        vk_util::CmdBlitMipmap(cmdBuf, image, srcExtent, dstExtent, VK_IMAGE_ASPECT_COLOR_BIT, i - 1);
+
+        vk_util::CmdImageLayoutTransition(
+            cmdBuf,
+            image,
+            VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            VK_IMAGE_ASPECT_COLOR_BIT,
+            VK_ACCESS_TRANSFER_WRITE_BIT,
+            VK_ACCESS_SHADER_READ_BIT,
+            i - 1
+        );
+
+        if (width > 1) {
+            width /= 2;
+        }
+        if (height > 1) {
+            height /= 2;
+        }
+    }
+
+
+    vk_util::CmdImageLayoutTransition(
+        cmdBuf,
+        image,
+        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+        VK_IMAGE_ASPECT_COLOR_BIT,
+        VK_ACCESS_TRANSFER_WRITE_BIT,
+        VK_ACCESS_SHADER_READ_BIT,
+        mipLevels - 1
+    );
 }

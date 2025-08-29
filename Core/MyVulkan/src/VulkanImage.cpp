@@ -56,7 +56,7 @@ void VulkanImage::CreateImage(VkImageUsageFlags usage, VkExtent3D extent, VkSamp
     DEBUG_VK_ASSERT(vkCreateImage(VulkanState::GetInstance().GetDevice(), &infoImage, nullptr, &m_image));
 }
 
-void VulkanImage::CreateImageView(VkImageAspectFlags aspect, uint32_t levelCout, uint32_t layerCout) {
+void VulkanImage::CreateImageView(VkImageAspectFlags aspect, uint32_t levelCount, uint32_t layerCout) {
     VkImageViewCreateInfo infoView{
         .sType      = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
         .pNext      = nullptr,
@@ -65,7 +65,7 @@ void VulkanImage::CreateImageView(VkImageAspectFlags aspect, uint32_t levelCout,
         .viewType   = VK_IMAGE_VIEW_TYPE_2D,
         .format     = m_format,
         .components = {VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY},
-        .subresourceRange = vk_util::GetSubresourceRange(aspect, levelCout, layerCout)
+        .subresourceRange = vk_util::GetSubresourceRange(aspect, 0, levelCount, 0, layerCout)
     };
 
     if (layerCout > 1) {
