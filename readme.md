@@ -1,6 +1,5 @@
 # VRez - A Vulkan Real-Time Rendering App
 VRez is a Vulkan-based real-time rendering application inspired by [Haru-V](https://github.com/andyroiiid/Haru-V?tab=readme-ov-file)
-
 ##  Features
 ### Rendering
 - **Deferred Rendering** (GBuffer + Lighting Pass)
@@ -34,20 +33,16 @@ VRez is a Vulkan-based real-time rendering application inspired by [Haru-V](http
 - **ImGui Integration** for debugging & UI
 - **JSON Parsing** with `simdjson` for configuration
 - **stb** for image loading
-
----
 ## Screenshots
 ![image01](./Doc/01.png)
-*<Center>(deferred and forward rendering)</Center>*
+*<Center>(Deferred + Forward rendering)</Center>*
 
 ![image02](./Doc/02.png)
-*<Center>(texture LOD comparison)</Center>*
-
+*<Center>(Texture LOD comparison)</Center>*
 ## Workflow
 Here’s the high-level workflow of the engine:
 
 ![image03](./Doc/03.png)
-
 ## Dependencies
 + [SDL](https://github.com/libsdl-org/SDL) - Window and input management
 + [SPIRV-Reflect](https://github.com/KhronosGroup/SPIRV-Reflect) - Shader reflection
@@ -57,7 +52,6 @@ Here’s the high-level workflow of the engine:
 + [simdjson](https://github.com/simdjson/simdjson/tree/master) - Fast JSON parser
 + [stb](https://github.com/nothings/stb) -Texture loading
 + [tinyobjloader](https://github.com/tinyobjloader/tinyobjloader) – Mesh loading
-
 ## Reference
 + [Haru-V](https://github.com/andyroiiid/Haru-V?tab=readme-ov-file)
 + [Learn OpenGL](https://learnopengl.com/)
