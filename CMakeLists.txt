@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.26)
-project(VulkanRayTracer)
+project(VulkanApp)
 
 set(CMAKE_CXX_STANDARD 20)
 
@@ -21,6 +21,6 @@ target_link_libraries(UI PUBLIC glm_config)
 target_link_libraries(GFX PUBLIC glm_config)
 target_link_libraries(Resource PUBLIC glm_config)
 
-add_executable(VulkanRayTracer main.cpp)
+add_executable(VulkanApp main.cpp)
 
-target_link_libraries(VulkanRayTracer Vulkan::Vulkan SDL3::SDL3 Debug Window glslang Resource)
+target_link_libraries(VulkanApp Vulkan::Vulkan SDL3::SDL3 Debug Window glslang Resource)

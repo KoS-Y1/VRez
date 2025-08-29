@@ -1,106 +1,67 @@
-# Vulkan Ray Tracer
+# VRez - A Vulkan Real-Time Rendering App
+VRez is a Vulkan-based real-time rendering application inspired by [Haru-V](https://github.com/andyroiiid/Haru-V?tab=readme-ov-file)
 
-*Used as a TODO list for now*
+##  Features
+### Rendering
+- **Deferred Rendering** (GBuffer + Lighting Pass)
+- **Forward Rendering** 
+- **Physically-Based Rendering (PBR)**
+    - Directional Light
+    - Point Light with range
+- **Image-Based Lighting (IBL)**
+- **Shadows**
+    - Directional Light
+- **Skybox Rendering**
+- **Post-Processing**
+    - FXAA (Fast Approximate Anti-Aliasing)
 
-## File System
-~~+ Verify if it's a valid file path~~
+### Shader System
+- Runtime **GLSL → SPIR-V** compilation
+- Automatic extraction of **descriptor bindings** and **push constants** from SPIR-V reflection
 
-~~## Meshes~~
-+ ~~Mesh Loader~~
-+ ~~Add Mesh Instance class, which has a model matrix handling~~
-  + ~~Transformation~~
-    + ~~Translation~~
-    + ~~Rotation~~
-    + ~~Scaling~~
-      + ~~uniform scaling~~
+### Asset System
+- **Mesh Manager**
+    - Supports loading `.obj` models
+- **Texture Manager**
+    - Mipmapping & LOD comparison
+- **Material Registry**
+    - Maps materials to textures
+- **Object Registry**
+    - Associates meshes with materials
 
-## Lighting
-+ ~~Light~~
-  + ~~Ambiemt light~~
-  + ~~Directional light~~
-  + ~~PointLight~~
-+ ~~Light with transformation~~
-  + ~~Translation, etc..~~
-+ ~~Traditional Graphics, Rasterization Shaders(make sure models' normal working)~~
-  + ~~Basic rendering(e.g. phong..)~~
-  + ~~Using PBR instead of phong blinn~~
-  + IBL for skybox
+### Framework
+- **Thread Pool** for parallelized asset loading
+- **ImGui Integration** for debugging & UI
+- **JSON Parsing** with `simdjson` for configuration
+- **stb** for image loading
 
-+ **Advanced(Vulkan Ray Tracing Extension/RT Pipeline)**
-## Texture
-+ Texture loader
-+ Different kind of textures with corresponding shaders
-  + ~~Basic texture mapping~~
-  + ~~Normal mapping~~...
-  + Emissive, ~~ORM~~... mappings
-  + Shadow mapping
-    + Soft shadow
-    + Antialiasing
-  + LOD, anisotropy, compare?
+---
+## Screenshots
+![image01](./Doc/01.png)
+*<Center>(deferred and forward rendering)</Center>*
 
-## ~~Shader Compiler~~
-+ ~~Parse to get the descrirptor set layout and push constant info with a given glsl file~~
-~~~~ c++
-read all file path
-for each file
-parse descriptor set layout/push constant layout
-merge same descriptor set/push constant
-compile file to spirv
+![image02](./Doc/02.png)
+*<Center>(texture LOD comparison)</Center>*
 
-~~~~
-+ ~~Reading from shader file, then compile the shader, and return a pipeline config~~
-+ ~~In VulkanState map<filename, shared_ptr pipeline>(still need a function to decide either pointer to compute/graphics pipeline)~~
-+ ~~Mesh instance owns a reference to a shared pipeline (shared_ptr to pipeline), and just need to update push constant/descriptor per draw to reuse the pipeline~~
-+ In VulkanState, each frame, update descriptor sets/push constant
-+ Feature to compile until shader header(#include <name.glsl> in shader file)
-+ ~~VulkanPipeline will directly create descriptor set layout and pipeline with the parsed descriptor set layout and push constant info~~
-~~~~ c++
-pass all file path of the shaders to ShaderCompiler
-Get all spirv code, descriptor layout info, and push constant
-For each spirv code, create shader module and shader stage
-Create pipeline layout with descriptor layout info and push constant
-~~~~
+## Workflow
+Here’s the high-level workflow of the engine:
 
+![image03](./Doc/03.png)
 
-~~~~ c++
-for each module
-{
-  get its all sets
-  for each set
-  {
-    if set is not in the map
-    {
-      create a new map element with an empty vector of descriptor set binding
-    }
-    else if the set is in the map
-    {
-      for each binding of the set
-      {
-        descriptor binding object with all info
-        
-        if binding is already in the set
-        {
-          the binding in the set stageflag |= new binding stage flag
-        }
-        else
-        {
-          add the new binding to the vector
-        }
-      }
-      
-    }
-  }
-}
-~~~~
+## Dependencies
++ [SDL](https://github.com/libsdl-org/SDL) - Window and input management
++ [SPIRV-Reflect](https://github.com/KhronosGroup/SPIRV-Reflect) - Shader reflection
++ [glm](https://github.com/g-truc/glm) - Math library
++ [glslang](https://github.com/KhronosGroup/glslang) - GLSL to SPIR-V compiler
++ [ImGui](https://github.com/ocornut/imgui) - UI framework
++ [simdjson](https://github.com/simdjson/simdjson/tree/master) - Fast JSON parser
++ [stb](https://github.com/nothings/stb) -Texture loading
++ [tinyobjloader](https://github.com/tinyobjloader/tinyobjloader) – Mesh loading
 
-## RAII
-+ Avoid to use raw pointer, use unique_ptr, shared_ptr or weak_ptr if possible
-
-## Improve/Refactor
-+ Vulkan state should have a public function to destroy/free vulkan object, so that other class(e.g. VulkanImage) won't need to have a VkDevice variable that helps itself destroy vkImage(also a TODO) 
-+ I'm not gonna implement it here, but there can be an abstract base Resource class using templates. Texture, mesh, etc. shoulde be derived from Resource class.
-
-## Misc TODO(I'm too lazy to have different sections)
-+ Deferred rendering
-+ Forword rendering for transparent object
-+ CSM
+## Reference
++ [Haru-V](https://github.com/andyroiiid/Haru-V?tab=readme-ov-file)
++ [Learn OpenGL](https://learnopengl.com/)
++ [Vulkan Tutorial](https://vulkan-tutorial.com/)
++ [Khronos Vulkan® Tutorial](https://docs.vulkan.org/tutorial/latest/00_Introduction.html)
++ [Vulkan Guide](https://vkguide.dev/)
++ [NVIDIA FXAA - TIMOTHY LOTTES](https://developer.download.nvidia.com/assets/gamedev/files/sdk/11/FXAA_WhitePaper.pdf)

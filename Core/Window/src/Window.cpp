@@ -28,7 +28,7 @@ Window::~Window() {
 }
 
 void Window::CreateWindow() {
-    m_window = SDL_CreateWindow("VulkanRayTracer", WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_VULKAN);
+    m_window = SDL_CreateWindow("VulkanApp", WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_VULKAN);
 
     m_width  = WINDOW_WIDTH;
     m_height = WINDOW_HEIGHT;

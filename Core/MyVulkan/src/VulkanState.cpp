@@ -102,9 +102,9 @@ void VulkanState::CreateInstance() {
     VkApplicationInfo infoApp{
         .sType              = VK_STRUCTURE_TYPE_APPLICATION_INFO,
         .pNext              = nullptr,
-        .pApplicationName   = "VulkanRayTracerApp",
+        .pApplicationName   = "VulkanApp",
         .applicationVersion = VK_MAKE_API_VERSION(0, 1, 0, 0),
-        .pEngineName        = "VulkanRayTracerEngine",
+        .pEngineName        = "VulkanEngine",
         .apiVersion         = VK_API_VERSION_1_4,
     };
 
