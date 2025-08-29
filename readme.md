@@ -22,7 +22,7 @@ VRez is a Vulkan-based real-time rendering application inspired by [Haru-V](http
 - **Mesh Manager**
     - Supports loading `.obj` models
 - **Texture Manager**
-    - Mipmapping & LOD comparison
+    - Mipmapping & LOD 
 - **Material Registry**
     - Maps materials to textures
 - **Object Registry**
